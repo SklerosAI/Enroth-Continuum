@@ -26,11 +26,13 @@ inline constexpr SpellId SPELL_FEATHER_FALL = static_cast<SpellId>(16);
 inline constexpr SpellId SPELL_JUMP = static_cast<SpellId>(19);
 inline constexpr SpellId SPELL_FLY = static_cast<SpellId>(21);
 inline constexpr SpellId SPELL_WATER_WALK = static_cast<SpellId>(27);
+inline constexpr SpellId SPELL_ENCHANT_ITEM = static_cast<SpellId>(29);
 inline constexpr SpellId SPELL_PROTECTION_FROM_MAGIC = static_cast<SpellId>(36);
 inline constexpr SpellId SPELL_BLESS = static_cast<SpellId>(46);
 inline constexpr SpellId SPELL_HEALING_TOUCH = static_cast<SpellId>(47);
 inline constexpr SpellId SPELL_HEROISM = static_cast<SpellId>(51);
 inline constexpr SpellId SPELL_CURE_WOUNDS = static_cast<SpellId>(71);
+inline constexpr SpellId SPELL_GOLDEN_TOUCH = static_cast<SpellId>(79);
 
 /**
  * @param spell                         MM6 spell ID.
@@ -40,6 +42,16 @@ inline constexpr SpellId SPELL_CURE_WOUNDS = static_cast<SpellId>(71);
 inline bool isPlayerAttackSpell(SpellId spell) {
     return spell == SPELL_FLAME_ARROW || spell == SPELL_FIRE_BOLT || spell == SPELL_STATIC_CHARGE || spell == SPELL_SPARKS ||
            spell == SPELL_LIGHTNING_BOLT || spell == SPELL_ICE_BOLT || spell == SPELL_MAGIC_ARROW || spell == SPELL_SPIRIT_ARROW;
+}
+
+/**
+ * @offset 0x422000
+ * @param spell                         MM6 spell ID.
+ * @return                              Whether the spell asks for an item in the caster's backpack, as Enchant Item
+ *                                      and Golden Touch do.
+ */
+inline bool isItemTargetSpell(SpellId spell) {
+    return spell == SPELL_ENCHANT_ITEM || spell == SPELL_GOLDEN_TOUCH;
 }
 
 /**

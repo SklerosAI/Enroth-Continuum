@@ -3330,12 +3330,17 @@ void pushSpellOrRangedAttack(SpellId spell,
                 break;
         }
 
+        if (engine->gameTitle() == GameTitle::MM6) {
+            flags &= ~ON_CAST_TargetedEnchantment;
+            if (mm6::isItemTargetSpell(spell))
+                flags |= ON_CAST_TargetedEnchantment;
+        }
         if (engine->gameTitle() == GameTitle::MM6 && spell == mm6::SPELL_HEALING_TOUCH) {
             flags &= ~ON_CAST_TargetedActorOrCharacter;
             flags |= ON_CAST_TargetedCharacter;
         }
         if (engine->gameTitle() == GameTitle::MM6 && mm6::isPlayerAttackSpell(spell)) {
-            flags &= ~(ON_CAST_TargetedActor | ON_CAST_TargetedEnchantment);
+            flags &= ~ON_CAST_TargetedActor;
             if (pParty->bTurnBasedModeOn && !target && spell != mm6::SPELL_SPARKS)
                 flags |= ON_CAST_TargetedActor;
         }

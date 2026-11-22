@@ -341,6 +341,18 @@ monsters have their own verified lists (`isVerifiedEventSpell`, `isVerifiedMonst
 Not castable yet, among others: Shield, Stun, Town Portal, Lloyd's Beacon, the other condition cures. Power Cure's heal
 rule is in source (`MM6PowerCureRules.cpp`) but the spell isn't on the list.
 
+### Spells that pick an item
+
+MM6.exe's cast routine (0x422000) sends two spells to an item in the caster's backpack: Enchant Item 29 and Golden
+Touch 79 (`mm6::isItemTargetSpell`). Both are refused, so no MM6 cast opens the item screen yet. MM7's item spells,
+Fire Aura 4, Recharge Item 28, Enchant Item 30 and Vampiric Weapon 91, share their numbers with MM6's Fire Bolt, Ice
+Bolt, Acid Burst and Mass Curse. The MM6 cast push clears MM7's item flag and sets it only for MM6's two.
+
+The item screen is MM6.exe's window 0x1F: `leather` at (8, 8), `fr_inven` and the backpack, `border5` and `border6`,
+and Cancel at (392, 318), 75 by 33, drawn with `buttesc1` and `buttesc2` when pressed. There is no paperdoll. The
+cursor is `MICON2` and the status line says "Select Target". A click on the backpack (0x420370) picks the item. Cancel
+uses the shared cancel path, which is not traced against MM6.exe. Neither is MM6.exe's effect of either spell.
+
 Scrolls and spellbook items are not implemented. Using a scroll throws in `Character::useItem` before the item is
 consumed. Reading a spellbook refuses a character whose class can't learn the school or who lacks the school skill,
 and throws otherwise. Spell guilds stock spellbooks as items, so a spell can't yet be learned in play. Game tests

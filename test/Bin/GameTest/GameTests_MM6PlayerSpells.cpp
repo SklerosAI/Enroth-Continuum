@@ -24,15 +24,18 @@
 #include "Engine/Objects/Monsters.h"
 #include "Engine/Party.h"
 #include "Engine/SaveLoad.h"
+#include "Engine/Spells/CastSpellInfo.h"
 #include "Engine/Spells/MM6SpellRules.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
 #include "Engine/Spells/Spells.h"
 #include "Engine/Tables/MapTable.h"
+#include "Engine/mm7_data.h"
 
 #include "Utility/Math/TrigLut.h"
 #include "Utility/String/Format.h"
 
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/UISpell.h"
 
 static void completeEditableMM6Party() {
     for (Character &character : pParty->pCharacters) {
@@ -362,6 +365,70 @@ GAME_TEST(MM6PlayerSpells, AttackSpells) {
         EXPECT_GE(hpTape.front() - hpTape.back(), attack.minDamage);
         EXPECT_LE(hpTape.front() - hpTape.back(), attack.maxDamage);
     }
+}
+
+GAME_TEST(MM6PlayerSpells, BoltsDontPickAnItem) {
+    // Fire Bolt and Ice Bolt share their numbers with MM7's Fire Aura and Recharge Item, which pick an item in the
+    // backpack. Cast from the spellbook, they fly at the monster and never open the item screen.
+    for (SpellId spell : {mm6::SPELL_FIRE_BOLT, mm6::SPELL_ICE_BOLT}) {
+        SCOPED_TRACE(fmt::format("spell={}", std::to_underlying(spell)));
+        test.prepareForNextTest();
+        enterFirstMapFromNewGame(game);
+        teachSorcerer(spell, CombinedSkillValue(10, MASTERY_NOVICE));
+        const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+        const int monster = game.spawnMonster(pParty->pos + ahead * 1000, sturdyMonster(), SPAWN_DUMMY)->id;
+        auto hpTape = actorTapes.hp(monster);
+        auto screenTape = tapes.screen();
+        auto targetWindowTape = tapes.custom([] { return pGUIWindow_CastTargetedSpell ? pGUIWindow_CastTargetedSpell->eWindowType : WINDOW_NULL; });
+        test.startTaping();
+
+        castFromSpellbook(game, spell);
+        for (int frame = 0; frame < 20 && hpTape.size() == 1; frame++)
+            game.tick(); // The bolt flies to the monster.
+
+        EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_SPELL_BOOK, SCREEN_GAME));
+        EXPECT_EQ(targetWindowTape, tape(WINDOW_NULL));
+        EXPECT_EQ(hpTape.size(), 2);
+    }
+}
+
+GAME_TEST(MM6PlayerSpells, ItemScreenHasMM6Art) {
+    // The screen where a spell picks an item drew MM7's paperdoll and fr_strip and x_x_u, which MM6's icons.lod lacks.
+    // MM6.exe draws leather, the backpack, the side borders and buttesc1 under Cancel. No admitted MM6 spell picks an
+    // item yet, so the screen opens in code, as the cast queue opens it for Enchant Item.
+    enterFirstMapFromNewGame(game);
+    CastSpellInfo enchantItem;
+    enchantItem.uSpellID = mm6::SPELL_ENCHANT_ITEM;
+    enchantItem.casterCharacterIndex = SORCERER;
+    enchantItem.flags = ON_CAST_TargetedEnchantment;
+    auto quadTape = tapes.hudQuads();
+    auto screenTape = tapes.screen();
+    auto statusTape = tapes.statusBar();
+    test.startTaping();
+
+    game.runGameRoutine([&] {
+        pGUIWindow_CastTargetedSpell = enchantItem.GetCastSpellInInventoryWindow();
+        IsEnchantingInProgress = true;
+        enchantingActiveCharacter = pParty->activeCharacterIndex();
+    });
+    game.tick();
+    const AccessibleVector<DrawnQuad> screen = quadTape.back();
+    game.pressAndReleaseButton(BUTTON_LEFT, {420, 330}); // Cancel.
+    game.tick();
+
+    AccessibleVector<std::string> textures;
+    for (const DrawnQuad &quad : screen)
+        textures.push_back(quad.texture);
+    EXPECT_EQ(screenTape, tape(SCREEN_CASTING, SCREEN_GAME));
+    EXPECT_CONTAINS(statusTape, std::string("Select Target"));
+    EXPECT_CONTAINS(screen, (DrawnQuad{"leather", {8, 8}}));
+    EXPECT_CONTAINS(screen, (DrawnQuad{"fr_inven", {14, 17}}));
+    EXPECT_CONTAINS(screen, (DrawnQuad{"border5", {7, 8}}));
+    EXPECT_CONTAINS(screen, (DrawnQuad{"border6", {461, 8}}));
+    EXPECT_CONTAINS(screen, (DrawnQuad{"buttesc1", {392, 318}}));
+    EXPECT_MISSES(textures, std::string("fr_strip"));
+    EXPECT_MISSES(textures, std::string("backdoll"));
+    EXPECT_MISSES(textures, std::string("x_x_u"));
 }
 
 GAME_TEST(MM6PlayerSpells, PartyBuffs) {

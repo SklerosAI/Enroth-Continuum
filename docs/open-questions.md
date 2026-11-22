@@ -97,9 +97,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 - **Dungeon door sounds.** When MM6.exe opens the dungeon entry and exit dialog (0x43A070) it calls 0x496520 with the
   house if the room's sound byte is set, and 0x488CA0 with 47 on a character under a level and alert check. Neither
   call is traced. The MM6 path plays nothing there. The d01 and d02 rooms have no sound byte.
-- **Spell cast on an item.** `GUIWindow_Inventory_CastSpell` in `src/GUI/UI/UIInventory.cpp` draws `x_x_u`, absent
-  from MM6 `icons.lod`. It opens for item-targeted spells listed by MM7 ids, and MM7's Fire Aura (4) shares its number
-  with MM6's Fire Bolt. Whether an MM6 cast reaches it is not verified.
 - **Oracle background.** A hidden capture of the Oracle's conversation draws the left view area plain white. Not checked
   in visible play, so it may be offscreen-only or a missing house picture.
 - **Missing chest button art.** Opening a chest logs a missing `ib-bcu-a`, the MM7 cancel button background loaded in

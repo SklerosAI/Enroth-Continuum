@@ -109,6 +109,11 @@ add_library(engine_mm6_executable STATIC MM6Executable.cpp MM6Executable.h)
 target_link_libraries(engine_mm6_executable PUBLIC engine_resources utility)
 target_check_style(engine_mm6_executable)
 
+add_library(engine_mm6_voice_rules STATIC MM6VoiceRules.cpp MM6VoiceRules.h)
+target_link_libraries(engine_mm6_voice_rules PUBLIC engine_mm6_executable library_random utility)
+target_check_style(engine_mm6_voice_rules)
+target_link_libraries(engine_objects PUBLIC engine_mm6_voice_rules)
+
 add_library(engine_mm6_map_visit STATIC MM6MapVisit.cpp MM6MapVisit.h)
 target_link_libraries(engine_mm6_map_visit PUBLIC core_time utility)
 target_check_style(engine_mm6_map_visit)
@@ -138,6 +143,11 @@ if(OE_BUILD_TESTS)
     target_link_libraries(test_engine_mm6_executable PUBLIC testing_unit engine)
     target_check_style(test_engine_mm6_executable)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_executable)
+
+    add_library(test_engine_mm6_voice_rules OBJECT Tests/MM6VoiceRules_ut.cpp)
+    target_link_libraries(test_engine_mm6_voice_rules PUBLIC testing_unit engine_mm6_voice_rules engine_serialization media_audio library_snd)
+    target_check_style(test_engine_mm6_voice_rules)
+    target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_voice_rules)
 
     add_library(test_engine_mm6_actual_stat_condition OBJECT Tests/MM6ActualStatCondition_ut.cpp)
     target_link_libraries(test_engine_mm6_actual_stat_condition PUBLIC testing_unit)

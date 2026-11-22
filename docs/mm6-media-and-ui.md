@@ -204,10 +204,19 @@ is `hitsfull`, the next quarter `hitshalf` and the last quarter `hitsqtr`, each 
   from its voice index (`Character::GetSexByVoice`), its paperdoll body from its face, both by the same 8 and 4 split.
 - Portrait expressions use the original portrait-frame table, read through the shared `PortraitFrameTable`.
 
-Voice reactions go through the shared `Character::playReaction`, which uses the inherited MM7 reaction table and
-sound-id formula for every title. MM6's sound table groups each face's voice lines into a band of ids.
-`mm6::faceAnimationSoundId` in [MM6VoiceSound.h](../src/Engine/MM6/MM6VoiceSound.h) computes the MM6 id
-(`5000 + 100 * face + 2 * kind + variant`), but only its unit test calls it.
+Voice reactions go through the shared `Character::playReaction`, which asks `mm6::speechSound` in
+[MM6VoiceRules.h](../src/Engine/MM6/MM6VoiceRules.h) for the MM6 sample, as MM6.exe does at 0x488D12. MM6.exe's speech
+table (0x4C22F0, 103 rows of 8 bytes) gives each speech up to two recorded lines in bytes 0 and 1, and its portrait
+reactions in bytes 3 to 7. The table at 0x4C20D0 holds the number of takes of each of the 45 lines for each of the 12
+voices. The character says one of the speech's lines, picked at random, then one take of it, sound
+`5000 + 100 * voice + 2 * line + take`. In `dsounds.bin` these are `MaleA` to `MaleH` and `GirlA` to `GirlD`, then the
+line number and a take letter. Portrait reactions still come from the shared MM7 table, which matches MM6's but for
+speeches 63 and 64.
+
+Speeches 1 to 5, 7 to 13, 15 to 31, 37 to 39, 41, 42, 44 to 48, 53 to 59, 62, 67, 69, 80, 84 to 86 and 99 to 102 have a
+voice line. The rest have none in MM6.exe, the coach and boat departures 71 and 72 among them. Every take has a sample
+in `dsounds.bin` and `Audio.snd` but nine. 5135, 5282, 5578, 5629, 5635, 5956 and 6033 have no `dsounds.bin` entry, and
+5674 (`MaleG37a`) and 6074 (`GirlC37a`) have no sample in `Audio.snd`. Those takes play nothing.
 
 When a conversation opens, the active character greets the NPC unless the NPC is hired. MM6.exe does it at the end of
 its dialogue setup (0x43C075): speech 22 at an effective reputation of zero or more, speech 23 below zero, at any hour.

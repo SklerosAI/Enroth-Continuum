@@ -383,7 +383,7 @@ GAME_TEST(MM6NpcDialogue, StreetNpcThreat) {
     auto text = textTape.flatten();
     EXPECT_CONTAINS(text, "Understood sir.  I want to live.  What do you need?");
     EXPECT_CONTAINS(text, "Now what?  Have you returned to slay me?  I will\nsurely call out your name before you strike me\ndown!  Someone will come to save me!");
-    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE, PORTRAIT_53)); // The greeting and the threat, then the greeting below zero reputation.
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE, PORTRAIT_WIDE_SMILE, PORTRAIT_53)); // The greeting, the threat, then the greeting below zero reputation.
 }
 
 GAME_TEST(MM6NpcDialogue, StreetNpcThreatRefused) {
@@ -402,7 +402,7 @@ GAME_TEST(MM6NpcDialogue, StreetNpcThreatRefused) {
     EXPECT_EQ(dialogueTape, tape(DIALOGUE_NULL, DIALOGUE_MAIN, DIALOGUE_THREAT));
     EXPECT_EQ(optionsTape, tape(std::vector<std::string>(), std::vector<std::string>{"Beg", "Threat", "Bribe 50 Gold"}));
     EXPECT_CONTAINS(textTape.flatten(), "A threat?  You had best be gone before I set the\nwatch on you!");
-    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE, PORTRAIT_41)); // The greeting, then the failed threat.
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE, PORTRAIT_42)); // The greeting, then the failed threat.
 }
 
 GAME_TEST(MM6NpcDialogue, StreetNpcBribe) {
@@ -475,7 +475,7 @@ GAME_TEST(MM6NpcDialogue, StreetNpcBribeRefused) {
     EXPECT_EQ(dialogueTape, tape(DIALOGUE_NULL, DIALOGUE_MAIN, DIALOGUE_BRIBE));
     EXPECT_EQ(optionsTape, tape(std::vector<std::string>(), std::vector<std::string>{"Beg", "Threat", "Bribe 50 Gold"}));
     EXPECT_CONTAINS(textTape.flatten(), "Money means little.  Knowledge is power to me.  ");
-    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE, PORTRAIT_SAD)); // The greeting, then the failed bribe.
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE, PORTRAIT_48)); // The greeting, then the failed bribe.
 }
 
 
@@ -540,4 +540,28 @@ GAME_TEST(MM6NpcDialogue, GreetingSpeech) {
     EXPECT_EQ(activeCharacterTape, tape(1));
     EXPECT_EQ(talkerPortraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_BLINK, PORTRAIT_WIDE_SMILE, PORTRAIT_53)); // A blink, then the two greetings.
     EXPECT_EQ(otherPortraitTape, tape(PORTRAIT_NORMAL));
+}
+
+GAME_TEST(MM6NpcDialogue, StreetNpcVoices) {
+    // Characters spoke MM6 speeches with MM7's voice lines, and begging had no voice.
+    auto speechTape = tapes.speeches();
+    auto soundsTape = tapes.sounds();
+    auto activeCharacterTape = tapes.activeCharacterIndex();
+    auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
+    enterNewSorpigal(game);
+    test.startTaping();
+    talkToMarianne(game);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_2); // The first character is still saying the greeting, so the second one begs.
+    game.tick();
+    clickNpcOption(game, "Beg");
+    leaveConversation(game);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_3);
+    game.tick();
+    talkToMarianne(game);
+
+    auto voices = soundsTape.flatten().filter([](SoundId sound) { return sound >= static_cast<SoundId>(5000) && sound < static_cast<SoundId>(6200); });
+    EXPECT_EQ(speechTape.flatten(), tape(SPEECH_GOOD_DAY, SPEECH_BEG, SPEECH_GOOD_EVENING));
+    EXPECT_EQ(voices, tape(static_cast<SoundId>(5062), static_cast<SoundId>(5182), static_cast<SoundId>(5808))); // MaleA31a, MaleB41a, GirlA04a.
+    EXPECT_EQ(activeCharacterTape, tape(0, 1, 2));
+    EXPECT_EQ(reputationTape, tape(0, -10));
 }

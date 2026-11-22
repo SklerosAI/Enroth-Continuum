@@ -62,6 +62,8 @@ disassembly or with GrayFace's MMExtension structure definitions, where the tabl
 | Shop stock rows | `0x4C433C`, `0x4C4546`, `0x4C459C` | Per shop: treasure level and item kinds, two banks | `mm6::decodeShopStockRules` in `MM6ShopStock.cpp` | First use |
 | Shop visible slots | `0x4C45F1` | 4 bytes, by house type | same | First use |
 | Guild spellbooks | `0x4C48B0` | 22 int16, spell guilds 119 to 140 | same | First use |
+| Speech voice lines | `0x4C22F0` | 103 rows of 8 bytes, lines in bytes 0 and 1 | `mm6::decodeVoiceRules` in `MM6VoiceRules.cpp` | First speech |
+| Voice line takes | `0x4C20D0` | 45 lines × 12 voices | same | First speech |
 
 Row layouts:
 

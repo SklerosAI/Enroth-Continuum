@@ -491,7 +491,7 @@ void reconstructMM6IndoorDelta(const MM6IndoorRuntimeDelta &delta, IndoorLocatio
     vChests.resize(delta.chests.size());
     for (size_t i = 0; i < delta.chests.size(); ++i) {
         vChests[i].position.reset(); // Derived later from this map's own chest events, the vector still holds the previous map's.
-        reconstruct(delta.chests[i], &vChests[i], tags::context<int>(i));
+        mm6::reconstructChest(delta.chests[i], &vChests[i], i);
     }
 
     reconstruct(delta.doors, &dst->doors);
@@ -712,7 +712,7 @@ static Blob encodeIndoorLiveState(const IndoorLocation &location, IndoorActorAnd
     }
     for (size_t i = 0; i < current.chests.size(); ++i) {
         Chest_MM7 live{};
-        snapshot(vChests[i], &live);
+        mm6::snapshotChest(vChests[i], &live);
         if (!mm6::validChestRuntimeGrid(GameTitle::MM6, live))
             throw Exception("MM6 indoor chest {} has invalid active grid", i);
         std::copy_n(live.inventoryMatrix.begin(), mm6::CHEST_PAGE_CELLS, current.chests[i].inventoryMatrix.begin()); // The later pages stay as the delta has them.

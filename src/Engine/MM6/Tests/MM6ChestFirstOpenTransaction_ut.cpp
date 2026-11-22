@@ -130,6 +130,41 @@ UNIT_TEST(MM6ChestFirstOpenTransaction, ArtifactOnSecondPageIsSeenAndCanBeTaken)
     EXPECT_EQ(mm6::decodeChestPages(*left, mm6::CHEST_PAGE_CELLS), std::vector<mm6::ChestPageItem>{});
 }
 
+UNIT_TEST(MM6ChestFirstOpenTransaction, GoldOnSecondPageIsCredited) {
+    // A gold pile on a chest's second page goes to the party like one on the first page. An artifact that fills the
+    // grid pushes the pile there.
+    TableScope table;
+    table.table->itemSizes[static_cast<ItemId>(400)] = Sizei(9, 9);
+    const auto types = chestTypes();
+    auto input = inputFor(400);
+    input.dchest = types;
+    input.overflow = mm6::ChestOverflow::Paged;
+    input.iconLookup = [](int itemId) { return itemId == 400 ? mm6::ChestIconSize{288, 288} : mm6::ChestIconSize{32, 32}; };
+    input.partyGold = 100;
+    const auto second = std::span(input.record).subspan(4 + 28, 28);
+    mm6::writeChest32(second, 0, std::to_underlying(ITEM_GOLD_SMALL));
+    mm6::writeChest32(second, 12, 79);
+    const auto opened = mm6::stageChestFirstOpenInteraction(input);
+    ASSERT_TRUE(opened);
+    const auto grid = mm6::decodeChestGridWire(GameTitle::MM6, opened->record);
+    ASSERT_TRUE(grid);
+    EXPECT_EQ(mm6::decodeChestPages(*grid, mm6::CHEST_PAGE_CELLS), (std::vector<mm6::ChestPageItem>{{1, 1, 0}}));
+
+    input.record = opened->record;
+    input.action = mm6::ChestInteractionAction::TakeGridItem;
+    input.page = 1;
+    input.netGoldCredit = 79;
+    const auto taken = mm6::stageChestFirstOpenInteraction(input);
+    ASSERT_TRUE(taken);
+    EXPECT_EQ(taken->grossGold, 79);
+    EXPECT_EQ(taken->partyGold, 179);
+    EXPECT_EQ(taken->heldItem.itemId, ITEM_NULL);
+    const auto left = mm6::decodeChestGridWire(GameTitle::MM6, taken->record);
+    ASSERT_TRUE(left);
+    EXPECT_EQ((*left)[0], 1);
+    EXPECT_EQ(mm6::decodeChestPages(*left, mm6::CHEST_PAGE_CELLS), std::vector<mm6::ChestPageItem>{});
+}
+
 UNIT_TEST(MM6ChestFirstOpenTransaction, GoldRequiresExplicitNetCreditAndBounds) {
     TableScope table;
     const auto types = chestTypes();

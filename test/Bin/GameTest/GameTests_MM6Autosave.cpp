@@ -314,6 +314,24 @@ static void takeFromHiveChest4(EngineController &game, ItemId item, int characte
     game.tick();
 }
 
+static constexpr ItemId kOlympianShield = static_cast<ItemId>(83);
+
+static void takeShieldFromHiveChest1(EngineController &game) {
+    // With chest luck 0 the hive's chest 1 holds an Olympian Shield of Poison Resistance. The party opens the chest and
+    // puts the shield into the second character's backpack.
+    mm6::chestTitleState().lcgState = 0;
+    game.teleportTo(pMapTable->GetMapInfo("hive.blv"), Vec3f(435, 3707, 1), 90);
+    clickMM6CampaignChainIndoorEventFace(game, 41); // Chest 1.
+    InventoryEntry entry = vChests[1].inventory.find(kOlympianShield);
+    ASSERT_TRUE(entry);
+    game.pressAndReleaseButton(BUTTON_LEFT, chestTable[vChests[1].chestTypeId].inventoryOffset + entry.geometry().topLeft() * 32 + Pointi(16, 16));
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    game.pressGuiButton("Game_Character2");
+    game.tick();
+}
+
 static void wearFromBackpack(EngineController &game, int characterIndex, ItemId item) {
     // The character picks the item up in the backpack and drops it on the paperdoll.
     game.goToInventory(characterIndex);
@@ -936,6 +954,43 @@ GAME_TEST(MM6InGameSave, SavesWithASpecialBonus) {
     saveFromMenu(game);
 
     EXPECT_EQ(spearTape, tape(ITEM_ENCHANTMENT_NULL, ITEM_ENCHANTMENT_OF_ACID));
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
+    EXPECT_EQ(slotTape, tape(false, true));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6InGameSave, SavesWithAPoisonResistanceShield) {
+    // An item with the Poison Resistance bonus from a chest came out with Earth resistance, which MM6 doesn't have. Worn,
+    // the Olympian Shield of Poison Resistance raised no resistance on the stats screen, and the game couldn't be saved.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    startNewGameThroughInput(game);
+    auto shieldTape = charTapes.custom(1, [](const Character &character) {
+        InventoryConstEntry entry = character.inventory.entry(ITEM_SLOT_OFF_HAND);
+        return entry ? entry->itemId : ITEM_NULL;
+    });
+    auto textTape = tapes.drawnTexts();
+    auto statusTape = tapes.statusBar();
+    auto slotTape = tapes.custom([&] { return std::filesystem::exists(profile / "saves/save000.ec6"); });
+    test.startTaping();
+
+    takeShieldFromHiveChest1(game);
+    wearFromBackpack(game, 1, kOlympianShield); // The second character has the Shield skill.
+    game.pressGuiButton("CharacterWindow_Stats");
+    game.tick();
+    const auto statsScreen = textTape.back();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    saveFromMenu(game);
+
+    auto poisonRow = statsScreen.filter([](const DrawnText &text) { return text.text.starts_with("Poison"); }).map([](const DrawnText &text) { return text.text; });
+    EXPECT_EQ(poisonRow, tape(std::string("Poison\f65535\t11023\f00000 / 23\n"))); // The Cleric's 5 and the shield's 18.
+    EXPECT_EQ(shieldTape, tape(ITEM_NULL, kOlympianShield));
     EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
     EXPECT_EQ(slotTape, tape(false, true));
     game.runGameRoutine([&] {

@@ -86,12 +86,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 
 ## MM6: saves
 
-- **A party carrying random ground treasure or a random `GiveItem` gift can't save.** `mm6::spawnRandomTreasure` and
-  `mm6::giveEventItem` build their items through `generatedRuntimeItem`, which gives them no native record. Once one is
-  carried the inventory capture throws "MM6 raw inventory edits are not reversible" and the save is refused. Seen with
-  throwaway game tests that picked up the Oracle's third treasure marker (a Leather Belt of Speed) and that put a level
-  2 `GiveItem` roll in the backpack on `oute3`. Chest loot is not affected, the chest projection reads each record
-  from the chest.
 
 ## MM6: media and UI
 

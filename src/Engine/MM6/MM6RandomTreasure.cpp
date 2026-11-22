@@ -57,6 +57,8 @@ StagedTitleItem stageRandomTreasure(const ChestTitleState &state, MapTreasureLev
         next.lcgState = pick->nextRngState;
         next.generatedArtifactFlags = pick->generatedArtifactFlags;
         result.item.itemId = static_cast<ItemId>(pick->itemId);
+        result.item.mm6RawRecord.emplace();
+        result.item.mm6RawRecord->setWord(0, pick->itemId); // MM6.exe 0x44A6B0 writes nothing but the number.
     } else if (typeRoll >= 60) {
         const auto kind = static_cast<RandomItemType>(std::to_underlying(RANDOM_ITEM_WEAPON) + nextChestRandom15(next.lcgState) % 24);
         return stageTitleItem(next, *pItemTable, markerLevel, kind, itemKindRoll(), collectedArtifactExclusion());

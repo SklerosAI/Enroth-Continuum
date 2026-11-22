@@ -23,8 +23,10 @@ void giveEventItem(ItemTreasureLevel treasureLevel, RandomItemType requestedKind
     const ItemKindRoll kindRoll = engine->config->gameplay.FixItemGeneration.value() ? ITEM_KIND_ROLL_FIXED : ITEM_KIND_ROLL_VANILLA;
     StagedTitleItem staged = stageTitleItem(chestTitleState(), *pItemTable, treasureLevel, requestedKind, kindRoll,
                                            collectedArtifactExclusion());
-    if (fixedId != ITEM_NULL)
+    if (fixedId != ITEM_NULL) {
         staged.item.itemId = fixedId;
+        staged.item.mm6RawRecord->setWord(0, fixed);
+    }
 
     if (pParty->pPickedItem.itemId == ITEM_NULL) {
         pParty->setHoldingItem(staged.item);

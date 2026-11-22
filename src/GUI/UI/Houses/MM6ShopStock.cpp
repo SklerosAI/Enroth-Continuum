@@ -103,13 +103,7 @@ void generateShopBankWithTitleRng(ShopStockFields *stock, const ShopStockRules &
             throw std::runtime_error("MM6 shop stock request is outside the random item generator's tables");
         rng->lcgState = fields->nextRngState;
         rng->generatedArtifactFlags = fields->generatedArtifactFlags;
-        *record = {};
-        record->setWord(0, fields->itemId);
-        record->setWord(4, fields->standardAttributeIndex);
-        record->setWord(8, fields->standardStrength);
-        record->setWord(12, fields->specialEnchantmentId);
-        record->setWord(16, fields->numCharges);
-        record->setWord(20, fields->flags);
+        *record = generatedItemRecord(*fields);
     };
     generateShopBank(stock, rules, bank, houseId, type, random, generator);
 }

@@ -374,6 +374,14 @@ static std::string carriedRecords() {
     return result;
 }
 
+static std::string carriedItemName(ItemId itemId) {
+    // Identified name of the first such item in the backpacks, or empty.
+    for (const Character &character : pParty->pCharacters)
+        if (InventoryConstEntry entry = character.inventory.find(itemId))
+            return entry->GetIdentifiedName();
+    return {};
+}
+
 static std::string drawnItems(const AccessibleVector<DrawnQuad> &quads, int characterIndex) {
     // Where the character screen drew the icons of the character's items, in the backpack and on the paperdoll.
     std::set<std::string> icons;
@@ -1093,6 +1101,121 @@ GAME_TEST(MM6InGameSave, SavesWithACobraEggFromTheFloor) {
     loadFromEscapeMenu(game, 1);
 
     EXPECT_EQ(eggTape, tape(false, true, false, true)); // Picked up, a new game, the load.
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
+    EXPECT_EQ(slotTape, tape(false, true));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6InGameSave, SavesWithRandomGroundTreasure) {
+    // The game couldn't be saved once the party picked up random treasure in the Oracle, the generated item had no
+    // record to save.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    startNewGameThroughInput(game);
+    const ItemId belt = static_cast<ItemId>(100);
+    mm6::chestTitleState().lcgState = 7; // Chest luck with which the Oracle's third treasure marker rolls a Leather Belt of Speed.
+    game.teleportTo(pMapTable->GetMapInfo("oracle.blv"), Vec3f(-1408, 900, -512), 90);
+    auto beltTape = tapes.custom([=] { return carriedItemName(belt); });
+    auto recordsTape = tapes.custom([] { return carriedRecords(); });
+    auto statusTape = tapes.statusBar();
+    auto slotTape = tapes.custom([&] { return std::filesystem::exists(profile / "saves/save000.ec6"); });
+    test.startTaping();
+
+    pickUpFromGround(game, belt);
+    saveFromMenu(game);
+    game.goToMainMenu();
+    startNewGameThroughInput(game);
+    loadFromEscapeMenu(game, 1);
+
+    EXPECT_EQ(beltTape, tape(std::string(), std::string("Leather Belt of Speed"), std::string(), std::string("Leather Belt of Speed")));
+    ASSERT_EQ(recordsTape.size(), 5); // Picked up, the main menu, a new game, the load.
+    EXPECT_EQ(recordsTape, tape(recordsTape[0], recordsTape[1], std::string(" | | | |"), recordsTape[3], recordsTape[1]));
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
+    EXPECT_EQ(slotTape, tape(false, true));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6InGameSave, SavesWithAGiveItemReward) {
+    // The game couldn't be saved once the party took the weapon a pile of bones in the Abandoned Temple gives, the item
+    // a GiveItem event rolls had no record to save.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    startNewGameThroughInput(game);
+    engine->config->debug.NoActors.setValue(true); // The temple's monsters would come for the party.
+    game.teleportTo(pMapTable->GetMapInfo("d02.blv"), Vec3f(-24320, -7830, -2201), 90);
+    engine->config->debug.NoActors.setValue(false); // A new game without its monsters can't be saved.
+    auto heldTape = tapes.custom([] { return pParty->pPickedItem.itemId != ITEM_NULL; });
+    auto recordsTape = tapes.custom([] { return carriedRecords(); });
+    auto statusTape = tapes.statusBar();
+    auto slotTape = tapes.custom([&] { return std::filesystem::exists(profile / "saves/save000.ec6"); });
+    test.startTaping();
+
+    useMM6CampaignChainDecoration(game, 107); // Event 18, a level 1 weapon.
+    game.pressGuiButton("Game_Character1"); // The weapon comes in hand and goes into the first character's backpack.
+    game.tick();
+    saveFromMenu(game);
+    game.goToMainMenu();
+    startNewGameThroughInput(game);
+    loadFromEscapeMenu(game, 1);
+
+    EXPECT_EQ(heldTape, tape(false, true, false));
+    ASSERT_EQ(recordsTape.size(), 5); // In the backpack, the main menu, a new game, the load.
+    EXPECT_EQ(recordsTape, tape(recordsTape[0], recordsTape[1], std::string(" | | | |"), recordsTape[3], recordsTape[1]));
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
+    EXPECT_EQ(slotTape, tape(false, true));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6InGameSave, SavesWithMonsterLoot) {
+    // The game couldn't be saved once the party looted a random item from a monster's corpse, the generated item had
+    // no record to save.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    startNewGameThroughInput(game);
+    const ItemId merlin = static_cast<ItemId>(404);
+    const Vec3f ahead(std::cos(pParty->_viewYaw * std::numbers::pi / 1024), std::sin(pParty->_viewYaw * std::numbers::pi / 1024), 0);
+    Actor *wyrm = game.spawnMonster(pParty->pos + ahead * 400, static_cast<MonsterId>(39), SPAWN_DUMMY); // A Great Wyrm, whose loot is a level 6 item.
+    wyrm->hp = 1;
+    const int wyrmId = wyrm->id;
+    auto merlinTape = tapes.hasItem(merlin);
+    auto recordsTape = tapes.custom([] { return carriedRecords(); });
+    auto statusTape = tapes.statusBar();
+    auto slotTape = tapes.custom([&] { return std::filesystem::exists(profile / "saves/save000.ec6"); });
+    test.startTaping();
+
+    mm6::chestTitleState().lcgState = 17; // Chest luck that rolls artifact 404, Merlin.
+    for (int frame = 0; frame < 300 && !pActors[wyrmId].IsNotAlive(); frame++) { // Blows can miss.
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+    }
+    for (int frame = 0; frame < 100 && pActors[wyrmId].aiState != Dead; frame++) // The wyrm falls.
+        game.tick();
+    game.pointMouseAtActor(wyrmId);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+    saveFromMenu(game);
+    game.goToMainMenu();
+    startNewGameThroughInput(game);
+    loadFromEscapeMenu(game, 1);
+
+    EXPECT_EQ(merlinTape, tape(false, true, false, true)); // Looted, a new game, the load.
+    ASSERT_EQ(recordsTape.size(), 5);
+    EXPECT_EQ(recordsTape, tape(recordsTape[0], recordsTape[1], std::string(" | | | |"), recordsTape[3], recordsTape[1]));
     EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
     EXPECT_EQ(slotTape, tape(false, true));
     game.runGameRoutine([&] {

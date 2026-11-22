@@ -336,6 +336,7 @@ static void takeShieldFromHiveChest1(EngineController &game) {
 
 static constexpr ItemId kPoppysnaps = static_cast<ItemId>(160); // An herb oute3's own data puts on the ground around New Sorpigal.
 static constexpr ItemId kCobraEgg = static_cast<ItemId>(474); // Lies on the floor of the Abandoned Temple.
+static constexpr ItemId kTempleGong = static_cast<ItemId>(462); // Seven lie on the floor of the Supreme Temple of Baa, the pad byte of their records set.
 
 static void pickUpFromGround(EngineController &game, ItemId item) {
     // The party looks down at the first item of that kind lying on the map and clicks it.
@@ -1216,6 +1217,59 @@ GAME_TEST(MM6InGameSave, SavesWithMonsterLoot) {
     EXPECT_EQ(merlinTape, tape(false, true, false, true)); // Looted, a new game, the load.
     ASSERT_EQ(recordsTape.size(), 5);
     EXPECT_EQ(recordsTape, tape(recordsTape[0], recordsTape[1], std::string(" | | | |"), recordsTape[3], recordsTape[1]));
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
+    EXPECT_EQ(slotTape, tape(false, true));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6InGameSave, SavesAfterTheSupremeTempleOfBaa) {
+    // The game couldn't be saved once the party had left the Supreme Temple of Baa, the Temple Gongs on its floor came
+    // back from the left map without the pad byte of their records.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    startNewGameThroughInput(game);
+    const MapId outa3 = pMapTable->GetMapInfo("outa3.odm");
+    const MapId t6 = pMapTable->GetMapInfo("t6.blv");
+    const auto enterTemple = [&] {
+        game.teleportTo(outa3, Vec3f(-19904, -18070, 64), 90); // In front of the temple door on the Hermit's Isle.
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        game.tick();
+        confirmTransition(game);
+    };
+    auto mapTape = tapes.map();
+    auto gongTape = tapes.custom([=] {
+        if (engine->_currentLoadedMapId != t6)
+            return std::optional<int>();
+        return std::optional<int>(std::ranges::count_if(pSpriteObjects, [](const SpriteObject &object) {
+            return object.uObjectDescID && object.containing_item.itemId == kTempleGong;
+        }));
+    });
+    auto statusTape = tapes.statusBar();
+    auto slotTape = tapes.custom([&] { return std::filesystem::exists(profile / "saves/save000.ec6"); });
+    test.startTaping();
+
+    enterTemple();
+    game.teleportTo(t6, Vec3f(-2048, 3562, 2048), 90); // In front of the way out.
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    confirmTransition(game);
+    saveFromMenu(game);
+    game.goToMainMenu();
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(4);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto saved = std::ranges::find(slots, "save000.ec6", [](const auto &entry) { return entry.fileName; });
+    ASSERT_NE(saved, slots.end());
+    loadFromMenu(game, saved - slots.begin());
+    enterTemple();
+
+    EXPECT_EQ(mapTape, tape(pMapTable->GetMapInfo("oute3.odm"), outa3, t6, outa3, t6));
+    EXPECT_EQ(gongTape, tape(std::optional<int>(), std::optional<int>(7), std::optional<int>(), std::optional<int>(7)));
     EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
     EXPECT_EQ(slotTape, tape(false, true));
     game.runGameRoutine([&] {

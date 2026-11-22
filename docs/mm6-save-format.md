@@ -128,7 +128,9 @@ Added by v3 to v7:
 | `ARTC` | 1 | `MM6ArtifactCollectionSection.cpp` | v7, optional | The All Artifacts mod's 30 collected flags of artifacts 400 to 429 |
 
 `PRKM` holds, per map of the session and sorted by name: the map name, the 75 map and 125 decoration event
-variables, the actor list as full actor images, and the ground-item sprite list.
+variables, the actor list as full actor images, and the ground-item sprite list. Each item's fields follow its actor or
+sprite image, except the item record's pad byte, which only the image holds. MM6's own records set it, the seven
+Temple Gongs in `t6.blv` have `0x80` there.
 
 `BEAC` (Lloyd's Beacons and a thumbnail, `MM6BeaconSaveFields.cpp`) and `SPAW` (`MM6SpawnedActorSection.cpp`) have
 codecs and unit tests but are in no manifest. `ITEM` and v1 `HELD` belong to v1 only.

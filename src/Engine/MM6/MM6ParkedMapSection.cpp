@@ -170,7 +170,7 @@ static void putItem(ParkedMapWriter *out, const Item &item) {
         out->image(*item.mm6RawRecord);
 }
 
-static Item getItem(ParkedMapReader *in) {
+static Item getItem(ParkedMapReader *in, std::uint8_t chestRerollSource) {
     Item item;
     item.itemId = static_cast<ItemId>(in->i32());
     item.potionPower = in->i32();
@@ -192,6 +192,7 @@ static Item getItem(ParkedMapReader *in) {
         throw std::runtime_error("MM6 PRKM item record flag is not canonical");
     if (hasRaw)
         item.mm6RawRecord = in->image<ItemRecord28>();
+    item.chestRerollSource = chestRerollSource; // The actor or sprite image holds it, in the item record's pad byte.
     return item;
 }
 
@@ -253,7 +254,7 @@ static Actor getActor(ParkedMapReader *in, std::size_t slot) {
     actor.donebloodsplat = blood;
     actor.massDistortionTime = Duration::fromTicks(in->i64());
     for (Item &item : actor.items)
-        item = getItem(in);
+        item = getItem(in, item.chestRerollSource);
     return actor;
 }
 
@@ -283,7 +284,7 @@ static SpriteObject getSprite(ParkedMapReader *in) {
     sprite._lastParticleTime = Duration::fromTicks(in->i64());
     sprite._ticksPerParticle = Duration::fromTicks(in->i64());
     sprite.uSectorID = in->i32();
-    sprite.containing_item = getItem(in);
+    sprite.containing_item = getItem(in, sprite.containing_item.chestRerollSource);
     return sprite;
 }
 
@@ -346,8 +347,12 @@ static std::vector<ParkedMapRuntime> decodePayload(std::span<const std::uint8_t>
 SaveSection encodeParkedMapSection(std::span<const ParkedMapRuntime> maps, GameTitle title) {
     requireMM6(title);
     std::vector<std::uint8_t> payload = encodePayload(maps);
-    if (encodePayload(decodePayload(payload)) != payload)
+    if (encodePayload(decodePayload(payload)) != payload) {
+        for (const ParkedMapRuntime &map : maps)
+            if (const std::vector<std::uint8_t> single = encodePayload(std::span(&map, 1)); encodePayload(decodePayload(single)) != single)
+                throw std::runtime_error("MM6 PRKM doesn't round-trip exactly, map " + map.mapName);
         throw std::runtime_error("MM6 PRKM doesn't round-trip exactly");
+    }
     return {PRKM, true, std::move(payload)};
 }
 

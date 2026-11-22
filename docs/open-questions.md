@@ -31,8 +31,10 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 - **Encounter spawner.** MM6.exe rings extra monsters 128 (outdoor) or 64 (indoor) units around the spawn point,
   caps the level odds at difficulty 4 and keeps table hostility. The port stacks them, caps at 5 and spawns friendly
   aggressors. Not changed because it reaches every MM6 map. `SpawnEncounter` in `src/Engine/Objects/Actor.cpp`.
-- **Travel clears recovery.** Map travel calls the shared `restAndHeal`, which clears recovery. MM6's travel keeps it.
-  `src/Application/Game.cpp`, the travel branch near `restAndHeal`.
+- **Nicolai leaves after travel.** MM6.exe's [travel rest](mm6-travel-and-maps.md#travel-rest) sets a flag
+  (0x4962CC). On a later frame (0x410808), with quest bit 90 set and Nicolai (NPC 13) hired, it runs global event 20,
+  which moves him out of the party, clears bit 90 and sets bit 95. The port has no such hook, so a coach, boat, border
+  or training stay with him never sends him off. `MM6Transport.cpp`, `MM6MapTransition.cpp`, `MM6Training.cpp`.
 - **Event W2 follow-up.** With nobody active, the event run picks one member, but other active-member reads in the
   same run (a held item moved when a new one is given) still see nobody. `MM6GiveItemEvent.cpp`, `EvtInterpreter.cpp`.
 - **Map timer hour 88.** The Temple of the Sun (t4) dawn timer has an out-of-range hour byte. Its first firing now

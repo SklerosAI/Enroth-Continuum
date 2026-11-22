@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
@@ -369,4 +370,18 @@ GAME_TEST(MM6Transport, CoachLeavesWhenTheHorsemanIsDone) {
     EXPECT_EQ(waits, std::vector<int>({11, 16})); // The house closes a frame after the coach leaves.
     EXPECT_EQ(soundsTape.flatten().count(static_cast<SoundId>(31102)), 2); // The horseman's farewell, 11_02.
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE, SCREEN_GAME, SCREEN_HOUSE, SCREEN_GAME));
+}
+
+GAME_TEST(MM6Transport, CoachClearsRecovery) {
+    // A coach trip clears the recovery of a character who has just attacked, as MM6's travel rest does.
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    auto recoveringTape = tapes.custom([] { return std::pair(pParty->uCurrentDayOfMonth, pParty->pCharacters[0].timeToRecovery > 0_ticks); });
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_A); // A swing at the air, nobody is in reach.
+    game.tick();
+    takeCoachFromNewSorpigal(game);
+
+    EXPECT_EQ(recoveringTape, tape(std::pair(0, true), std::pair(2, false))); // Still recovering when the coach leaves.
 }

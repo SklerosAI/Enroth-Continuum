@@ -1,5 +1,7 @@
 #include <cstdint>
 #include <optional>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
@@ -362,4 +364,41 @@ GAME_TEST(MM6MapTravel, EdgeDialogArt) {
     EXPECT_CONTAINS(lines, (DrawnLine{"Castle Ironfist", {504, 2}, colorTable.White}));
     EXPECT_CONTAINS(lines, (DrawnLine{"It will take 5 days", {491, 154}, colorTable.White}));
     EXPECT_CONTAINS(lines, (DrawnLine{"Sorpigal?", {524, 244}, colorTable.White}));
+}
+
+GAME_TEST(MM6MapTravel, BorderTripClearsRecoveryAndDailyCasts) {
+    // A border trip kept a dead character's recovery and the daily spell casts, which MM6's travel rest clears.
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const MapId oute3 = pMapTable->GetMapInfo("oute3.odm");
+    const MapId outd3 = pMapTable->GetMapInfo("outd3.odm");
+    auto mapTape = tapes.map();
+    auto screenTape = tapes.screen();
+    auto recoveringTape = tapes.custom([] {
+        return std::tuple(pParty->uCurrentDayOfMonth, pParty->pCharacters[0].timeToRecovery > 0_ticks,
+                          pParty->pCharacters[1].timeToRecovery > 0_ticks);
+    });
+    auto castsTape = tapes.custom([] {
+        return std::pair(static_cast<int>(pParty->pCharacters[1].uNumDivineInterventionCastsThisDay),
+                         static_cast<int>(pParty->pCharacters[1].uNumArmageddonCasts));
+    });
+    game.teleportTo(oute3, Vec3f(-22450, -10000, 100), 180); // Next to the west edge, facing it.
+    game.pressAndReleaseKey(PlatformKey::KEY_A); // The first character swings at the air, then the second.
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_A);
+    game.tick();
+    pParty->pCharacters[0].conditions.set(CONDITION_DEAD, pParty->GetPlayingTime());
+    pParty->pCharacters[1].uNumDivineInterventionCastsThisDay = 1; // No admitted MM6 player spell counts these.
+    pParty->pCharacters[1].uNumArmageddonCasts = 1;
+    test.startTaping();
+
+    game.pressKey(PlatformKey::KEY_UP);
+    game.tick(2); // The party walks off the edge and the travel dialogue opens.
+    game.releaseKey(PlatformKey::KEY_UP);
+    ASSERT_EQ(screenTape.back(), SCREEN_CHANGE_LOCATION);
+    confirmTransition(game);
+
+    EXPECT_EQ(mapTape, tape(oute3, outd3));
+    EXPECT_EQ(recoveringTape, tape(std::tuple(0, true, true), std::tuple(5, false, false)));
+    EXPECT_EQ(castsTape, tape(std::pair(1, 1), std::pair(0, 0)));
 }

@@ -62,7 +62,8 @@ struct BorderConfirmation {
 
 /**
  * Applies the MM6 border confirmation to a copy of the party: the trip's days pass with a full rest even without food,
- * the party rests again if it has any food, gets Weak if it doesn't have enough, and arrives at the wrapped position.
+ * which also clears every character's recovery and daily spell casts, the party rests again if it has any food, gets
+ * Weak if it doesn't have enough, and arrives at the wrapped position.
  * The live party, the map and the world are never touched. The arrival Z is left to the target map's placement.
  *
  * @param title                         Game title, only MM6 is accepted.
@@ -104,6 +105,12 @@ struct BorderConfirmation {
     copy.pHirelings[0].hasUsedAbility = false;
     copy.pHirelings[1].hasUsedAbility = false;
     fullRest(copy);
+    for (Character &character : copy.pCharacters) { // MM6.exe 0x4962D6, dead characters included.
+        character.timeToRecovery = 0_ticks;
+        character.uNumDivineInterventionCastsThisDay = 0;
+        character.uNumArmageddonCasts = 0;
+        character.uNumFireSpikeCasts = 0;
+    }
 
     if (result.effects.extraRest)
         fullRest(copy);

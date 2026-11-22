@@ -774,7 +774,8 @@ GAME_TEST(MM6Houses, Training) {
     const std::string needMore = localization->format(LSTR_YOU_NEED_D_MORE_EXPERIENCE_TO_TRAIN_TO, 2000, 3);
     EXPECT_EQ(optionsTape, tape(std::vector<std::string>{}, std::vector<std::string>{train}, std::vector<std::string>{needMore},
                                 std::vector<std::string>{train}, std::vector<std::string>{needMore}));
-    EXPECT_EQ(soundsTape.flatten(), tape(static_cast<SoundId>(30701), SOUND_gold01, static_cast<SoundId>(30702), SOUND_gold01, static_cast<SoundId>(30702))); // The trainer's greeting, then paying and the trainer twice.
+    // The trainer's greeting, then paying and the trainer twice.
+    EXPECT_EQ(soundsTape.flatten(), tape(static_cast<SoundId>(30701), SOUND_gold01, static_cast<SoundId>(30702), SOUND_gold01, static_cast<SoundId>(30702)));
 }
 
 GAME_TEST(MM6Houses, TavernMenu) {

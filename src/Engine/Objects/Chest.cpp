@@ -225,7 +225,7 @@ bool rerollMm6Chest(int chestId) {
         return false;
     auto staged = mm6::stageChestReroll(binding, chestId, *layout, pMapTable->pInfos[engine->_currentLoadedMapId].mapTreasureLevel,
                                         *pItemTable, std::span(static_cast<const std::uint8_t *>(dchest.data()), dchest.size()),
-                                        mm6ChestIconSize, *owned, !binding.collectedArtifactFlags);
+                                        mm6ChestIconSize, *owned);
     if (!staged) {
         MM_WARNING("MM6 chest {} doesn't match its loot layout and can't be rerolled", chestId);
         mm6::chestRerollLayouts().erase({pMapTable->pInfos[engine->_currentLoadedMapId].fileName, chestId});

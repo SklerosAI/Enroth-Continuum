@@ -332,8 +332,8 @@ sits between them when the chest has more than one page.
 - Each click puts the layout's markers and empty slots back over the chest's current record and runs the ordinary MM6
   chest generator and placement on it (`mm6::stageChestReroll`), with the chest random state and the map's treasure
   level, so the treasure-level ranges are those of the first roll. The chest type, flags, trap and fixed items stay.
-- An artifact of the discarded roll comes off the generated list. With [All Artifacts for MM6](#all-artifacts-for-mm6)
-  on, the collected ledger decides what rolls and the generated list keeps it.
+- An artifact of the discarded roll comes off the generated list, also with
+  [All Artifacts for MM6](#all-artifacts-for-mm6) on. The party never took it, so the collected ledger doesn't have it.
 - MM6 chests only let items be taken out. Taking an item or a gold pile forgets the chest's layout, so a looted chest
   can't be rerolled, also after a save and a load.
 - A chest rolled before the mod was on has no layout and can't be rerolled until its map refills.

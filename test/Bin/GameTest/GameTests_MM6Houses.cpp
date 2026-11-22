@@ -1608,6 +1608,66 @@ GAME_TEST(MM6Houses, WeaponShopBlasterHover) {
     }
 }
 
+static void rightClickAt(EngineController &game, Pointi point) {
+    // Holds the right button down for a frame, then lets it go.
+    game.pressButton(BUTTON_RIGHT, point);
+    game.tick();
+    game.releaseButton(BUTTON_RIGHT);
+    game.tick();
+}
+
+static AccessibleVector<std::string> boxTitles(const TestMultiTape<DrawnLine> &tape) {
+    // Title lines drawn left of the right panel, where an item info box goes.
+    return tape.flatten().filter([](const DrawnLine &line) { return line.position.x < 468; }).map([](const DrawnLine &line) { return line.text; });
+}
+
+GAME_TEST(MM6Houses, WeaponShopItemInfoBox) {
+    // Right-clicking an item in the New Sorpigal weapon shop showed no info box, on the table or in the backpack.
+    for (bool buy : {true, false}) {
+        SCOPED_TRACE(fmt::format("buy={}", buy));
+        test.prepareForNextTest();
+        auto linesTape = tapes.titleLines();
+        startMM6NewGame(game);
+        test.startTaping();
+        openWeaponShopScreen(game, buy ? 539 : 540); // Buy Items or Sell Items.
+        GUIWindow_MM6Shop *shop = dynamic_cast<GUIWindow_MM6Shop *>(window_SpeakInHouse.get());
+        ASSERT_NE(shop, nullptr);
+        rightClickAt(game, buy ? shop->stockItemRect(0).center() : backpackItemCenter(1));
+        EXPECT_EQ(boxTitles(linesTape).unique(), tape(std::string(buy ? "Mace" : "Longsword")));
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopItemInfoBoxUnconscious) {
+    // An unconscious character identified a weapon with his own skill by right-clicking it in the New Sorpigal weapon
+    // shop. The info box leaves the weapon unidentified for him and still lets a conscious character identify it, and
+    // without fix_incapacitated_skill_identify it lets him too.
+    struct Case { bool conscious; bool fix; };
+    for (Case c : {Case{false, true}, Case{true, true}, Case{false, false}}) {
+        SCOPED_TRACE(fmt::format("conscious={} fix={}", c.conscious, c.fix));
+        test.prepareForNextTest();
+        auto linesTape = tapes.titleLines();
+        auto identifiedTape = tapes.custom([] { return knightSword() && knightSword()->IsIdentified(); });
+        engine->config->gameplay.FixIncapacitatedSkillIdentify.setValue(c.fix);
+        startMM6NewGame(game);
+        knightSword()->flags &= ~ITEM_IDENTIFIED;
+        pParty->pCharacters[0].pActiveSkills[SKILL_ITEM_ID] = CombinedSkillValue::novice();
+        if (!c.conscious)
+            knockOut(&pParty->pCharacters[0]);
+        test.startTaping();
+        openWeaponShopScreen(game, 540); // Sell Items.
+        game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+        game.tick();
+        rightClickAt(game, backpackItemCenter(1));
+        const bool identifies = c.conscious || !c.fix;
+        EXPECT_EQ(identifiedTape, identifies ? tape(false, true) : tape(false));
+        if (identifies) {
+            EXPECT_EQ(boxTitles(linesTape).unique(), tape(std::string("Longsword")));
+        } else {
+            EXPECT_EQ(boxTitles(linesTape).unique(), tape(std::string("Longsword"), std::string("Not Identified")));
+        }
+    }
+}
+
 GAME_TEST(MM6Houses, WeaponShopIdentifyUnconscious) {
     // An unconscious character had a weapon identified at the New Sorpigal weapon shop. The shop turns him away with
     // the no condition line and the error sound, and a conscious one still pays and gets it identified.

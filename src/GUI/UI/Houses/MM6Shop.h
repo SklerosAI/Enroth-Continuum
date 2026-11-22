@@ -28,6 +28,7 @@ class GUIWindow_MM6Shop : public GUIWindow_MM6House {
     virtual void selectService(int index) override;
     virtual bool goBack() override;
     virtual void houseScreenClick() override;
+    virtual void showItemInfo() override;
 
     /**
      * @return                          The shop screen the party is on, or `std::nullopt` on the proprietor's menu.

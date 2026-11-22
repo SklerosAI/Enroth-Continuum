@@ -52,8 +52,11 @@ restriction arrives at the map's Party Start. Taking an exit autosaves, leaves t
   guilds, mercenary and thieves' guilds, stables, boats, taverns and training. The panel shows the "in no condition"
   line instead, and the menu returns on the first frame with a character who can act. Temples and banks don't check.
 - Every shop screen also refuses a click from a character who can't act, with the error sound. This is vanilla
-  MM6.exe, so it has no config flag. GrayFace's W28 fix is for the item info box identify and repair, which MM6 shops
-  don't have.
+  MM6.exe, so it has no config flag.
+- Right-clicking an item on a shop screen shows its info box (0x495F60): the shelf item on the buy screens, the spell of
+  the book on Buy Spells, and the backpack item on the other screens. The box (0x41C440) lets the active character
+  identify and repair the item with his skills. With `gameplay.fix_incapacitated_skill_identify` (default on) a
+  character who can't act doesn't, GrayFace's W28. Vanilla MM6.exe only checked that someone was selected.
 - The focus colour starts on the first option and follows the mouse every frame. Arrow keys don't move it in a house.
 - A looping room movie can be told to finish its pass, and some rooms move on to another house once the movie ends
   (`roomAfterMovie`). A `MoveNPC` event can stop the loop.

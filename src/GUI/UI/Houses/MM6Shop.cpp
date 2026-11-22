@@ -30,6 +30,7 @@
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/ItemGrid.h"
 #include "GUI/UI/MM6CharacterScreen.h"
+#include "GUI/UI/UIPopup.h"
 #include "GUI/UI/UIStatusBar.h"
 
 #include "Io/Mouse.h"
@@ -224,6 +225,31 @@ void GUIWindow_MM6Shop::houseScreenClick() {
             return;
         default:
             return;
+    }
+}
+
+void GUIWindow_MM6Shop::showItemInfo() {
+    if (!_screen || !pParty->hasActiveCharacter())
+        return;
+    if (!isBuyScreen(_screen)) {
+        if (InventoryEntry entry = clickedBackpackEntry())
+            GameUI_DrawItemInfo(entry.get());
+        return;
+    }
+    const Pointi pt = EngineIocContainer::ResolveMouse()->position();
+    for (int slot = 0; slot < 12; ++slot) {
+        if (!stockItemRect(slot).contains(pt))
+            continue;
+        const mm6::ItemRecord28 &record = mm6::shopTitleState().stock.records[stockRecordIndex(slot)];
+        if (_screen == mm6::HouseServiceOption::BuySpells) {
+            showSpellbookInfo(static_cast<ItemId>(record.itemNumberRaw()));
+            return;
+        }
+        if (const auto projected = mm6::stageBoundedItem(record, *pItemTable, GameTitle::MM6)) {
+            Item item = mm6::boundedItem(*projected);
+            GameUI_DrawItemInfo(&item);
+        }
+        return;
     }
 }
 

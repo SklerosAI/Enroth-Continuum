@@ -392,7 +392,7 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
 - **W27**. Buy dialog read out of bounds with no active member. State: **fixed**.
   `MM6Shop.cpp:141` returns without an active member.
 - **W28**. Unconscious members could identify and repair in shops (`FixDeadPlayerIdentifyItem=1`, `MMHooks.pas:3062`,
-  hooked at MM6 0x41C58E). State: **fixed, paid path vanilla**.
+  hooked at MM6 0x41C58E). State: **fixed, config for the skill path**.
   The patch hook sits in the item info box (0x41C440), where the selected member's Identify Item and Repair skills act
   on a right-clicked item. It treats a member who can't act (0x4876E0) as no member. Paid shop identify and repair were
   never broken in MM6.exe: the shop click handler 0x4A4CA0 refuses a member who can't act with "%s is in no condition to
@@ -401,9 +401,10 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   `MM6Houses.WeaponShopIdentifyUnconscious` and `WeaponShopRepairUnconscious`. The proprietor's menu is gated the same
   way in MM6.exe (state 1 of the weapon, armor, magic and general store, guild, mercenary and thieves' guild, stable and
   boat, tavern and training draws), and ours now hides it behind that line too, tests
-  `MM6Houses.WeaponShopMenuUnconscious` and `TrainingUnconscious`. Our MM6 shops show no item info box on right-click,
-  and the map's inventory and chest info boxes already refuse a member who can't act (`UIPopup.cpp`), so the skill path
-  has no hole yet. Porting the MM6 shop item info box must bring the patch's check with it.
+  `MM6Houses.WeaponShopMenuUnconscious` and `TrainingUnconscious`. MM6 shops now show the item info box on right-click
+  (0x495F60), and `GameUI_DrawItemInfo` treats an MM6 active character who can't act as no character for the skill
+  identify and repair, behind `gameplay.fix_incapacitated_skill_identify`. The map's inventory and chest boxes refuse
+  such a character before the box opens. Test `MM6Houses.WeaponShopItemInfoBoxUnconscious`.
 - **W29**. Free Haven Smuggler's Guild added to the map. State: **vanilla by data**.
   House 151 exists in `2devents.txt` and `MM6HouseServiceData.cpp:203` gives it skills, but the GOG `Outc2.odm` has no
   door to it. The patched `Outc2.odm` and `outc2.evt` add the entrance.
@@ -479,7 +480,7 @@ Rules for every fix in this backlog:
 - **W28**. Unconscious members identify and repair. Require the selected member to be able to act before identify or
   repair in a shop, and on the map.
   Same as GrayFace. Done 2026-11-18 for the paid shop path, which MM6.exe already refused, so it has no config flag. The
-  skill path is unreachable today, see the W28 row above.
+  skill path in the shop item info box is done behind `fix_incapacitated_skill_identify`.
 - **C12**. Static Charge cost from the exe table. Read Normal, Expert and Master costs from `spells.txt`, as GrayFace
   does.
   Same as GrayFace. Flips the exe-table decision described in [MM6 rules from MM6.exe](mm6-executable-rules.md). Done

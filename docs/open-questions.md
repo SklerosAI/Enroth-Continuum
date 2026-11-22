@@ -66,8 +66,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   (`proftext.txt`) before Join, and its news (`npcnews.txt`, picked by 0x43BC20 as the house lists its people) after
   Join, when its `npcdata.txt` News column is set. The port shows neither, so most residents, teachers and guild
   recruiters included, lack their first topic. `GUIWindow_MM6House::refreshTopics`.
-- **Shop item info box.** MM6 shops have no right-click item info box. When it is ported, GrayFace's W28 check (no
-  skill identify or repair by a member who can't act) comes with it. `src/GUI/UI/Houses/MM6Shop.cpp`.
 - **Street NPC news carry-over.** A street NPC slot keeps its news topic across map loads within one game, as in
   vanilla. GrayFace has no fix. Owner's call whether to clear it.
 - **Potion mixing.** Item-on-item use of potions stays refused (`mm6::shouldBlockItemOnItemUse` in

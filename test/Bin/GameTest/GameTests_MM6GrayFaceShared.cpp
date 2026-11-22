@@ -384,8 +384,8 @@ GAME_TEST(MM6GrayFaceShared, BuffDurationShowsMinutesNextToDays) {
 }
 
 GAME_TEST(MM6GrayFaceShared, StatsScreenShowsConditionThatSetsStats) {
-    // The stats screen of a weak and poisoned character said Weak while the poison set the stats. The stats screen shows
-    // the condition that sets the stats, and the quick reference keeps showing the most severe one.
+    // The stats screen of a weak and poisoned character said Weak while the poison set the stats. The stats screen
+    // shows the condition that sets the stats, and the quick reference keeps showing the most severe one.
     for (bool fix : {true, false}) {
         SCOPED_TRACE(fmt::format("fix={}", fix));
         test.prepareForNextTest();

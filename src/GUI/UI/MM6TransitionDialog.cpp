@@ -9,6 +9,7 @@
 #include "Engine/AssetsManager.h"
 #include "Engine/Engine.h"
 #include "Engine/Graphics/Image.h"
+#include "Engine/Graphics/LocationFunctions.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Localization.h"
@@ -23,6 +24,7 @@
 #include "GUI/UI/UIDialogue.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/UITransition.h"
+#include "GUI/UI/Houses/MM6House.h"
 
 #include "Media/MediaPlayer.h"
 
@@ -109,12 +111,15 @@ void GUIWindow_IndoorEntryExit::initializeMM6(HouseId transitionHouse, unsigned 
                 if (!specialText)
                     pMediaPlayer->OpenHouseMovie(entry.room->videoName, 1);
             }
+            mm6PlayHouseSound(transitionHouse, HOUSE_SOUND_GENERAL_GREETING);
         }
     } catch (const std::logic_error &) {
         refused = true;
     } catch (const std::runtime_error &) {
         refused = true;
     }
+    if (uCurrentlyLoadedLevelType == LEVEL_INDOOR && pParty->hasActiveCharacter() && pParty->GetRedOrYellowAlert()) // MM6.exe 0x43A29F.
+        pParty->activeCharacter().playReaction(SPEECH_LEAVE_DUNGEON);
     _mm6Unsupported = refused;
     if (refused) {
         // Missing or invalid local house data keeps the transition closed.

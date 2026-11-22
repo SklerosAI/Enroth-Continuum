@@ -293,6 +293,8 @@ static const Vec3f kHaroldHessDoor(-5976, -8068, 160); // Harold Hess's house, f
 static const Vec3f kBladesEndDoor(-6504, -6090, 300); // Blades' End, a mercenary guild.
 static const Vec3f kBuccaneersLairDoor(-12632, -5946, 300); // Buccaneers' Lair, a thieves' guild.
 static const Vec3f kIsaoHouseDoor(-12528, -5814, 300); // In front of Isao Magistrus' house, facing north.
+static const Vec3f kOdysseyDock(1600, -10224, 160); // On the New Sorpigal dock, facing the Odyssey.
+static constexpr int kOdysseyDecoration = 477;
 static const Vec3f kJezebelHouseDoor(4688, -17668, 192); // In front of Jezebel's house on the Misty Islands, facing south.
 static const Vec3f kNaomiHighlandDoor(12498, 18464, 86); // In front of Naomi Highland's house, facing east.
 static constexpr AwardId kElementalGuildMember = static_cast<AwardId>(64);
@@ -772,7 +774,7 @@ GAME_TEST(MM6Houses, Training) {
     const std::string needMore = localization->format(LSTR_YOU_NEED_D_MORE_EXPERIENCE_TO_TRAIN_TO, 2000, 3);
     EXPECT_EQ(optionsTape, tape(std::vector<std::string>{}, std::vector<std::string>{train}, std::vector<std::string>{needMore},
                                 std::vector<std::string>{train}, std::vector<std::string>{needMore}));
-    EXPECT_EQ(soundsTape.flatten(), tape(SOUND_gold01, static_cast<SoundId>(30702), SOUND_gold01, static_cast<SoundId>(30702))); // Paying, then the trainer.
+    EXPECT_EQ(soundsTape.flatten(), tape(static_cast<SoundId>(30701), SOUND_gold01, static_cast<SoundId>(30702), SOUND_gold01, static_cast<SoundId>(30702))); // The trainer's greeting, then paying and the trainer twice.
 }
 
 GAME_TEST(MM6Houses, TavernMenu) {
@@ -995,7 +997,7 @@ GAME_TEST(MM6Houses, MercenaryGuildMenu) {
                                std::vector<int>{1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1},
                                std::vector<int>{1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1}));
     EXPECT_EQ(goldTape, tape(1000, 625, 250));
-    EXPECT_EQ(soundsTape.flatten(), tape(SOUND_gold01, static_cast<SoundId>(32902))); // The room's learn sound.
+    EXPECT_EQ(soundsTape.flatten(), tape(static_cast<SoundId>(32901), SOUND_gold01, static_cast<SoundId>(32902))); // The room's greeting and learn sound.
 }
 
 GAME_TEST(MM6Houses, ThievesGuildMenu) {
@@ -1043,7 +1045,7 @@ GAME_TEST(MM6Houses, ThievesGuildMenu) {
                                std::vector<int>{1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}));
     EXPECT_EQ(goldTape, tape(200, 50)); // Zoltan's new Merchant skill takes the price down to 135.
     EXPECT_CONTAINS(statusTape, localization->str(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD));
-    EXPECT_EQ(soundsTape.flatten(), tape(SOUND_gold01, static_cast<SoundId>(32602), static_cast<SoundId>(32604))); // The room's learn and no gold sounds.
+    EXPECT_EQ(soundsTape.flatten(), tape(static_cast<SoundId>(32601), SOUND_gold01, static_cast<SoundId>(32602), static_cast<SoundId>(32604))); // The room's greeting, learn and no gold sounds.
 }
 
 GAME_TEST(MM6Houses, SelfGuildDoor) {
@@ -1567,7 +1569,7 @@ GAME_TEST(MM6Houses, ExpertTeacher) {
                                 std::vector<std::string>{pNPCTopics[261].pText}, // "You must know the skill before you can become an expert in it!"
                                 std::vector<std::string>{"Become Expert in Fire Magic for 1000 gold"},
                                 std::vector<std::string>{"Fire Magic Expertise", "Jezebel"}));
-    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE));
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_WIDE_SMILE));
 }
 
 GAME_TEST(MM6Houses, MasterTeacher) {
@@ -1816,4 +1818,30 @@ GAME_TEST(MM6Houses, HireHouseResident) {
             EXPECT_EQ(portraitsTape, tape(Lines(), Lines{"npc014"}, Lines(), Lines{"npc014"}, Lines()));
         }
     }
+}
+
+GAME_TEST(MM6Houses, EntrySounds) {
+    // MM6 houses greeted nobody. The proprietor greets the party at the door, a guild tells a non-member it serves
+    // members only, a stable or boat with no route today stays silent, and the party says hello in a residence.
+    auto houseTape = tapes.house();
+    auto soundsTape = tapes.sounds();
+    auto speechTape = tapes.speeches();
+    startMM6NewGame(game);
+    test.startTaping();
+    for (const auto &[door, yaw] : {std::pair(kWeaponShopDoor, 0), std::pair(kGuildDoor, 1536), std::pair(kStableDoor, 180), std::pair(kBufordHouseDoor, 90)}) {
+        enterThroughDoor(game, door, yaw);
+        game.pressGuiButton("House_Exit");
+        game.tick();
+    }
+    game.teleportTo(engine->_currentLoadedMapId, kOdysseyDock, 0);
+    game.pointMouseAtDecoration(kOdysseyDecoration);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+
+    auto house = [](int id) { return static_cast<HouseId>(id); };
+    auto isRoomSound = [](SoundId sound) { return std::to_underlying(sound) >= 30000; }; // 30000 + 100 * the room's sound group + the line.
+    EXPECT_EQ(houseTape, tape(HOUSE_INVALID, house(1), HOUSE_INVALID, house(137), HOUSE_INVALID, house(48), HOUSE_INVALID, house(470), HOUSE_INVALID,
+                              house(57)));
+    EXPECT_EQ(soundsTape.flatten().filter(isRoomSound), tape(static_cast<SoundId>(33301), static_cast<SoundId>(35603), static_cast<SoundId>(31101)));
+    EXPECT_EQ(speechTape.flatten(), tape(SPEECH_HELLO_HOUSE));
 }

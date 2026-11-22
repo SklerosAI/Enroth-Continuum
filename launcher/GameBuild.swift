@@ -78,11 +78,14 @@ enum GameBuild: String {
      * @param chestReroll               Whether Private mods allows rerolling unclaimed MM7 chest loot.
      * @param monsterLootReroll          Whether Private mods allows MM7 monster loot previews and rerolls.
      * @param mm6AllArtifacts           Whether MM6's saved choice asks for the All Artifacts mod. Only MM6 reads it.
+     * @param mm6ChestReroll            Whether MM6's saved choice allows rerolling MM6 chest loot. Only MM6 reads it.
+     * @param mm6MonsterLootReroll      Whether MM6's saved choice asks for Fortune's Turn. Only MM6 reads it.
      * @return                          The environment to launch the helper with.
      */
     func environment(base: [String: String], modRoot: URL?, vendorRefresh: Bool,
                      allArtifactsStorage: Bool, chestReroll: Bool, monsterLootReroll: Bool,
-                     mm6AllArtifacts: Bool = false) -> [String: String] {
+                     mm6AllArtifacts: Bool = false, mm6ChestReroll: Bool = false,
+                     mm6MonsterLootReroll: Bool = false) -> [String: String] {
         var environment = base
         environment.removeValue(forKey: "ENROTH_MM7_MOD_DIR")
         environment.removeValue(forKey: "ENROTH_MM7_ALL_ARTIFACTS_STORAGE")
@@ -90,12 +93,16 @@ enum GameBuild: String {
         environment.removeValue(forKey: "ENROTH_MM7_MONSTER_LOOT_REROLL")
         environment.removeValue(forKey: "ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY")
         environment.removeValue(forKey: "ENROTH_MM6_ALL_ARTIFACTS")
+        environment.removeValue(forKey: "ENROTH_MM6_CHEST_REROLL")
+        environment.removeValue(forKey: "ENROTH_MM6_MONSTER_LOOT_REROLL")
         switch self {
         case .mm6:
             environment.removeValue(forKey: "ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY")
             environment.removeValue(forKey: "OPENENROTH_MM7_PATH")
             environment["ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY"] = vendorRefresh ? "1" : "0"
             environment["ENROTH_MM6_ALL_ARTIFACTS"] = mm6AllArtifacts ? "1" : "0"
+            environment["ENROTH_MM6_CHEST_REROLL"] = mm6ChestReroll ? "1" : "0"
+            environment["ENROTH_MM6_MONSTER_LOOT_REROLL"] = mm6MonsterLootReroll ? "1" : "0"
         case .fork:
             environment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] = "0"
             environment["ENROTH_MM7_ALL_ARTIFACTS_STORAGE"] = "0"

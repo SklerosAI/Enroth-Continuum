@@ -260,6 +260,10 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         else if action == "chest-reroll-off" { preferences.set(false, forKey: "mods.mm7.chestReroll"); sendState(message: "MM7 chests will use their normal loot on the next launch.") }
         else if action == "monster-loot-reroll-on" { preferences.set(true, forKey: "mods.mm7.monsterLootReroll"); sendState(message: "Fortune's Turn will apply on the next private-mods MM7 launch.") }
         else if action == "monster-loot-reroll-off" { preferences.set(false, forKey: "mods.mm7.monsterLootReroll"); sendState(message: "Fortune's Turn is off for the next MM7 launch.") }
+        else if action == "mm6-chest-reroll-on" { preferences.set(true, forKey: "mods.mm6.chestReroll"); sendState(message: "MM6 chest reroll will apply on the next MM6 launch.") }
+        else if action == "mm6-chest-reroll-off" { preferences.set(false, forKey: "mods.mm6.chestReroll"); sendState(message: "MM6 chests will use their normal loot on the next launch.") }
+        else if action == "mm6-monster-loot-reroll-on" { preferences.set(true, forKey: "mods.mm6.monsterLootReroll"); sendState(message: "Fortune's Turn will apply on the next MM6 launch.") }
+        else if action == "mm6-monster-loot-reroll-off" { preferences.set(false, forKey: "mods.mm6.monsterLootReroll"); sendState(message: "Fortune's Turn is off for the next MM6 launch.") }
         else if action.hasPrefix("choose-portrait-") {
             if let slot = Int(action.dropFirst("choose-portrait-".count)), (1...4).contains(slot) { choosePortrait(slot) }
         }
@@ -328,6 +332,8 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             "chestReroll": preferences.bool(forKey: "mods.mm7.chestReroll"),
             "monsterLootReroll": preferences.bool(forKey: "mods.mm7.monsterLootReroll"),
             "mm6AllArtifacts": preferences.bool(forKey: "mods.mm6.allArtifacts"),
+            "mm6ChestReroll": preferences.bool(forKey: "mods.mm6.chestReroll"),
+            "mm6MonsterLootReroll": preferences.bool(forKey: "mods.mm6.monsterLootReroll"),
             "portraits": (1...4).map { validPortraitURL($0, mood: "normal") != nil },
             "portraitNormalFiles": (1...4).map { portraitExists($0, mood: "normal") },
             "legacyPortraits": (1...4).map { FileManager.default.fileExists(atPath: portraitURL($0).path) },
@@ -725,7 +731,9 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
                                                     allArtifactsStorage: preferences.bool(forKey: "mods.mm7.allArtifactsStorage"),
                                                     chestReroll: preferences.bool(forKey: "mods.mm7.chestReroll"),
                                                     monsterLootReroll: preferences.bool(forKey: "mods.mm7.monsterLootReroll"),
-                                                    mm6AllArtifacts: preferences.bool(forKey: "mods.mm6.allArtifacts"))
+                                                    mm6AllArtifacts: preferences.bool(forKey: "mods.mm6.allArtifacts"),
+                                                    mm6ChestReroll: preferences.bool(forKey: "mods.mm6.chestReroll"),
+                                                    mm6MonsterLootReroll: preferences.bool(forKey: "mods.mm6.monsterLootReroll"))
             let startedAt = Date()
             process.terminationHandler = { [weak self] finished in
                 DispatchQueue.main.async {

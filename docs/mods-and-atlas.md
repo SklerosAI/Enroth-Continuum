@@ -63,11 +63,18 @@ Each title keeps its own profile so saves and configs never mix. An MM7 Atlas pr
 - MM6 gets no recording and no Private mods switch. The child environment drops `ENROTH_MM7_MOD_DIR`,
   `ENROTH_MM7_ALL_ARTIFACTS_STORAGE`, `ENROTH_MM7_CHEST_REROLL`, `ENROTH_MM7_MONSTER_LOOT_REROLL`,
   `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY` and `OPENENROTH_MM7_PATH`.
-- MM6 honours two Atelier options of its own, set on every Play MM6 launch whatever the Private mods switch says:
+- MM6 honours four Atelier options of its own, set on every Play MM6 launch whatever the Private mods switch says:
   - Fresh vendor stock on entry. Atlas sets `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` to `1` or `0` from the preference
     `mods.mm6.vendorRefreshOnEntry`. See [Vendor refresh on entry](#vendor-refresh-on-entry).
   - All Artifacts. Atlas sets `ENROTH_MM6_ALL_ARTIFACTS` to `1` or `0` from the preference `mods.mm6.allArtifacts`.
     See [All Artifacts for MM6](#all-artifacts-for-mm6).
+  - Reroll chest loot. Atlas sets `ENROTH_MM6_CHEST_REROLL` to `1` or `0` from the preference `mods.mm6.chestReroll`.
+    See [Chest reroll](#chest-reroll).
+  - Fortune's Turn. Atlas sets `ENROTH_MM6_MONSTER_LOOT_REROLL` to `1` or `0` from the preference
+    `mods.mm6.monsterLootReroll`. See [Fortune's Turn](#fortunes-turn).
+- Vendor refresh has one "MM6 + MM7" row in the Atelier that writes both titles' preferences. All Artifacts, chest
+  reroll and Fortune's Turn each have their own "· MM6" row below the MM7 rows, and its status reads "On for next MM6
+  launch" when on.
 - Play MM6 is a playtest entry. MM8 is a data-detection card only. There is no MM8 helper.
 
 ### Upstream OpenEnroth
@@ -154,14 +161,16 @@ node launcher/tests/atlas_page.js   # prints "Atlas page checks passed"
 discovery with stub executables (bundled first, external upstream fallback, disabled when absent), that upstream and MM6
 never share the fork's profile, the exact argument lists per build, and the child environment per build. In
 particular, upstream and MM6 receive no fork mod keys and no `OPENENROTH_MM7_PATH`, and vanilla MM7 gets the mod
-flags forced to `0`. MM6 gets `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` and `ENROTH_MM6_ALL_ARTIFACTS` from its own
-choices, and MM7 and upstream never get them. `tests/atlas_page.js` runs the page script against a fake DOM and checks
+flags forced to `0`. MM6 gets `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY`, `ENROTH_MM6_ALL_ARTIFACTS`,
+`ENROTH_MM6_CHEST_REROLL` and `ENROTH_MM6_MONSTER_LOOT_REROLL` from its own choices, and MM7 and upstream never get
+them. `tests/atlas_page.js` runs the page script against a fake DOM and checks
 the play, recording, vendor, artifact and reroll controls.
 
 ## MM7 private mods
 
-All private mods are opt-in. Fresh vendor stock on entry and All Artifacts also exist for MM6, each with its own MM6
-variable, see [Vendor refresh on entry](#vendor-refresh-on-entry) and [All Artifacts for MM6](#all-artifacts-for-mm6).
+All private mods are opt-in. Fresh vendor stock on entry, All Artifacts, chest reroll and Fortune's Turn also exist
+for MM6, each with its own MM6 variable, see [Vendor refresh on entry](#vendor-refresh-on-entry),
+[All Artifacts for MM6](#all-artifacts-for-mm6), [Chest reroll](#chest-reroll) and [Fortune's Turn](#fortunes-turn).
 The MM7 mods live in the user's home folder, never in the repository or in game archives. The engine sees them only
 through environment variables that the Atlas sets for a Play MM7 launch when the **Use private mods** switch is on
 (preference `mods.mm7.enabled`). With the switch off (Vanilla), the Atlas removes `ENROTH_MM7_MOD_DIR` and sets the
@@ -176,6 +185,8 @@ four MM7 boolean flags to `0`.
 | `ENROTH_MM7_MONSTER_LOOT_REROLL` | Private mods on and preference `mods.mm7.monsterLootReroll` | `mm7::mods::monsterLootRerollEnabled` |
 | `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.vendorRefreshOnEntry` | `mm6::vendorRefreshPolicy` |
 | `ENROTH_MM6_ALL_ARTIFACTS` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.allArtifacts` | `mm6::mods::allArtifactsEnabled` |
+| `ENROTH_MM6_CHEST_REROLL` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.chestReroll` | The MM6 engine, see [Chest reroll](#chest-reroll) |
+| `ENROTH_MM6_MONSTER_LOOT_REROLL` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.monsterLootReroll` | The MM6 engine, see [Fortune's Turn](#fortunes-turn) |
 
 Every MM7 reader checks `GameTitle::MM7` first, so the MM7 variables do nothing in an MM6 run, and the MM6 readers
 check `GameTitle::MM6`. The boolean flags

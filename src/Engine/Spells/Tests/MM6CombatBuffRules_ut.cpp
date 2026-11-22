@@ -2,6 +2,7 @@
 
 #include "Testing/Unit/UnitTest.h"
 
+#include "Engine/MM6/MM6ArtifactBonus.h"
 #include "Engine/Spells/MM6CombatBuffRules.h"
 
 UNIT_TEST(MM6CombatBuffRules, TwoBuffsThreeRanksAndPartyScope) {
@@ -35,7 +36,7 @@ UNIT_TEST(MM6CombatBuffRules, RejectsUnsupportedInputsBeforeBuffMutation) {
     EXPECT_THROW(mm6::planCombatBuff(SPELL_AIR_SHIELD, MASTERY_NONE, 1, now), std::runtime_error);
     EXPECT_THROW(mm6::planCombatBuff(SPELL_AIR_SHIELD, MASTERY_GRANDMASTER, 1, now), std::runtime_error);
     EXPECT_THROW(mm6::planCombatBuff(SPELL_AIR_SHIELD, MASTERY_NOVICE, 0, now), std::runtime_error);
-    EXPECT_THROW(mm6::planCombatBuff(SPELL_AIR_SHIELD, MASTERY_NOVICE, 64, now), std::runtime_error);
+    EXPECT_THROW(mm6::planCombatBuff(SPELL_AIR_SHIELD, MASTERY_NOVICE, mm6::kMaxCastSkillLevel + 1, now), std::runtime_error);
     SpellBuff slot;
     auto plan = mm6::planCombatBuff(SPELL_AIR_SHIELD, MASTERY_NOVICE, 1, now);
     plan.power = 1;

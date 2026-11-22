@@ -3,10 +3,12 @@
 #include <algorithm>
 #include <utility>
 
+#include "Engine/MM6/MM6ArtifactBonus.h"
 #include "Engine/MM6/MM6CombatRules.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Character.h"
 #include "Engine/Objects/Item.h"
+#include "Engine/Objects/ItemEnumFunctions.h"
 
 #include "Library/Random/RandomEngine.h"
 
@@ -102,6 +104,20 @@ inline void drainHadesWielder(Character &character, int steps, Time now) {
         character.conditions.set(CONDITION_UNCONSCIOUS, now);
     if (character.health + character.GetBaseEndurance() < 1 && !character.conditions.has(CONDITION_DEAD))
         character.conditions.set(CONDITION_DEAD, now);
+}
+
+/**
+ * @param character                     MM6 caster.
+ * @param school                        Magic skill of the spell being cast.
+ * @param level                         Skill level the cast would use, with any school enchantment already added.
+ * @return                              Skill level the cast uses, half again as high when an artifact boosts the
+ *                                      school, see `boostsSpellSchool`.
+ */
+inline int artifactSpellSkillLevel(const Character &character, Skill school, int level) {
+    for (ItemSlot slot : allItemSlots())
+        if (InventoryConstEntry item = character.inventory.functionalEntry(slot); item && boostsSpellSchool(item->itemId, slot, school))
+            return level + level / 2;
+    return level;
 }
 
 } // namespace mm6

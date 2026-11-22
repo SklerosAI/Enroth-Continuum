@@ -671,3 +671,44 @@ GAME_TEST(MM6PlayerSpells, ExpertStaticChargeCost) {
         EXPECT_EQ(hpTape.size(), 2);
     }
 }
+
+GAME_TEST(MM6PlayerSpells, ArtifactsBoostSpellSkill) {
+    // Morgan and Igraine didn't boost their schools' spells. Morgan casts Fire, Air, Water and Earth spells, Igraine
+    // Spirit, Mind and Body spells at half again the skill, which Feather Fall's and Heroism's power show.
+    struct Case {
+        int artifact;
+        SpellId spell;
+        int power;
+    };
+    const Case cases[] = {
+        {0, mm6::SPELL_FEATHER_FALL, 10},
+        {414, mm6::SPELL_FEATHER_FALL, 15}, // Morgan.
+        {0, mm6::SPELL_HEROISM, 15},
+        {413, mm6::SPELL_HEROISM, 20}, // Igraine.
+    };
+    for (const Case &c : cases) {
+        SCOPED_TRACE(fmt::format("artifact={} spell={}", c.artifact, std::to_underlying(c.spell)));
+        test.prepareForNextTest();
+        auto powerTape = tapes.custom([&] {
+            return c.spell == mm6::SPELL_HEROISM ? pParty->pCharacters[0].pCharacterBuffs[CHARACTER_BUFF_HEROISM].power :
+                                                   pParty->pPartyBuffs[PARTY_BUFF_FEATHER_FALL].power;
+        });
+        enterFirstMapFromNewGame(game);
+        teachSorcerer(c.spell, CombinedSkillValue(10, MASTERY_NOVICE));
+        if (c.artifact) {
+            const Pointi cell = pParty->pCharacters[SORCERER].inventory.add(Item(static_cast<ItemId>(c.artifact))).geometry().topLeft();
+            drinkFromBackpack(game, SORCERER, cell); // Dropped on the paperdoll, the jewelry goes on.
+            game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+            game.tick();
+        }
+        test.startTaping();
+
+        castFromSpellbook(game, c.spell);
+        if (c.spell == mm6::SPELL_HEROISM) {
+            game.pressAndReleaseKey(characterKey(0));
+            game.tick();
+        }
+
+        EXPECT_EQ(powerTape, tape(0, c.power));
+    }
+}

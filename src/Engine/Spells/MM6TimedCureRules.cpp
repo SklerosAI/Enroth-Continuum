@@ -4,6 +4,8 @@
 #include <stdexcept>
 #include <utility>
 
+#include "Engine/MM6/MM6ArtifactBonus.h"
+
 namespace mm6 {
 
 static constexpr std::array<int, 6> kSpellIds = {40, 49, 57, 60, 64, 67};
@@ -42,7 +44,7 @@ bool applyTimedCure(SpellId spellId, Mastery mastery, int skillLevel, Time now, 
                     TimedCureWindow window) {
     const Condition condition = conditionForSpell(spellId);
     const int rank = std::to_underlying(mastery);
-    if (rank < 1 || rank > 3 || skillLevel < 1 || skillLevel > 63 || !now.isValid())
+    if (rank < 1 || rank > 3 || skillLevel < 1 || skillLevel > kMaxCastSkillLevel || !now.isValid())
         throw std::runtime_error("MM6 timed cure has invalid mastery, skill or time");
     if (!conditions.has(condition))
         return false;

@@ -149,4 +149,40 @@ constexpr bool weaponSlays(ItemId weapon, ItemEnchantment enchantment, int monst
     return false;
 }
 
+/**
+ * Highest skill level an MM6 spellbook cast can use: a skill of 63, half again for a school enchantment and half of
+ * that again for an artifact. MM6.exe casts with the boosted level as it is.
+ */
+inline constexpr int kMaxCastSkillLevel = 141;
+
+/**
+ * @offset 0x422829
+ *
+ * @param item                          Item an MM6 caster wears.
+ * @param slot                          Slot it's worn in.
+ * @param school                        Magic skill of the spell being cast.
+ * @return                              Whether the item boosts that school's spells by half the skill. Morgan does it
+ *                                      for Fire, Air, Water and Earth as the amulet, Igraine for Spirit, Mind and Body
+ *                                      and Guinevere for Light and Dark on any ring finger.
+ */
+constexpr bool boostsSpellSchool(ItemId item, ItemSlot slot, Skill school) {
+    const bool ring = slot >= ITEM_SLOT_RING1 && slot <= ITEM_SLOT_RING6;
+    switch (school) {
+        case SKILL_FIRE:
+        case SKILL_AIR:
+        case SKILL_WATER:
+        case SKILL_EARTH:
+            return slot == ITEM_SLOT_AMULET && std::to_underlying(item) == 414;
+        case SKILL_SPIRIT:
+        case SKILL_MIND:
+        case SKILL_BODY:
+            return ring && std::to_underlying(item) == 413;
+        case SKILL_LIGHT:
+        case SKILL_DARK:
+            return ring && std::to_underlying(item) == 412;
+        default:
+            return false;
+    }
+}
+
 } // namespace mm6

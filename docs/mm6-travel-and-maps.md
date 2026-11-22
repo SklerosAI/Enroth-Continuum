@@ -142,6 +142,13 @@ a copy of the party (`MM6OutdoorBorderConfirmation.h`). The trip rests the party
 any food, eats one food per day, and leaves it Weak if the food ran short. Characters who just became Weak say so. The
 party arrives at the wrapped position, and its height is set from the target terrain once the map has loaded.
 
+Loading that autosave opens the travel dialog again at once, as it does in MM6.exe. MM6.exe's confirmation (the case at
+0x42C03B) calls its save routine 0x44F320 before the trip's days pass and before X and Y wrap. The save routine writes
+the position the last drawn frame recorded (party offset 0x3C, copied every frame by the draw routine 0x435130) and
+then puts the live one back. At least one frame is drawn between the crossing and the click on Yes, so the save holds
+the party past the edge. Nothing on load clamps it, and the border check 0x45C560 offers the trip again. The port
+saves the live position, which is the same one. GrayFace leaves this alone.
+
 ## Other ways between maps
 
 | Route | Where |

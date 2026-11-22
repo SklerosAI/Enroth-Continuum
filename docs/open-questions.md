@@ -91,9 +91,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   throwaway game tests that picked up the Oracle's third treasure marker (a Leather Belt of Speed) and that put a level
   2 `GiveItem` roll in the backpack on `oute3`. Chest loot is not affected, the chest projection reads each record
   from the chest.
-- **Border autosave reopens the travel dialog.** The autosave on a walk across an outdoor border holds the party at
-  the edge, so loading it opens the travel dialog again at once. Not checked against MM6.exe.
-  `MM6InGameSave.BountyKillSurvivesAutosave` closes it with No.
 
 ## MM6: media and UI
 

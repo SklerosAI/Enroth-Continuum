@@ -232,6 +232,18 @@ see [houses and services](mm6-houses-and-services.md). `SpeakNPC` (22) opens an 
 
 `StatusText` (29) and `ShowMessage` (30) read local strings for map events and NPC topic text for global events.
 
+### Nicolai disappears after a rest
+
+Prince Nicolai (NPC 13) sits in the Castle Ironfist throne room, house 154. His Boredom topic (global event 18) sets
+bit 90, Entertain Nicolai, hires him and moves his first topic to The Circus. MM6.exe then sends him off after the next
+rest. Two places mark the party as rested: the [travel rest](mm6-travel-and-maps.md#travel-rest) of a coach, boat,
+border trip or training stay (0x4962CC), and closing the rest screen (0x42BC4B), also when nobody rested. On every pass
+over its messages while the game screen shows (0x410808), MM6.exe consumes the mark, and with bit 90 set and Nicolai
+hired runs global event 20. It moves him to house 166, dismisses him, shows "It seems that Prince Nicolai disappeared
+while you were resting.", clears bit 90, sets bit 95, Find and return Prince Nicolai, and moves his first topic to 21.
+The port marks the rest in the same places and checks once per frame on the game screen outside a map change
+(`mm6::notePartyRested` and `mm6::runPartyRestedEvent` in `MM6PartyRest.h`).
+
 ## Facets, sprites and houses
 
 - Indoor faces: opcodes 11 and 23 address one face by global index. MM7 matches every face with a cog number, which

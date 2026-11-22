@@ -22,4 +22,17 @@ void restAndHealDetachedParty(Party &party);
  */
 bool hostileMonstersNearParty();
 
+/**
+ * Notes that the party has rested, as MM6.exe flags it in its travel rest (0x4962CC), which the coach, the boat, a
+ * border trip and training go through, and when the rest screen closes (0x42BC4B).
+ */
+void notePartyRested();
+
+/**
+ * MM6's check after a rest, which MM6.exe makes on every pass over its messages while the game screen shows
+ * (0x410808). If the party rested since the last check, Prince Nicolai is hired and the "Entertain Nicolai" quest bit
+ * is set, runs global event 20, in which he disappears.
+ */
+void runPartyRestedEvent();
+
 } // namespace mm6

@@ -615,6 +615,8 @@ void Game::processQueuedMessages() {
                                     }
                                     remainingRestTime = Duration();
                                     currentRestType = REST_NONE;
+                                    if (engine->gameTitle() == GameTitle::MM6)
+                                        mm6::notePartyRested(); // Also when the screen closes without a rest.
                                     onEscape();
                                     continue;
                                 case SCREEN_SHOP_INVENTORY:
@@ -1576,6 +1578,9 @@ void Game::processQueuedMessages() {
     }
 
     engine->_messageQueue->swapFrames();
+
+    if (engine->gameTitle() == GameTitle::MM6 && current_screen_type == SCREEN_GAME && uGameState == GAME_STATE_PLAYING)
+        mm6::runPartyRestedEvent();
 
     if (AfterEnchClickEventId != UIMSG_0) {
         AfterEnchClickEventTimeout = std::max(0_ticks, AfterEnchClickEventTimeout - gameTimer->dt());

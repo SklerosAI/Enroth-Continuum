@@ -106,6 +106,7 @@ bool confirmBorderTravel(const MapDestination &offered) {
     leaveMap(offered.map());
     autoSave(); // The original saves before the trip's days pass, with the party still at the edge.
     *pParty = std::move(*confirmed.party);
+    notePartyRested();
     for (int character : confirmed.weakReactions)
         pParty->pCharacters[character].playReaction(SPEECH_WEAK);
 

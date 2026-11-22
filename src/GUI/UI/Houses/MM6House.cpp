@@ -254,6 +254,15 @@ static bool isResidentNpc(const NPCData &npc, HouseId houseId) {
 }
 
 /**
+ * @param text                          What the NPC says, with dialogue codes.
+ * @param npc                           NPC who says it.
+ * @return                              The text with its codes filled in for the NPC and the active character.
+ */
+static std::string npcLine(std::string_view text, NPCData *npc) {
+    return BuildDialogueString(text, pParty->hasActiveCharacter() ? pParty->activeCharacterIndex() : 0, npc);
+}
+
+/**
  * @param hour                          Hour of the day, 0 to 23.
  * @return                              The hour on MM6's 12-hour clock, and whether it's pm. MM6 keeps 12 as 12 am.
  */
@@ -396,6 +405,7 @@ void GUIWindow_MM6House::selectResident(int index) {
     _membershipOffer.reset();
     _teacherOffer.reset();
     _bountyShown = false;
+    _joinOffer = false;
     _selected = index;
     if (_residents[index].npc) {
         refreshTopics();
@@ -456,26 +466,23 @@ void GUIWindow_MM6House::refreshTopics() {
         return;
     clearOptionButtons();
     _focusedOption = 0;
-    if (_membershipOffer) {
-        _optionButtons.push_back(CreateButton("HouseNpcDialogue_Option0", {480, 160}, {139, 29}, BUTTON_TYPE_NORMAL, 0, UIMSG_SelectHouseNPCDialogueOption,
-                                              std::to_underlying(DIALOGUE_MAGIC_GUILD_JOIN)));
-        return;
-    }
     if (_bountyShown)
         return;
-    if (_teacherOffer) {
-        _optionButtons.push_back(CreateButton("HouseNpcDialogue_Option0", {480, 160}, {139, 29}, BUTTON_TYPE_NORMAL, 0, UIMSG_SelectHouseNPCDialogueOption,
-                                              std::to_underlying(DIALOGUE_MASTERY_TEACHER_LEARN)));
-        return;
+    std::vector<DialogueId> topics;
+    if (_membershipOffer) {
+        topics = {DIALOGUE_MAGIC_GUILD_JOIN};
+    } else if (_teacherOffer) {
+        topics = {DIALOGUE_MASTERY_TEACHER_LEARN};
+    } else if (_joinOffer) {
+        if (!pNPCStats->pProfessions[npc->profession].pBenefits.empty())
+            topics.push_back(DIALOGUE_PROFESSION_DETAILS);
+        topics.push_back(DIALOGUE_HIRE_FIRE);
+    } else {
+        topics = prepareScriptedNPCDialogueTopics(npc); // Join first when the resident joins, then the scripted topics.
     }
-    int row = 0;
-    for (DialogueId topic : prepareScriptedNPCDialogueTopics(npc)) {
-        if (topic < DIALOGUE_SCRIPTED_LINE_1 || topic > DIALOGUE_SCRIPTED_LINE_6)
-            continue;
-        _optionButtons.push_back(CreateButton(fmt::format("HouseNpcDialogue_Option{}", row), {480, 160 + 30 * row}, {139, 29},
-                                              BUTTON_TYPE_NORMAL, 0, UIMSG_SelectHouseNPCDialogueOption, std::to_underlying(topic)));
-        ++row;
-    }
+    for (size_t row = 0; row < topics.size(); ++row)
+        _optionButtons.push_back(CreateButton(fmt::format("HouseNpcDialogue_Option{}", row), {480, 160 + 30 * static_cast<int>(row)}, {139, 29},
+                                              BUTTON_TYPE_NORMAL, 0, UIMSG_SelectHouseNPCDialogueOption, std::to_underlying(topics[row])));
 }
 
 void GUIWindow_MM6House::offerGuildMembership(int guild) {
@@ -558,20 +565,49 @@ void GUIWindow_MM6House::huntBounty() {
     refreshTopics();
 }
 
+void GUIWindow_MM6House::offerToJoin() {
+    NPCData *npc = selectedNpc();
+    _joinOffer = true;
+    dialogue_show_profession_details = false;
+    current_npc_text = npcLine(pNPCStats->pProfessions[npc->profession].pJoinText, npc);
+    refreshTopics();
+}
+
+void GUIWindow_MM6House::toggleJoinDetails() {
+    NPCData *npc = selectedNpc();
+    const NPCProfession &profession = pNPCStats->pProfessions[npc->profession];
+    dialogue_show_profession_details = !dialogue_show_profession_details;
+    current_npc_text = npcLine(dialogue_show_profession_details ? profession.pBenefits : profession.pJoinText, npc);
+}
+
+void GUIWindow_MM6House::hireResident() {
+    NPCData *npc = selectedNpc();
+    const bool partyFull = !pParty->pHirelings[0].name.empty() && !pParty->pHirelings[1].name.empty();
+    selectSpecialNPCTopicSelection(DIALOGUE_HIRE_FIRE, npc);
+    if (!npc->Hired()) {
+        if (!partyFull)
+            current_npc_text = npcLine(pNPCStats->pProfessions[npc->profession].pJoinText, npc);
+        return;
+    }
+    _joinOffer = false;
+    std::erase_if(_residents, [](const Resident &resident) { return resident.npc && resident.npc->Hired(); }); // `_selected` stays until the hire's Escape reaches `goBack`.
+}
+
 NPCData *GUIWindow_MM6House::selectedNpc() const {
     return _selected == -1 ? nullptr : _residents[_selected].npc;
 }
 
 bool GUIWindow_MM6House::goBack() {
     current_npc_text.clear();
-    if (_membershipOffer || _teacherOffer || _bountyShown) {
+    if (_membershipOffer || _teacherOffer || _bountyShown || _joinOffer) {
         _membershipOffer.reset();
         _teacherOffer.reset();
         _bountyShown = false;
+        _joinOffer = false;
         refreshTopics();
         return true;
     }
-    if (_selected == -1 || _residents.size() < 2)
+    if (_selected == -1 || _residents.size() == 1) // MM6 leaves a house of one person, and stays in one whose only resident was hired.
         return false;
     _selected = -1;
     clearOptionButtons();
@@ -1054,6 +1090,18 @@ void mm6SelectHouseTopic(DialogueId topic) {
     }
     if (npc && topic == DIALOGUE_MASTERY_TEACHER_LEARN) {
         house->learnFromTeacher();
+        return;
+    }
+    if (npc && topic == DIALOGUE_13_hiring_related) {
+        house->offerToJoin();
+        return;
+    }
+    if (npc && topic == DIALOGUE_PROFESSION_DETAILS) {
+        house->toggleJoinDetails();
+        return;
+    }
+    if (npc && topic == DIALOGUE_HIRE_FIRE) {
+        house->hireResident();
         return;
     }
     if (!npc || topic < DIALOGUE_SCRIPTED_LINE_1 || topic > DIALOGUE_SCRIPTED_LINE_6)

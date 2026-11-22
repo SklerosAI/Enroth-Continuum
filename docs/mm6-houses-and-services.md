@@ -178,8 +178,25 @@ See [travel and maps](mm6-travel-and-maps.md) for the arrival side.
   Squire 2) in the attack, melee damage and shooting bonuses, with the Squire's 2 in every armor class term
   (`MM6CombatRules.h`, MM6.exe 0x483930).
 - Event variables 214 and 223 hire, dismiss and test hirelings, see [MM6 events](mm6-events.md).
-- House residents marked as joinable can't be hired yet. The MM6 house window shows them by name and runs their scripted
-  topics only.
+
+### House residents who join
+
+A resident joins when its `npcdata.txt` Join column is 1 (`NPCData::canJoin`, MM6.exe NPC field 0x1C). In the shipped
+`npcdata.txt` 173 of the 398 NPCs join. All of them have a profession and live in plain houses on the outdoor maps, two
+of them in New Sorpigal: Naomi Highland the Healer (house 475) and Orville Corvair the Scholar (house 476).
+
+- MM6.exe builds a resident's topics at 0x4998A0: the profession's topic of the day when it has a profession, Join when
+  it joins, its news when its News column is set, then its events A, B and C. The port shows Join and the events, see
+  [open questions](open-questions.md) for the other two.
+- Join (0x49671B) shows the profession's join text with More Information, when the profession has a benefits text, and
+  Hire (0x499730). More Information swaps the join text and the benefits (0x496782). Escape goes back to the topics.
+- Hire (0x4967E3) does what the street NPC hire (0x4A3B69) does, and the port runs the street hire for it. A full
+  party is turned away with a status line. Otherwise the party pays the profession's `npcprof.txt` Cost, a Burglar
+  nothing. A party short of gold gets a status line, speech 38 and the join text again. A hired resident takes the first
+  free slot and speech 61 plays. The house then rebuilds its list without it (0x43C140 skips hired NPCs) and backs out.
+- Backing out (0x4A4AA0) leaves a house that has one person left, and shows the list otherwise. A house whose only
+  resident was hired stays open with no one in it, and is empty when entered again. Dismissing the hireling (0x4A3CF0)
+  clears its hired flag, which lists the resident in its house again.
 
 ## Street NPCs
 

@@ -219,6 +219,7 @@ Landed:
 | W22, W26 | `fix_wasted_black_potion`, `fix_shops_buying_blasters` |
 | W15 | `fix_door_state_switch`. No shipped script uses door action 3, so it is unit tested only. |
 | C12 | `fix_spells_cost` |
+| C4 | `fix_bonus_damage_resistance` for the relics Hades, Ares and Artemis. The elemental enchantments wait for their admission. |
 | C25 | `fix_item_generation`. Shop stock and `GiveItem` kinds only, the any-item roll stays vanilla as in the patch. |
 | W28 | No flag. MM6.exe already refused paid shop services. The skill half waits for the shop item info box. |
 | W12 | `fix_unopened_chest_artifacts` for the respawn refund. Event opcode 69 `RefundChestArtifacts` runs without a flag, no shipped script uses it. |

@@ -1,4 +1,5 @@
 #include <optional>
+#include <regex>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -6,6 +7,8 @@
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
+
+#include "Application/GameConfig.h"
 
 #include "Engine/Data/AwardEnums.h"
 #include "Engine/Engine.h"
@@ -378,6 +381,52 @@ GAME_TEST(MM6GrayFaceShared, BuffDurationShowsMinutesNextToDays) {
 
     auto timeLines = textTape.flatten().map([](const DrawnText &text) { return text.text; }).filter([](const std::string &text) { return text.starts_with("\r020"); });
     EXPECT_EQ(timeLines.unique(), tape(std::string("\r0201 Day 4 Minutes"))); // 25 hours less 55 minutes of waiting and a few seconds of play.
+}
+
+GAME_TEST(MM6GrayFaceShared, StatsScreenShowsConditionThatSetsStats) {
+    // The stats screen of a weak and poisoned character said Weak while the poison set the stats. The stats screen shows
+    // the condition that sets the stats, and the quick reference keeps showing the most severe one.
+    for (bool fix : {true, false}) {
+        SCOPED_TRACE(fmt::format("fix={}", fix));
+        test.prepareForNextTest();
+        engine->config->gameplay.FixStatsScreenCondition.setValue(fix);
+        startNewGameThroughInput(game);
+        pParty->pCharacters[0].conditions.set(CONDITION_WEAK, pParty->GetPlayingTime());
+        pParty->pCharacters[0].conditions.set(CONDITION_POISON_WEAK, pParty->GetPlayingTime());
+        auto textTape = tapes.drawnTexts();
+        test.startTaping();
+
+        for (PlatformKey key : {PlatformKey::KEY_DIGIT_1, PlatformKey::KEY_I}) {
+            game.pressAndReleaseKey(key);
+            game.tick();
+        }
+        game.tick(); // The key queues the character screen for the next frame.
+        game.pressAndReleaseKey(PlatformKey::KEY_S);
+        game.tick();
+        for (PlatformKey key : {PlatformKey::KEY_ESCAPE, PlatformKey::KEY_Z}) {
+            game.pressAndReleaseKey(key);
+            game.tick();
+        }
+
+        auto statsRows = textTape.map([](const AccessibleVector<DrawnText> &frame) {
+            static const std::regex codes("\f[0-9]{5}|[\t\r][0-9]{3}|\n");
+            static const std::regex spaces(" +");
+            std::string result;
+            for (const DrawnText &text : frame) {
+                if (!text.text.starts_with("Might") && !text.text.starts_with("Speed") && !text.text.starts_with("Condition"))
+                    continue;
+                std::string row = std::regex_replace(std::regex_replace(text.text, codes, " "), spaces, " ");
+                while (row.ends_with(' '))
+                    row.pop_back();
+                result += (result.empty() ? "" : ", ") + row;
+            }
+            return result;
+        }).filter([](const std::string &rows) { return !rows.empty(); }).unique();
+        auto referenceConditions = textTape.flatten().map([](const DrawnText &text) { return text.text; })
+            .filter([](const std::string &text) { return text == "Weak" || text == "Poison"; }).unique();
+        EXPECT_EQ(statsRows, tape(fix ? "Might 12 / 17, Speed 10 / 14, Condition: Poison" : "Might 12 / 17, Speed 10 / 14, Condition: Weak"));
+        EXPECT_EQ(referenceConditions, tape("Weak"));
+    }
 }
 
 GAME_TEST(MM6GrayFaceShared, AnimationFramesTurnWhenTheirTimeIsUp) {

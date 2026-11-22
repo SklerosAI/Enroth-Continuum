@@ -351,10 +351,15 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   `gameplay.fix_buff_duration_text` (default on, MM6 only), buff times show the two largest nonzero units. Test
   `MM6GrayFaceShared.BuffDurationShowsMinutesNextToDays`.
 - **W19**. Condition priority order for display and stats (`FixConditionPriorities=1`, `MMHooks.pas:2080`), stats screen
-  shows the condition that sets the stats. State: **display fixed, stats screen differs**.
-  Display order is the GrayFace order behind `gameplay.alternative_condition_priorities` (default true). Stats use the
-  original MM6 order in `MM6ActualStatCondition.h`. The MM6 stats screen shows the display condition, not the
-  stat-setting one.
+  shows the condition that sets the stats. State: **fixed, config**.
+  MM6.exe has one condition routine, 0x482D30, which walks the order at 0x4C276C (Eradicated, Stoned, Dead,
+  Unconscious, Asleep, Paralyzed, the diseases and poisons from severe to weak, Insane, Drunk, Afraid, Weak, Cursed)
+  for the stats and for every display. `DoFixConditionPriorities` copies that routine with the severe-first order and
+  sends three call sites (0x417124, 0x41AB1D, 0x42D410) and the portrait routine 0x484980 to the copy. The stats screen
+  (0x4145C0) and the stat routines keep the original. Display order is the GrayFace order behind
+  `gameplay.alternative_condition_priorities` (default true). Stats use the original order in
+  `MM6ActualStatCondition.h`. `gameplay.fix_stats_screen_condition` (default on, MM6 only) makes the stats screen show
+  the stat-setting condition too. Test `MM6GrayFaceShared.StatsScreenShowsConditionThatSetsStats`.
 - **W20**. Depleted wands break instead of vanishing (`KeepEmptyWands=1`). State: **absent, config ready**.
   MM6 wand fire throws. `gameplay.destroy_discharged_wands=false` keeps an empty wand.
 - **W21**. Some scrolls were endless on the paper doll in turn-based mode, right-click scroll use auto-picked the target
@@ -503,7 +508,7 @@ Rules for every fix in this backlog:
   swing for clubs, so it has no config flag.
 - **W19**. Stats screen shows the display condition. Show the condition that determines the stats on the stats screen,
   the most severe one everywhere else.
-  Same as GrayFace 2.5.2.
+  Same as GrayFace 2.5.2. Done 2026-11-22 behind `fix_stats_screen_condition`, see the W19 row above.
 - **W5, W18**. 5:00 AM brightness, buff duration text. Pin with a game test, fix only if the test shows the vanilla bug.
   Done 2026-11-18. Both showed the vanilla bug and are fixed behind `fix_sunrise_light` and `fix_buff_duration_text`.
 - **C3, C7, C21, C27, W4, W6, W17, W24**. Fixed in shared code, no MM6 test. Add an MM6 game test for each.

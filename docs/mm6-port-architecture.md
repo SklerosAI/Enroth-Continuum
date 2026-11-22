@@ -105,6 +105,7 @@ Current MM6 flags, by key:
 | `fix_new_day_at_month_start` | [Engine.cpp](../src/Engine/Engine.cpp) |
 | `fix_sunrise_light` | [Outdoor.cpp](../src/Engine/Graphics/Outdoor.cpp) |
 | `fix_buff_duration_text` | [GUIWindow.cpp](../src/GUI/GUIWindow.cpp) |
+| `fix_stats_screen_condition` | [MM6CharacterScreen.cpp](../src/GUI/UI/MM6CharacterScreen.cpp) |
 | `fix_map_timers` | [Processor.cpp](../src/Engine/Evt/Processor.cpp) |
 | `fix_travel_autosave`, `fix_travel_speech_delay` | [MM6Transport.cpp](../src/GUI/UI/Houses/MM6Transport.cpp) |
 | `fix_flying_border_offer` | [Outdoor.cpp](../src/Engine/Graphics/Outdoor.cpp) |

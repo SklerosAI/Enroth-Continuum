@@ -216,6 +216,7 @@ Landed:
 | W1, W7, W8, W9 | `fix_map_timers`, `fix_travel_autosave`, `fix_travel_speech_delay`, `fix_flying_border_offer` |
 | W2 | `fix_inactive_party_events` |
 | W4, W5, W18 | `fix_new_day_at_month_start`, `fix_sunrise_light`, `fix_buff_duration_text` |
+| W19 | `fix_stats_screen_condition`. The display order was already GrayFace's through `alternative_condition_priorities`. |
 | W22, W26 | `fix_wasted_black_potion`, `fix_shops_buying_blasters` |
 | W15 | `fix_door_state_switch`. No shipped script uses door action 3, so it is unit tested only. |
 | C12 | `fix_spells_cost` |
@@ -231,7 +232,6 @@ Open:
 | Items | What is left |
 | --- | --- |
 | C24 | Doesn't reproduce. MM6.exe's own walking edge check, which we port, keeps chasing monsters on their ledges. Needs a vanilla case that falls. |
-| W19 | The stats screen shows the display condition, not the one that sets the stats |
 | C2, C4, C9, C11, C19, W10, W20, W21 | Fixed when the spell or feature is admitted, not before |
 | Data fixes | Script fixes as an engine-side patch table keyed by file hash. Map fixes through `*.games.lod` override archives. |
 

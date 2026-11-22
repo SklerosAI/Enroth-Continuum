@@ -67,3 +67,7 @@ void mm6::drawNpcDialogueOptions(GUIWindow *window) {
 
     render->DrawQuad2D(assets->getIcon("buttesc1"), exitPosition);
 }
+
+SpeechId mm6::npcGreetingSpeech(int reputation) {
+    return reputation < 0 ? SPEECH_GOOD_EVENING : SPEECH_GOOD_DAY; // MM7 picks between these two by the hour.
+}

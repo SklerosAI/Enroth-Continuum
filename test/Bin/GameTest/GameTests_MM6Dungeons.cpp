@@ -336,6 +336,20 @@ GAME_TEST(MM6Dungeons, TempleEntranceRaisesTheAlert) {
     EXPECT_EQ(yellowTape, tape(true));
 }
 
+GAME_TEST(MM6Dungeons, AngelaGreeting) {
+    // Angela's conversation, which the plate under her opens, had no greeting. MM6 greets in every conversation.
+    startNewGameThroughInput(game);
+    enterD02(game);
+    auto speechTape = tapes.speeches();
+    auto screenTape = tapes.screen();
+    test.startTaping();
+
+    walkOntoMM6CampaignChainIndoorEventPlate(game, 14);
+
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_NPC_DIALOGUE));
+    EXPECT_EQ(speechTape.flatten(), tape(SPEECH_GOOD_DAY));
+}
+
 GAME_TEST(MM6Dungeons, RestNearAndFarFromMonsters) {
     // The Abandoned Temple's monsters never noticed the party, and the party could rest next to them. Now the bats of
     // the entrance hall bite and the party can't rest there. In the cage room, far from every monster, it rests and

@@ -74,8 +74,10 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 - **Shop footer.** The footer draws over the status bar, so "Done!" and "Good as New!" never show. Not checked against
   MM6.exe.
 - **Shop item hover.** Hovering an item on a shop shelf shows no name in the status bar. Not checked against MM6.exe.
-- **Greeting speech.** MM6 greets with speech 22 or 23 by the party's reputation. Ours picks good day or good evening
-  by the hour. `initializeNPCDialogue` in `UIDialogue.cpp`.
+- **House entry sounds.** On entering a house MM6.exe plays the room's sound 1 through 0x496520 at 0x43C77D, sound 3
+  instead at a guild the active character hasn't joined, and nothing at a stable or boat house with no route that day.
+  For houses 204 to 550 the active character then says speech 84 (0x43C7A5). The MM6 path plays neither.
+  `mm6EnterHouse` in `src/GUI/UI/Houses/MM6House.cpp`.
 - **Street NPC news carry-over.** A street NPC slot keeps its news topic across map loads within one game, as in
   vanilla. GrayFace has no fix. Owner's call whether to clear it.
 - **Potion mixing.** Item-on-item use of potions stays refused (`mm6::shouldBlockItemOnItemUse` in

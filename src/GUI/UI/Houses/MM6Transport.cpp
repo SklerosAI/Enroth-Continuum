@@ -10,6 +10,7 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Localization.h"
+#include "Engine/MM6/MM6PartyRest.h"
 #include "Engine/Objects/NPC.h"
 #include "Engine/Party.h"
 #include "Engine/PartyPlacement.h"
@@ -187,4 +188,5 @@ void GUIWindow_MM6Transport::depart() {
 void GUIWindow_MM6Transport::payForTrip() {
     pParty->TakeGold(_fare);
     restAndHeal(Duration::fromDays(_tripDays));
+    mm6::notePartyRested();
 }

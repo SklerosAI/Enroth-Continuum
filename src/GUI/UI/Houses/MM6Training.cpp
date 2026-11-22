@@ -7,6 +7,7 @@
 
 #include "Engine/Engine.h"
 #include "Engine/Localization.h"
+#include "Engine/MM6/MM6PartyRest.h"
 #include "Engine/Objects/Character.h"
 #include "Engine/Party.h"
 
@@ -76,6 +77,7 @@ void mm6::trainActiveCharacter(int houseId, float value, bool *timePassed) {
     if (!*timePassed) {
         const CivilTime now = pParty->GetPlayingTime().toCivilTime();
         restAndHeal(Duration::fromMinutes((hoursUntil5am(now.hour) + 172) * 60 - now.minute)); // Seconds are kept.
+        mm6::notePartyRested();
         *timePassed = true;
     }
     character.playReaction(SPEECH_LEVEL_UP);

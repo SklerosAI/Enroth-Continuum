@@ -163,6 +163,9 @@ never keeps a character's recovery.
 The coach, the boat and training call the shared `restAndHeal(Duration)`, which does the same. The border trip does it
 on its party copy.
 
+The travel rest also marks the party as rested (0x4962CC), and so does closing the rest screen, see
+[Nicolai's disappearance](mm6-events.md#nicolai-disappears-after-a-rest).
+
 ## Other ways between maps
 
 | Route | Where |

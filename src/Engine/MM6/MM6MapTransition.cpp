@@ -28,6 +28,7 @@
 #include "Media/Audio/AudioPlayer.h"
 
 #include "MM6ArtifactCollection.h"
+#include "MM6ChestReroll.h"
 #include "MM6ChestMapLoadRoute.h"
 #include "MM6FirstMapManualSave.h"
 #include "MM6MapVisit.h"
@@ -153,6 +154,7 @@ void forgetParkedMaps() {
     parkedMaps.clear();
     mapTimerFirings().clear();
     artifactCollection() = {};
+    chestRerollLayouts().clear();
 }
 
 std::vector<SessionMap> captureSessionMaps() {

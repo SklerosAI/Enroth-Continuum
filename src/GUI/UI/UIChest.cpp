@@ -47,8 +47,10 @@ void GUIWindow_Chest::drawExitButton() {
 }
 
 void GUIWindow_Chest::Update() {
-    if (engine->gameTitle() == GameTitle::MM6)
+    if (engine->gameTitle() == GameTitle::MM6) {
         updatePageButton();
+        updateRerollButton();
+    }
     if (current_screen_type == SCREEN_CHEST_INVENTORY && pParty->hasActiveCharacter()) {
         draw_leather();
         CharacterUI_InventoryTab_Draw(&pParty->activeCharacter(), true);
@@ -101,6 +103,15 @@ void GUIWindow_Chest::Update() {
             GUIWindow::DrawText(font, {x, rect.y + (rect.h - font->GetHeight()) / 2}, colorTable.White, text, frameRect);
             render->DrawQuad2D(arrow, {x + textWidth + 4, rect.y + (rect.h - arrow->height()) / 2});
         }
+        if (_rerollButton) {
+            const Recti &rect = _rerollButton->rect;
+            GUIFont *font = assets->pFontArrus.get();
+            render->FillRect(rect, colorTable.Tacha);
+            render->FillRect({rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4}, colorTable.CarnabyTan);
+            render->FillRect({rect.x + 4, rect.y + 4, rect.w - 8, rect.h - 8}, colorTable.Cioccolato);
+            DrawText(font, {rect.x + font->AlignText_Center(rect.w, "Reroll"), rect.y + (rect.h - font->GetHeight()) / 2},
+                     colorTable.PaleCanary, "Reroll", frameRect);
+        }
         if (engine->gameTitle() == GameTitle::MM7 && Chest::canReroll(_chestId)) {
             render->FillRect({337, 326, 105, 24}, colorTable.Tacha);
             render->FillRect({339, 328, 101, 20}, colorTable.CarnabyTan);
@@ -121,6 +132,18 @@ int GUIWindow_Chest::pageCount() const {
     for (const mm6::ChestPageItem &item : vChests[_chestId].mm6Pages)
         result = std::max(result, item.page + 1);
     return result;
+}
+
+void GUIWindow_Chest::updateRerollButton() {
+    const bool shown = current_screen_type == SCREEN_CHEST && Chest::canReroll(_chestId);
+    if (shown && !_rerollButton) {
+        _rerollButton = CreateButton("Chest_Reroll", {396, 254}, {66, 24}, BUTTON_TYPE_NORMAL, 0, UIMSG_CHEST_Reroll, 0,
+                                     INPUT_ACTION_INVALID, "Reroll chest loot");
+        std::rotate(vButtons.begin(), vButtons.end() - 1, vButtons.end()); // Ahead of the chest grid's button, which covers it.
+    } else if (!shown && _rerollButton) {
+        _rerollButton->Release();
+        _rerollButton = nullptr;
+    }
 }
 
 void GUIWindow_Chest::updatePageButton() {

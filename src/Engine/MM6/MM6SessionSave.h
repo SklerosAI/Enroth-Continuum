@@ -9,6 +9,7 @@
 #include "Engine/GameTitle.h"
 
 #include "MM6ArtifactCollectionSection.h"
+#include "MM6ChestRerollSection.h"
 #include "MM6MapVisit.h"
 #include "MM6ParkedMapSection.h"
 #include "MM6RawSaveFields.h"
@@ -23,13 +24,14 @@ inline constexpr std::uint16_t SESSION_SAVE_VERSION = 7;
  * the visited maps as the party left them. `PRKM` holds the actors, ground items and event variables of the active map
  * and of every visited map. The optional `TIMR` holds when each map's periodic timers last went off, a save written
  * before it existed has none. The optional `ARTC` after it holds the All Artifacts mod's ledger, only once the mod
- * started it.
+ * started it. The optional `CHRL` last holds the chests the chest reroll mod can still reroll, only when there are any.
  */
 struct SessionSaveFields {
     RawSaveFields raw;
     std::vector<ParkedMapRuntime> maps;
     MapTimerFirings timers;
     ArtifactCollection artifacts;
+    ChestRerollLayouts rerolls;
 };
 
 std::vector<std::uint8_t> encodeSessionSave(const SessionSaveFields &fields, GameTitle title);
@@ -47,6 +49,7 @@ struct StagedSessionSave {
     std::vector<ParkedMapRuntime> maps;
     MapTimerFirings timers;
     ArtifactCollection artifacts;
+    ChestRerollLayouts rerolls;
 };
 
 /**

@@ -185,13 +185,14 @@ four MM7 boolean flags to `0`.
 | `ENROTH_MM7_MONSTER_LOOT_REROLL` | Private mods on and preference `mods.mm7.monsterLootReroll` | `mm7::mods::monsterLootRerollEnabled` |
 | `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.vendorRefreshOnEntry` | `mm6::vendorRefreshPolicy` |
 | `ENROTH_MM6_ALL_ARTIFACTS` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.allArtifacts` | `mm6::mods::allArtifactsEnabled` |
-| `ENROTH_MM6_CHEST_REROLL` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.chestReroll` | The MM6 engine, see [Chest reroll](#chest-reroll) |
+| `ENROTH_MM6_CHEST_REROLL` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.chestReroll` | `mm6::mods::chestRerollEnabled`, see [Chest reroll](#chest-reroll) |
 | `ENROTH_MM6_MONSTER_LOOT_REROLL` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.monsterLootReroll` | `mm6::mods::monsterLootRerollEnabled`, see [Fortune's Turn](#fortunes-turn) |
 
 Every MM7 reader checks `GameTitle::MM7` first, so the MM7 variables do nothing in an MM6 run, and the MM6 readers
 check `GameTitle::MM6`. The boolean flags
 accept only the exact string `1`. Values such as `true` or `01` leave the mod off. None of these settings is written
-into saves, the engine config or game archives, so turning a mod off restores vanilla rules on the next launch. A
+into saves, the engine config or game archives, so turning a mod off restores vanilla rules on the next launch. Saves
+do keep what a mod built up while it was on, such as the All Artifacts ledgers and which chests can still be rerolled. A
 direct diagnostic launch of the engine may set the same variables by hand.
 
 The mods folder may hold only these files. Anything else is ignored.
@@ -297,9 +298,11 @@ collection ledger across a save round trip.
 
 ### Chest reroll
 
+#### MM7
+
 The Atelier's "Reroll chest loot · MM7" toggle adds a small Reroll button, in brass and dark wood, to the lower wooden
-border of an MM7 chest that still holds an authored random-loot marker. The button is absent when the flag is off, when
-no marker remains, and in MM6.
+border of an MM7 chest that still holds an authored random-loot marker. The button is absent when the flag is off and
+when no marker remains.
 
 - The chest keeps each authored random marker as a hidden record. Its generated items link back to it through
   `Item::chestRerollSource`, saved in the formerly unused pad byte at offset 0x1B of `Item_MM7`, so the native chest
@@ -313,6 +316,31 @@ no marker remains, and in MM6.
   holds across save and load.
 - A save whose chest was generated before the mod was on has no marker for it. That chest can't be rerolled until its
   map respawns.
+
+#### MM6
+
+`ENROTH_MM6_CHEST_REROLL` accepts only the exact string `1` (`mm6::mods::chestRerollEnabled` in
+`src/Engine/Mods/PrivateMods.{h,cpp}`). With it on, an MM6 chest whose random loot can still be rolled again shows a
+Reroll button in the same brass and dark wood, on the chest's right-hand panel above the exit button. The page button
+sits between them when the chest has more than one page.
+
+- MM6 rolls a map's chests when the map loads, and the roll writes over the random-loot markers in the native chest
+  record. MM6 data already uses the item record's pad byte, so MM6 keeps its own record of the roll instead. When a
+  map's chests roll with the mod on, `mm6::noteRolledChests` keeps a layout for every chest that had a marker: per item
+  slot, the marker (-1 to -7), an empty slot or a fixed item (`MM6ChestReroll.h`). With the mod off the roll forgets any
+  layout those chests had.
+- Each click puts the layout's markers and empty slots back over the chest's current record and runs the ordinary MM6
+  chest generator and placement on it (`mm6::stageChestReroll`), with the chest random state and the map's treasure
+  level, so the treasure-level ranges are those of the first roll. The chest type, flags, trap and fixed items stay.
+- An artifact of the discarded roll comes off the generated list. With [All Artifacts for MM6](#all-artifacts-for-mm6)
+  on, the collected ledger decides what rolls and the generated list keeps it.
+- MM6 chests only let items be taken out. Taking an item or a gold pile forgets the chest's layout, so a looted chest
+  can't be rerolled, also after a save and a load.
+- A chest rolled before the mod was on has no layout and can't be rerolled until its map refills.
+
+The layouts are saved in the optional `CHRL` section of a v7 save, after `ARTC`, only when there are any, so a game
+that never used the mod saves the same bytes as before. A save without `CHRL` loads with no rerollable chest. A
+first-map v5 save doesn't carry it, see [MM6 save format](mm6-save-format.md).
 
 ### Fortune's Turn
 
@@ -454,8 +482,9 @@ it as `ENROTH_MM6_ALL_ARTIFACTS=1`, or `0` when off. The MM7 and upstream launch
   preview test, which always runs. The vendor tests
   skip unless `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY=1` is set. The MM6 vendor tests in
   [GameTests_MM6Houses.cpp](../test/Bin/GameTest/GameTests_MM6Houses.cpp) (`MM6Houses.*VendorRefresh*`) and the MM6
-  artifact tests in [GameTests_MM6AllArtifacts.cpp](../test/Bin/GameTest/GameTests_MM6AllArtifacts.cpp) and the MM6
-  Fortune's Turn tests in [GameTests_MM6FortunesTurn.cpp](../test/Bin/GameTest/GameTests_MM6FortunesTurn.cpp) set their
-  own flag. The MM6 ledger's fresh-process pair runs in `tools/run_mm6_firstmap_gate.py`.
+  artifact tests in [GameTests_MM6AllArtifacts.cpp](../test/Bin/GameTest/GameTests_MM6AllArtifacts.cpp), the MM6
+  Fortune's Turn tests in [GameTests_MM6FortunesTurn.cpp](../test/Bin/GameTest/GameTests_MM6FortunesTurn.cpp) and the
+  MM6 chest reroll tests (`MM6ChestReroll.*`) in [GameTests_MM6Chest.cpp](../test/Bin/GameTest/GameTests_MM6Chest.cpp)
+  set their own flag. The MM6 ledger's fresh-process pair runs in `tools/run_mm6_firstmap_gate.py`.
 
 See also: [Build setup](build-and-dev-setup.md), [Testing](testing.md), [MM7 status](mm7-status.md), [Upstream](upstream.md), [Source and privacy](source-and-privacy.md)

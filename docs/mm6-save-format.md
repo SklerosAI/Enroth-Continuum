@@ -42,7 +42,7 @@ The container layer only frames bytes. Which sections a given version must hold 
 manifest decoders (`decodeRawSave`, `decodeSessionSave`, the v3 to v6 decoders and the slot shells in
 `MM6AtomicSaveFile.cpp`). Those decoders want an exact section set. A missing, extra or duplicate section is refused,
 and so is a required section marked optional or the other way round. The v7 slot shell also wants `PRKM` after the
-19 raw owners, then an optional `TIMR` and an optional `ARTC` last.
+19 raw owners, then an optional `TIMR`, an optional `ARTC` and an optional `CHRL` last.
 
 ### Section payloads
 
@@ -61,7 +61,7 @@ version byte and deciding what happens to saves written before, see [Changing a 
 | 4 | v3 + `EVRT` (23) | The first-map anchor kept in memory, see [First-map saves](#first-map-saves-v5). |
 | 5 | v4 + `SPRT`, `ARTR`, `DECR` (26) | Written: a save on the first map of a session that never left it. |
 | 6 | Outdoor: v5 + `VIST` (27). Indoor: v2 + `GNPC`, `RNGS`, `EVRT`, `IFOV`, `IACR`, `ISCR`, `IDCR`, `IDRT`, `ISRT`, `IART` | Test-only candidates. No production writer or loader. |
-| 7 | v2 + `PRKM`, then an optional `TIMR` and an optional `ARTC` (20 to 22) | Written: every other save. `SESSION_SAVE_VERSION`. |
+| 7 | v2 + `PRKM`, then an optional `TIMR`, `ARTC` and `CHRL` (20 to 23) | Written: every other save. `SESSION_SAVE_VERSION`. |
 
 A slot file on disk is always v5 or v7. The slot shell (`decodeNumberedSlotShell`) picks v7 when the container version
 is 7 and v5 otherwise, and both validators run the full staging pass before a file is trusted.
@@ -126,6 +126,7 @@ Added by v3 to v7:
 | `PRKM` | 1 | `MM6ParkedMapSection.cpp` | v7, required | The live lists of the active map and every visited map, see below |
 | `TIMR` | 1 | `MM6MapTimerSection.cpp` | v7, optional | Per map, when each of its four periodic event timers last fired |
 | `ARTC` | 1 | `MM6ArtifactCollectionSection.cpp` | v7, optional | The All Artifacts mod's 30 collected flags of artifacts 400 to 429 |
+| `CHRL` | 1 | `MM6ChestRerollSection.cpp` | v7, optional | The chests the chest reroll mod can still reroll, each with its loot layout |
 
 `PRKM` holds, per map of the session and sorted by name: the map name, the 75 map and 125 decoration event
 variables, the actor list as full actor images, and the ground-item sprite list. Each item's fields follow its actor or
@@ -146,6 +147,12 @@ without it still loads, and its maps then start with no recorded firings. It onl
 `ARTC` came later the same way, after `TIMR`. It is written only once the All Artifacts mod started the ledger, so a
 game that never ran the mod saves the same bytes as before. A save without it loads with an empty ledger. A first-map
 v5 save has no `ARTC`, see [Mods and the Atlas](mods-and-atlas.md#all-artifacts-for-mm6).
+
+`CHRL` follows `ARTC` the same way, written only when a chest can be rerolled. Its payload is the version byte, a
+16-bit count, then per chest, sorted by map name and chest index: the map name with a length byte, the chest index and
+140 signed slot bytes (a marker -1 to -7, 0 for empty, 1 for a fixed item). The decoder refuses an unsorted or
+duplicate chest, a layout without a marker and trailing bytes, so a payload re-encodes to the same bytes, and the
+encoder decodes its own output before it returns. See [Mods and the Atlas](mods-and-atlas.md#chest-reroll).
 
 ### Native map deltas
 
@@ -323,7 +330,8 @@ left out. A slot that would need backup recovery is refused for load.
 - [MM6RawSaveFields.h](../src/Engine/MM6/MM6RawSaveFields.h) the 19 raw owners
 - [MM6V5SaveFields.h](../src/Engine/MM6/MM6V5SaveFields.h), [MM6V4SaveFields.h](../src/Engine/MM6/MM6V4SaveFields.h), [MM6V3SaveFields.h](../src/Engine/MM6/MM6V3SaveFields.h) first-map save layers
 - [MM6ParkedMapSection.h](../src/Engine/MM6/MM6ParkedMapSection.h), [MM6MapTimerSection.h](../src/Engine/MM6/MM6MapTimerSection.h),
-  [MM6ArtifactCollectionSection.h](../src/Engine/MM6/MM6ArtifactCollectionSection.h) v7 sections
+  [MM6ArtifactCollectionSection.h](../src/Engine/MM6/MM6ArtifactCollectionSection.h),
+  [MM6ChestRerollSection.h](../src/Engine/MM6/MM6ChestRerollSection.h) v7 sections
 - [MM6FirstMapManualSave.h](../src/Engine/MM6/MM6FirstMapManualSave.h) arming, save and load entry points
 - [MM6V5FirstMapNativeSlotPolicy.h](../src/Engine/MM6/MM6V5FirstMapNativeSlotPolicy.h) slot names and slot policy
 - [MM6AtomicSaveFile.h](../src/Engine/MM6/MM6AtomicSaveFile.h) atomic writer and slot shells

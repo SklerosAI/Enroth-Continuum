@@ -29,7 +29,10 @@
 #include "Engine/Graphics/Sprites.h"
 #include "Engine/Tables/ItemTable.h"
 #include "Engine/Party.h"
+#include "Engine/MM6/MM6ArtifactCollection.h"
 #include "Engine/MM6/MM6ChestOpenOwnerTransaction.h"
+#include "Engine/MM6/MM6ChestReroll.h"
+#include "Engine/MM6/MM6ChestSeedAndOwnership.h"
 #include "Engine/MM6/MM6ChestTrap.h"
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/Tables/MapTable.h"
@@ -188,6 +191,7 @@ void takeMm6ChestItem(int chestId, Pointi mousePos) {
 
     binding.chests->swap(staged->chests);
     binding.deltaBytes->swap(staged->deltaBytes);
+    mm6::chestRerollLayouts().erase({pMapTable->pInfos[engine->_currentLoadedMapId].fileName, chestId});
     if (found) {
         pParty->SetGold(staged->partyGold);
         engine->_statusBar->setEvent(found->status);
@@ -198,6 +202,40 @@ void takeMm6ChestItem(int chestId, Pointi mousePos) {
     GraphicsImage *icon = assets->getIcon(staged->heldItem.GetIconName());
     offset -= Pointi(itemOffset(icon->width()), itemOffset(icon->height()));
     pParty->setHoldingItem(staged->heldItem, -offset);
+}
+
+const mm6::ChestRerollLayout *mm6ChestRerollLayout(int chestId) {
+    if (!mm6::mods::chestRerollEnabled(engine->gameTitle()) || engine->_currentLoadedMapId == MAP_INVALID)
+        return nullptr;
+    const auto layout = mm6::chestRerollLayouts().find({pMapTable->pInfos[engine->_currentLoadedMapId].fileName, chestId});
+    return layout == mm6::chestRerollLayouts().end() ? nullptr : &layout->second;
+}
+
+bool rerollMm6Chest(int chestId) {
+    const mm6::ChestRerollLayout *layout = mm6ChestRerollLayout(chestId);
+    mm6::ChestLiveBinding binding;
+    MM6IndoorSnapshot indoorBase;
+    if (!layout || current_screen_type != SCREEN_CHEST || pParty->pPickedItem.itemId != ITEM_NULL ||
+        !bindMm6Chests(&binding, &indoorBase))
+        return false;
+    binding.collectedArtifactFlags = mm6::collectedArtifactExclusion();
+    const Blob dchest = engine->resources()->eventsData("dchest.bin");
+    const auto owned = mm6::scanPartyOwnedChestArtifacts(GameTitle::MM6, *pParty);
+    if (!owned)
+        return false;
+    auto staged = mm6::stageChestReroll(binding, chestId, *layout, pMapTable->pInfos[engine->_currentLoadedMapId].mapTreasureLevel,
+                                        *pItemTable, std::span(static_cast<const std::uint8_t *>(dchest.data()), dchest.size()),
+                                        mm6ChestIconSize, *owned, !binding.collectedArtifactFlags);
+    if (!staged) {
+        MM_WARNING("MM6 chest {} doesn't match its loot layout and can't be rerolled", chestId);
+        mm6::chestRerollLayouts().erase({pMapTable->pInfos[engine->_currentLoadedMapId].fileName, chestId});
+        return false;
+    }
+    binding.chests->swap(staged->chests);
+    binding.deltaBytes->swap(staged->deltaBytes);
+    binding.titleState->lcgState = staged->nextLcgState;
+    binding.titleState->generatedArtifactFlags = staged->generatedArtifactFlags;
+    return true;
 }
 
 constexpr uint8_t kRerollMarker = 255;
@@ -593,6 +631,8 @@ void GenerateItemsInChest() {
 }
 
 bool Chest::canReroll(int chestId) {
+    if (engine && engine->gameTitle() == GameTitle::MM6)
+        return mm6ChestRerollLayout(chestId) != nullptr;
     if (!engine || !mm7::mods::chestRerollEnabled(engine->gameTitle()) ||
         chestId < 0 || chestId >= static_cast<int>(vChests.size()))
         return false;
@@ -603,6 +643,8 @@ bool Chest::canReroll(int chestId) {
 }
 
 bool Chest::reroll(int chestId) {
+    if (engine->gameTitle() == GameTitle::MM6)
+        return rerollMm6Chest(chestId);
     if (!canReroll(chestId) || current_screen_type != SCREEN_CHEST ||
         pParty->pPickedItem.itemId != ITEM_NULL || engine->_currentLoadedMapId == MAP_INVALID)
         return false;

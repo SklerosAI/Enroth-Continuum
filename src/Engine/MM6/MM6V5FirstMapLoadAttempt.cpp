@@ -5,6 +5,7 @@
 #include <deque>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -29,6 +30,7 @@
 #include "Library/Platform/Application/PlatformApplication.h"
 
 #include "MM6ChestLiveOwnerAdapter.h"
+#include "MM6ChestReroll.h"
 #include "MM6ChestSeedAndOwnership.h"
 #include "MM6ChestTitleState.h"
 #include "MM6EventRuntimeSaveFields.h"
@@ -170,10 +172,12 @@ bool V5FirstMapLoadAttempt::applyChestAtNativeMap(GameTitle title) {
         !chestOwnersUnchanged())
         throw std::runtime_error("MM6 first-map chest handoff lacks exact native owners");
     const auto owned = scanPartyOwnedChestArtifacts(title, *pParty);
+    std::optional<ChestRecordSet> rolledFrom;
     if (!owned || !applyActiveChestLiveOwnerHandoff(
             title, pMapTable->pInfos[engine->_currentLoadedMapId].mapTreasureLevel,
-            *pItemTable, *owned, true))
+            *pItemTable, *owned, true, &rolledFrom))
         throw std::runtime_error("MM6 first-map chest handoff refused");
+    noteActiveMapRolledChests(rolledFrom);
     _phase = Phase::ChestApplied;
     return true;
 }

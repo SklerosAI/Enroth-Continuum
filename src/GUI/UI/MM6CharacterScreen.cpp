@@ -7,9 +7,13 @@
 #include <string_view>
 #include <vector>
 
+#include "Application/GameConfig.h"
+
 #include "Engine/AssetsManager.h"
+#include "Engine/Engine.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Localization.h"
+#include "Engine/MM6/MM6ActualStatCondition.h"
 #include "Engine/Objects/Character.h"
 #include "Engine/Spells/Spells.h"
 
@@ -114,6 +118,8 @@ void drawMM6StatsTab(GUIWindow *window, Character *character) {
     draw(26, y += rowStep, leftRow(LSTR_ARMOR_CLASS, character->GetActualAC(), character->GetBaseAC()));
 
     Condition condition = character->GetMajorConditionIdx();
+    if (engine->config->gameplay.FixStatsScreenCondition.value()) // MM6.exe's stats screen reads the stat order (0x4145C0).
+        condition = mm6::actualStatCondition(GameTitle::MM6, [&](Condition candidate) { return character->conditions.has(candidate); });
     window->DrawTextInRect(font, {26, 268}, colorTable.White,
                            fmt::format("{}: {::}{}\n", localization->str(LSTR_CONDITION), GetConditionDrawColor(condition).tag(),
                                        localization->characterConditionName(condition)), 226, 0);

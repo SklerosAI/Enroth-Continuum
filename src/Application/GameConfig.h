@@ -310,6 +310,10 @@ class GameConfig : public Config {
             "MM6 only. Show the two largest units of a buff's remaining time, as the GrayFace patch does. "
             "In vanilla, a buff with a day and some minutes left showed only the day."};
 
+        Bool FixStatsScreenCondition = {this, "fix_stats_screen_condition", true,
+            "MM6 only. Show the condition that sets the stats on the stats screen, as the GrayFace patch does. Without it the "
+            "stats screen shows the most severe condition of alternative_condition_priorities, as the portraits do."};
+
         Bool FixMapTimers = {this, "fix_map_timers", true,
             "MM6 only. Keep each map's periodic timers counting from their last firing while the party is away, and start a "
             "daily timer today when its time hasn't come yet, as the GrayFace patch does. In vanilla, every visit restarted "

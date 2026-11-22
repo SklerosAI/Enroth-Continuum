@@ -37,8 +37,8 @@ struct DrawnQuad {
 };
 
 /**
- * Payload of `CALL_GUIWINDOW_DRAWN_TEXT`, a string drawn by `GUIWindow::DrawText`, the color it was drawn in and the
- * position it was drawn at.
+ * Payload of `CALL_GUIWINDOW_DRAWN_TEXT`, a string drawn by `GUIWindow::DrawText` or `GUIWindow::DrawTextInRect`, the
+ * color it was drawn in and the position it was drawn at.
  */
 struct DrawnText {
     std::string text;

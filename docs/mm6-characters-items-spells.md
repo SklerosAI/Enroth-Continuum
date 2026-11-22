@@ -107,7 +107,8 @@ dagger.
 
 - The 19 runtime condition clocks are kept as they are. Stats are evaluated against the first active condition in
   MM6's own priority order (`kActualStatConditionPriority` in `MM6ActualStatCondition.h`). MM6 has no Zombie entry
-  there.
+  there. The portraits and the quick reference show the most severe condition instead, and the stats screen shows the
+  stat-setting one with `gameplay.fix_stats_screen_condition`.
 - A new day starts at 3 am (`mm6::isNewDay`, `MM6NewDay.h`). `mm6::startNewDay` decays reputation by 1%, counts the
   days without rest, and from the second day without rest makes everyone Weak, eats food or cuts HP. From the fourth
   day it can kill or drive characters insane. Conditions set there skip speech and item protection, as in the

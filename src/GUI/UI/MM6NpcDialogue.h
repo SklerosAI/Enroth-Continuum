@@ -2,6 +2,8 @@
 
 #include <string_view>
 
+#include "Engine/Objects/CharacterEnums.h"
+
 #include "GUI/GUIDialogues.h"
 
 class GraphicsImage;
@@ -46,5 +48,12 @@ void drawNpcDialoguePanel(GraphicsImage *portrait, std::string_view name);
  * @param window                        Conversation window, its keyboard control group holds the topic buttons.
  */
 void drawNpcDialogueOptions(GUIWindow *window);
+
+/**
+ * @offset 0x43C075
+ * @param reputation                    Effective party reputation, positive is good.
+ * @return                              Speech the active character greets an NPC with when a conversation starts.
+ */
+SpeechId npcGreetingSpeech(int reputation);
 
 } // namespace mm6

@@ -383,7 +383,7 @@ GAME_TEST(MM6NpcDialogue, StreetNpcThreat) {
     auto text = textTape.flatten();
     EXPECT_CONTAINS(text, "Understood sir.  I want to live.  What do you need?");
     EXPECT_CONTAINS(text, "Now what?  Have you returned to slay me?  I will\nsurely call out your name before you strike me\ndown!  Someone will come to save me!");
-    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE, PORTRAIT_WIDE_SMILE)); // The greeting, then the threat.
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE, PORTRAIT_53)); // The greeting and the threat, then the greeting below zero reputation.
 }
 
 GAME_TEST(MM6NpcDialogue, StreetNpcThreatRefused) {
@@ -513,4 +513,31 @@ GAME_TEST(MM6NpcDialogue, StreetNpcNewsAfterNewGame) {
     EXPECT_EQ(mapTape, tape(pMapTable->GetMapInfo("oute3.odm"), pMapTable->GetMapInfo("outd3.odm"), pMapTable->GetMapInfo("oute3.odm")));
     EXPECT_EQ(optionsTape, tape(std::vector<std::string>(), std::vector<std::string>{"Beg", "Threat", "Bribe 50 Gold"}, std::vector<std::string>(),
                                 std::vector<std::string>{"Magic Weapons", "Join", "Abandoned Temple"}));
+}
+
+GAME_TEST(MM6NpcDialogue, GreetingSpeech) {
+    // The character who starts a conversation greeted by the hour of the day. MM6 greets by the party's reputation,
+    // with the other greeting at any hour once it drops below zero.
+    auto speechTape = tapes.speeches();
+    auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
+    auto screenTape = tapes.screen();
+    auto activeCharacterTape = tapes.activeCharacterIndex();
+    auto talkerPortraitTape = charTapes.portrait(1);
+    auto otherPortraitTape = charTapes.portrait(0);
+    enterNewSorpigal(game);
+    test.startTaping();
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_2);
+    game.tick();
+    for (int reputation : {0, -1}) {
+        game.runGameRoutine([reputation] { pParty->mm6Reputation = reputation; });
+        talkToMarianne(game);
+        leaveConversation(game);
+    }
+
+    EXPECT_EQ(speechTape.flatten(), tape(SPEECH_GOOD_DAY, SPEECH_GOOD_EVENING));
+    EXPECT_EQ(reputationTape, tape(0, -1));
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_NPC_DIALOGUE, SCREEN_GAME, SCREEN_NPC_DIALOGUE, SCREEN_GAME));
+    EXPECT_EQ(activeCharacterTape, tape(1));
+    EXPECT_EQ(talkerPortraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_BLINK, PORTRAIT_WIDE_SMILE, PORTRAIT_53)); // A blink, then the two greetings.
+    EXPECT_EQ(otherPortraitTape, tape(PORTRAIT_NORMAL));
 }

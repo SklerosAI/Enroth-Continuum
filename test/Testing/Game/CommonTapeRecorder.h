@@ -9,6 +9,7 @@
 
 #include "Engine/EngineCallObserver.h"
 #include "Engine/Data/HouseEnums.h"
+#include "Engine/Objects/CharacterEnums.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Objects/SpriteEnums.h"
 #include "Engine/Objects/MonsterEnums.h"
@@ -114,6 +115,8 @@ class CommonTapeRecorder {
     TestMultiTape<int> musicPauses();
 
     TestMultiTape<MusicId> music(); // Tracks the game asked to play, also when sound is off.
+
+    TestMultiTape<SpeechId> speeches(); // Speeches characters were asked to play, also when voices are off.
 
     TestMultiTape<std::string> hudTextures();
 

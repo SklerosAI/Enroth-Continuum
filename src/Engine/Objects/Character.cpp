@@ -4811,6 +4811,9 @@ void Character::tickRegeneration(int tick5, const RegenData &rData) {
 }
 
 SoundId Character::playReaction(SpeechId speech, int a3) {
+    if (engine->callObserver)
+        engine->callObserver->notify(CALL_PLAY_SPEECH, speech);
+
     int speechCount = 0;
     int portraitCount = 0;
     int pickedSoundID = 0;

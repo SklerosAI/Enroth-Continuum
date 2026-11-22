@@ -100,9 +100,9 @@ Houses 600 and 601 are terminal pseudo-houses with no room.
 entry even when the movie is off or missing. If a loop restart fails, `HouseMovieLoop` unloads the track for MM6,
 which resumes time and audio.
 
-MM6 house entry plays no greeting sound. `planHousePresentation` computes a candidate greeting id (sound group, kind 1)
-but nothing plays it. Service sounds go through `mm6PlayHouseSound`, which plays `30000 + 100 * soundGroup + kind` for
-rooms with a nonzero sound group.
+The port's MM6 house entry plays no greeting sound, see [open questions](open-questions.md). `planHousePresentation`
+computes a candidate greeting id (sound group, kind 1) but nothing plays it. Service sounds go through
+`mm6PlayHouseSound`, which plays `30000 + 100 * soundGroup + kind` for rooms with a nonzero sound group.
 
 ### The house screen
 
@@ -208,6 +208,12 @@ Voice reactions go through the shared `Character::playReaction`, which uses the 
 sound-id formula for every title. MM6's sound table groups each face's voice lines into a band of ids.
 `mm6::faceAnimationSoundId` in [MM6VoiceSound.h](../src/Engine/MM6/MM6VoiceSound.h) computes the MM6 id
 (`5000 + 100 * face + 2 * kind + variant`), but only its unit test calls it.
+
+When a conversation opens, the active character greets the NPC unless the NPC is hired. MM6.exe does it at the end of
+its dialogue setup (0x43C075): speech 22 at an effective reputation of zero or more, speech 23 below zero, at any hour.
+MM7 names the two good day and good evening and picks by the hour. The setup (0x43BE50) serves the street and quest NPCs
+the party talks to, hirelings and the `SpeakNPC` event alike, so a conversation an event opens is greeted too.
+`mm6::npcGreetingSpeech` in [MM6NpcDialogue.h](../src/GUI/UI/MM6NpcDialogue.h) picks the speech.
 
 Street NPC portraits are picked uniformly from per-sex lists in
 [MM6StreetNpcPortraits.h](../src/Engine/MM6/MM6StreetNpcPortraits.h), as `MM6.exe` does. The MM6 icon archive lacks

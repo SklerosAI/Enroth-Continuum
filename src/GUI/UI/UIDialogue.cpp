@@ -120,7 +120,10 @@ void initializeNPCDialogue(int npcId, int bPlayerSaysHello, Actor *actor) {
 
     pDialogueWindow = std::make_unique<GUIWindow_Dialogue>(DIALOG_WINDOW_FULL);
 
-    if (bPlayerSaysHello && pParty->hasActiveCharacter() && !pNPCInfo->Hired()) {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        if (pParty->hasActiveCharacter() && !pNPCInfo->Hired())
+            pParty->activeCharacter().playReaction(mm6::npcGreetingSpeech(mm6PartyReputation())); // MM6 greets in every conversation, a SpeakNPC event's too.
+    } else if (bPlayerSaysHello && pParty->hasActiveCharacter() && !pNPCInfo->Hired()) {
         if (pParty->uCurrentHour < 5 || pParty->uCurrentHour > 21) {
             pParty->activeCharacter().playReaction(SPEECH_GOOD_EVENING);
         } else {

@@ -234,7 +234,8 @@ What the other addresses do, and where the port has it:
   slot for Pendragon before it poisons (0x481250, 0x481318, 0x4813C3), and both hands for Aegis before it petrifies
   (0x481632). The checks jump on the item number before they test it for breakage, so a broken Pendragon or Aegis still
   wards. The jump on breakage goes the same way, so in MM6.exe any broken cloak wards off poison and any broken item
-  in hand wards off stone. The port wards only with the unbroken artifact, see [Open questions](open-questions.md).
+  in hand wards off stone. The port deliberately differs, by the owner's decision of 2026-11-21: a broken item wards
+  off nothing, so only an unbroken Pendragon or Aegis wards.
 - **Shielding** (`mm6::arrowHalvings`, `MM6MonsterAttack.h`). The routine for an object that hits a character halves an
   arrow once for an unbroken Aegis in either hand (0x431FAA), and once for an unbroken Valeria in the armour slot
   (0x431F7E). A shield can't go there, so Valeria never halves anything in MM6.exe, and the port does the same.

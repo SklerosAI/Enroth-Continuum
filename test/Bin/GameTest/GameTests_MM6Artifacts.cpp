@@ -447,13 +447,16 @@ GAME_TEST(MM6ArtifactEffects, AegisHalvesArrows) {
 }
 
 GAME_TEST(MM6ArtifactEffects, PendragonWardsOffPoison) {
-    // Pendragon keeps a spider's bite from poisoning its wearer.
-    for (bool pendragon : {false, true}) {
-        SCOPED_TRACE(fmt::format("pendragon={}", pendragon));
+    // Pendragon keeps a spider's bite from poisoning its wearer. A broken Pendragon doesn't, where MM6.exe lets it.
+    enum class Cloak { CLOAK_NONE, CLOAK_PENDRAGON, CLOAK_BROKEN_PENDRAGON };
+    for (Cloak cloak : {Cloak::CLOAK_NONE, Cloak::CLOAK_PENDRAGON, Cloak::CLOAK_BROKEN_PENDRAGON}) {
+        SCOPED_TRACE(fmt::format("cloak={}", std::to_underlying(cloak)));
         test.prepareForNextTest();
         startNewGameThroughInput(game);
-        if (pendragon)
+        if (cloak != Cloak::CLOAK_NONE)
             wieldFromBackpack(game, SKILL_INVALID, 410);
+        if (cloak == Cloak::CLOAK_BROKEN_PENDRAGON)
+            pParty->pCharacters[0].inventory.entry(ITEM_SLOT_CLOAK)->SetBroken();
         paralyzeAllButTheKnight();
         auto hpTape = charTapes.hp(0);
         auto conditionTape = charTapes.condition(0);
@@ -465,7 +468,7 @@ GAME_TEST(MM6ArtifactEffects, PendragonWardsOffPoison) {
             game.tick(); // The spider bites three times, the wearer's luck could shake off a single bite.
 
         ASSERT_EQ(hpTape.size(), 4);
-        EXPECT_EQ(conditionTape, pendragon ? tape(CONDITION_GOOD) : tape(CONDITION_GOOD, CONDITION_POISON_WEAK));
+        EXPECT_EQ(conditionTape, cloak == Cloak::CLOAK_PENDRAGON ? tape(CONDITION_GOOD) : tape(CONDITION_GOOD, CONDITION_POISON_WEAK));
     }
 }
 

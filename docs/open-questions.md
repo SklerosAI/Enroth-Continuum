@@ -47,10 +47,8 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   skill bonus routine (0x483930) differs. Spear damage starts at Expert where MM6 needs Master, Expert spear gives no
   armor class, shields scale by (1, 1, 2) where MM6 has (1, 2, 3), leather by (1, 1, 2) where MM6 has 1, and the blaster
   multipliers differ. Weapon-skill hireling points ride on the same terms.
-- **Valeria and broken warding items.** MM6.exe checks the armour slot for Valeria's arrow halving (0x431F7E), where a
-  shield can't go, so Valeria never shields, and the port does the same. Its warding checks also let any broken cloak
-  ward off poison and any broken item in hand ward off stone (0x481250, 0x481632), which the port doesn't copy. The
-  GrayFace patch fixes neither. Owner's call. See
+- **Valeria.** MM6.exe checks the armour slot for Valeria's arrow halving (0x431F7E), where a shield can't go, so
+  Valeria never shields, and the port does the same. The GrayFace patch doesn't fix it. Owner's call. See
   [Characters, items and spells](mm6-characters-items-spells.md#artifacts-and-relics).
 - **Hireling share rounding.** MM6.exe's gold-find routine 0x41EDE0 takes `(salaries / 100) * gold / 100` from a find,
   at least 1. `Party::foundGold` takes `gold * salaries / 100 / 100`. They differ only when the hirelings' prices don't

@@ -1,5 +1,6 @@
 #include "MM6Spellbook.h"
 
+#include <algorithm>
 #include <string>
 #include <utility>
 
@@ -10,6 +11,7 @@
 #include "Engine/Localization.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Party.h"
+#include "Engine/Spells/MM6SpellRules.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
 #include "Engine/Spells/Spells.h"
 #include "Engine/Timer.h"
@@ -19,6 +21,8 @@
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIStatusBar.h"
 #include "GUI/UI/UISpellbook.h"
+
+#include "Io/Mouse.h"
 
 #include "Media/Audio/AudioPlayer.h"
 
@@ -82,6 +86,8 @@ static constexpr int MM6_INACTIVE_SCHOOL_TAB_X = 421;
 static constexpr int MM6_SCHOOL_TAB_Y = 13;
 static constexpr int MM6_SCHOOL_TAB_STEP = 35;
 static constexpr int MM6_SPELL_NAME_BOX_WIDTH = 100;
+static constexpr int MM6_SPELL_POPUP_WIDTH = 460;
+static constexpr Pointi MM6_SPELL_POPUP_PICTURE_OFFSET = {17, 17};
 
 static bool hasMagicSchool(const Character &character, MagicSchool school) {
     return character.pActiveSkills[skillForMagicSchool(school)] || engine->config->debug.AllMagic.value();
@@ -173,6 +179,37 @@ void drawMM6Spellbook(const std::array<GraphicsImage *, 12> &page) {
             render->DrawQuad2D(assets->getIcon(fmt::format("tab{}a", std::to_underlying(tab) + 1)), {MM6_INACTIVE_SCHOOL_TAB_X, schoolTabY(tab)});
         }
     }
+}
+
+void drawMM6SpellPopup(SpellId spell) {
+    const Character &character = pParty->activeCharacter();
+    const SpellInfo &info = pSpellStats->pInfos[spell];
+    const int mouseY = mouse->position().y;
+    Recti frame(90, mouseY <= 250 ? mouseY + 30 : 30, 328, 68);
+
+    const int labelWidth = std::max({assets->pFontSmallnum->GetLineWidth(localization->str(LSTR_NORMAL)),
+                                     assets->pFontSmallnum->GetLineWidth(localization->str(LSTR_EXPERT)),
+                                     assets->pFontSmallnum->GetLineWidth(localization->str(LSTR_MASTER))});
+    const std::string text = fmt::format("{}\n\n{}\t{:03}:\t{:03}{}\t000\n{}\t{:03}:\t{:03}{}\t000\n{}\t{:03}:\t{:03}{}", info.pDescription,
+                                         localization->str(LSTR_NORMAL), labelWidth + 3, labelWidth + 10, info.pBasicSkillDesc,
+                                         localization->str(LSTR_EXPERT), labelWidth + 3, labelWidth + 10, info.pExpertSkillDesc,
+                                         localization->str(LSTR_MASTER), labelWidth + 3, labelWidth + 10, info.pMasterSkillDesc);
+    frame.h = std::max(frame.h + assets->pFontSmallnum->CalcTextHeight(text, frame.w, 0), 150);
+    frame.w = MM6_SPELL_POPUP_WIDTH;
+    GUIWindow::DrawMessageBox(frame, "");
+    render->DrawQuad2D(loadMM6SpellbookPage(magicSchoolForSpell(spell))[spellIndexInMagicSchool(spell) + 1], frame.topLeft() + MM6_SPELL_POPUP_PICTURE_OFFSET);
+    frame.w -= 12;
+    frame.h -= 12;
+    GUIWindow::DrawTitleText(assets->pFontArrus.get(), 120, 12, colorTable.PaleCanary, info.name, 3, frame);
+    GUIWindow::DrawText(assets->pFontSmallnum.get(), {120, 44}, colorTable.White, text, frame);
+
+    frame.w = 108;
+    const Skill skill = skillForMagicSchool(character.lastOpenedSpellbookPage);
+    GUIWindow::DrawTitleText(assets->pFontComic.get(), 12, 75, colorTable.White, localization->skillName(skill), 3, frame);
+    const Mastery mastery = std::max(character.getSkillValue(skill).mastery(), MASTERY_NOVICE); // MM6.exe reads a missing skill as Normal.
+    const int cost = mm6::spellManaRecovery(spell, mastery, mm6::SPELL_COST_FROM_SPELLS_TXT).mana; // MM6.exe shows spells.txt's cost, also where the cast charges the executable's.
+    GUIWindow::DrawTitleText(assets->pFontComic.get(), 12, frame.h - assets->pFontComic->GetHeight() - 16, colorTable.White,
+                             fmt::format("{}\n{}", localization->str(LSTR_SP_COST), cost), 3, frame);
 }
 
 void clickMM6QuickSpellButton(MM6QuickSpellAction action) {

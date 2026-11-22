@@ -98,8 +98,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 - **Spell cast on an item.** `GUIWindow_Inventory_CastSpell` in `src/GUI/UI/UIInventory.cpp` draws `x_x_u`, absent
   from MM6 `icons.lod`. It opens for item-targeted spells listed by MM7 ids, and MM7's Fire Aura (4) shares its number
   with MM6's Fire Bolt. Whether an MM6 cast reaches it is not verified.
-- **Spell popup mastery lines.** The spellbook's right-click popup shows a fourth line, "Get : Casting cost 0 spell
-  points", the Master text under a Grandmaster label MM6 doesn't have.
 - **Oracle background.** A hidden capture of the Oracle's conversation draws the left view area plain white. Not checked
   in visible play, so it may be offscreen-only or a missing house picture.
 - **Missing chest button art.** Opening a chest logs a missing `ib-bcu-a`, the MM7 cancel button background loaded in

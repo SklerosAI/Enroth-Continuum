@@ -317,8 +317,8 @@ the shared name is wrong.
 
 Spell points and recovery by mastery come through `mm6::spellManaRecovery`. Recovery is the executable's spell table.
 The cost is `spells.txt`'s while `gameplay.fix_spells_cost` is on, as the GrayFace patch has it, and the executable's
-otherwise. They differ only for Static Charge at Expert, 1 against 2. The cast path, the spellbook popup and the
-quick-spell key all use it. A cast with an overridden skill (scroll, NPC, temple) or
+otherwise. They differ only for Static Charge at Expert, 1 against 2. The cast path and the quick-spell key use it.
+The spellbook popup always shows `spells.txt`'s cost, as `MM6.exe`'s does. A cast with an overridden skill (scroll, NPC, temple) or
 under the debug all-magic switch throws, its cost rule isn't verified.
 
 ### What can be cast

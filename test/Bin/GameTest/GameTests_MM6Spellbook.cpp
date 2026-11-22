@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <cstdlib>
+#include <iterator>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -13,16 +15,20 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Localization.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/MM6/MM6PlayerSpell.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Party.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/MapTable.h"
+#include "Engine/mm7_data.h"
 
+#include "GUI/GUIButton.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UISpellbook.h"
 
+#include "Library/Color/ColorTable.h"
 #include "Library/Image/Png.h"
 
 #include "Utility/Streams/FileOutputStream.h"
@@ -72,6 +78,10 @@ static void enterFirstMapFromNewGame(EngineController &game) {
 }
 
 static constexpr Pointi MM6_CURE_WEAKNESS_PICTURE = {221, 56};
+static constexpr Pointi MM6_FLAME_ARROW_PICTURE = {350, 60};
+static constexpr Pointi MM6_FIRE_TAB = {430, 30};
+static constexpr Pointi MM6_STATIC_CHARGE_PICTURE = {360, 60};
+static constexpr Pointi MM6_AIR_TAB = {430, 65};
 
 static PlatformKey characterKey(int characterIndex) {
     return static_cast<PlatformKey>(std::to_underlying(PlatformKey::KEY_DIGIT_1) + characterIndex);
@@ -98,6 +108,11 @@ static void requireOffscreenCapture() {
     const char *capturePrefix = std::getenv("MM6_OFFSCREEN_CAPTURE_PATH");
     ASSERT_NE(capturePrefix, nullptr);
     ASSERT_TRUE(std::string_view(capturePrefix).starts_with("/private/tmp/"));
+}
+
+static std::string popupCost(const AccessibleVector<DrawnLine> &frame) {
+    auto line = std::ranges::find(frame, std::string("SP Cost"), &DrawnLine::text);
+    return line != frame.end() && std::next(line) != frame.end() ? std::next(line)->text : std::string();
 }
 
 GAME_TEST(MM6Spellbook, SpellPictureSelectsThenCasts) {
@@ -186,8 +201,79 @@ GAME_TEST(MM6Spellbook, KnightClosesBookWithExitTab) {
     EXPECT_EQ(screenTape, tape(SCREEN_SPELL_BOOK, SCREEN_GAME));
 }
 
+GAME_TEST(MM6Spellbook, SpellPopupHasThreeMasteries) {
+    // The spell popup drew a fourth mastery line, "Get" with the Master text again, and left out the spell's picture. MM6
+    // has Normal, Expert and Master.
+    auto textTape = tapes.drawnTexts();
+    auto lineTape = tapes.titleLines();
+    auto quadTape = tapes.hudQuads();
+    enterFirstMapFromNewGame(game);
+    pParty->pCharacters[2].bHaveSpell[mm6::SPELL_FLAME_ARROW] = true; // The Sorcerer, a Normal Fire caster.
+    pParty->pCharacters[3].pActiveSkills[SKILL_FIRE] = CombinedSkillValue(4, MASTERY_EXPERT); // The Druid.
+    pParty->pCharacters[3].bHaveSpell[mm6::SPELL_FLAME_ARROW] = true;
+    test.startTaping();
+
+    for (int characterIndex : {2, 3}) {
+        game.pressAndReleaseKey(characterKey(characterIndex));
+        game.tick();
+        game.pressAndReleaseKey(PlatformKey::KEY_C);
+        game.tick();
+        game.pressAndReleaseButton(BUTTON_LEFT, MM6_FIRE_TAB);
+        game.tick();
+        game.pressButton(BUTTON_RIGHT, MM6_FLAME_ARROW_PICTURE);
+        game.tick();
+        game.releaseButton(BUTTON_RIGHT);
+        game.tick();
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+    }
+
+    auto popupTexts = textTape.flatten().map([](const DrawnText &text) { return text.text; }).filter([](const std::string &text) {
+        return text.starts_with("Creates and fires");
+    });
+    EXPECT_EQ(popupTexts.unique(), tape(std::string(
+        "Creates and fires a single flaming arrow.  Unlike most spells, this spell is notoriously inaccurate and has the same chance of hitting "
+        "as a regular arrow (using your Fire skill as a bonus to hit).  The arrow does 1-8 points of damage when it hits.\n\n"
+        "Normal\t048:\t055Casting cost 2 spell points\t000\n"
+        "Expert\t048:\t055Casting cost 1spell point.  Quicker recovery rate\t000\n"
+        "Master\t048:\t055Casting cost 0 spell points.  Quickest recovery rate")));
+    EXPECT_EQ(lineTape.map(popupCost).unique(), tape(std::string(), std::string("2"), std::string(), std::string("1"), std::string()));
+    EXPECT_CONTAINS(lineTape.flatten(), (DrawnLine{"SP Cost", {123, 240}, colorTable.White}));
+    EXPECT_CONTAINS(quadTape.flatten(), (DrawnQuad{"cornr_ur", {517, 90}}));
+    EXPECT_CONTAINS(quadTape.flatten(), (DrawnQuad{"fire002", {107, 107}}));
+}
+
+GAME_TEST(MM6Spellbook, SpellPopupCostIsSpellsTxts) {
+    // Without fix_spells_cost the spell popup showed the cost MM6.exe charges, 2 for Expert Static Charge. MM6.exe's popup
+    // shows spells.txt's 1.
+    for (bool fix : {true, false}) {
+        SCOPED_TRACE(fmt::format("fix={}", fix));
+        test.prepareForNextTest();
+        engine->config->gameplay.FixSpellsCost.setValue(fix);
+        auto lineTape = tapes.titleLines();
+        enterFirstMapFromNewGame(game);
+        pParty->pCharacters[2].pActiveSkills[SKILL_AIR] = CombinedSkillValue(4, MASTERY_EXPERT); // The Sorcerer.
+        pParty->pCharacters[2].bHaveSpell[mm6::SPELL_STATIC_CHARGE] = true;
+        test.startTaping();
+
+        game.pressAndReleaseKey(characterKey(2));
+        game.tick();
+        game.pressAndReleaseKey(PlatformKey::KEY_C);
+        game.tick();
+        game.pressAndReleaseButton(BUTTON_LEFT, MM6_AIR_TAB);
+        game.tick();
+        game.pressButton(BUTTON_RIGHT, MM6_STATIC_CHARGE_PICTURE);
+        game.tick();
+        game.releaseButton(BUTTON_RIGHT);
+        game.tick();
+
+        EXPECT_EQ(lineTape.map(popupCost).unique(), tape(std::string(), std::string("1"), std::string()));
+    }
+}
+
 GAME_TEST(MM6OffscreenFrame, DISABLED_SpellbookCapture) {
-    // Hidden capture of every default character's spellbook.
+    // Hidden capture of every default character's spellbook, and of the right-click popup of the first spell on the page
+    // for a character who knows it.
     ASSERT_NO_FATAL_FAILURE(requireOffscreenCapture());
     enterFirstMapFromNewGame(game);
     for (int characterIndex = 0; characterIndex < 4; ++characterIndex) {
@@ -197,7 +283,20 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_SpellbookCapture) {
         }
         game.pressAndReleaseKey(PlatformKey::KEY_C);
         game.tick(3); // Books open over a couple of frames.
-        writeOffscreenFrame(game, fmt::format("{}-{}", characterIndex, localization->className(pParty->pCharacters[characterIndex].classType)));
+        const std::string name = fmt::format("{}-{}", characterIndex, localization->className(pParty->pCharacters[characterIndex].classType));
+        writeOffscreenFrame(game, name);
+        const Character &character = pParty->pCharacters[characterIndex];
+        const SpellId spell = spellsForMagicSchool(character.lastOpenedSpellbookPage)[0];
+        if (character.bHaveSpell[spell]) {
+            auto button = std::ranges::find(pGUIWindow_CurrentMenu->vButtons, std::string("SpellBook_Spell0"), &GUIButton::id);
+            ASSERT_NE(button, pGUIWindow_CurrentMenu->vButtons.end());
+            game.pressButton(BUTTON_RIGHT, (*button)->rect.center());
+            game.tick();
+            game.runGameRoutine([spell] { dword_507B00_spell_info_to_draw_in_popup = spell; }); // The frame cleared it after drawing the popup.
+            writeOffscreenFrame(game, name + "-popup");
+            game.releaseButton(BUTTON_RIGHT);
+            game.tick();
+        }
         game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
         game.tick(3);
         ASSERT_EQ(current_screen_type, SCREEN_GAME) << characterIndex;

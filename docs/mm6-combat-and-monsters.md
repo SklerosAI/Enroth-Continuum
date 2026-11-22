@@ -163,6 +163,8 @@ Melee and bow to-hit and damage use the shared formulas. MM6-specific parts:
 
 - Weapon special enchantments other than Antique throw (`requireVerifiedPartyAttack`). Elemental enchantments are not
   admitted yet.
+- Mordred heals, Hades, Ares and Artemis add elemental damage, and Conan doubles against devils and dragons, see
+  [artifacts and relics](mm6-characters-items-spells.md#artifacts-and-relics). Other weapons roll no extra damage.
 - Blasters deal Energy, which no MM6 monster resists. MM7 treats blasters as physical.
 - Player attack spells use `mm6::playerSpellDamage` and the spell's `spells.txt` damage tag (`MM6PlayerSpell.h`). Spells
   that roll to hit add 5 per spell level to the roll, and a miss says nothing.
@@ -216,6 +218,7 @@ Landed, matching the GrayFace patch:
 | Negative resistance no longer divides by zero | `resistedDamage` guards the divider |
 | Second weapon doesn't double recovery | Shared MM7 rule |
 | Recovery enchantment works, at +10% | `gameplay.fix_recovery_enchant` |
+| Relic extra damage goes through the monster's resistance, none to a stoned monster | `gameplay.fix_bonus_damage_resistance` |
 | Scholar gives +5% experience | `Party::GivePartyExp` |
 | Turn-based round is 50 game seconds | `gameplay.fix_turn_based_turn_time` |
 | Party can't hit a monster in its dying animation | Shared `CanBeDamaged` checks |
@@ -225,7 +228,7 @@ Landed, matching the GrayFace patch:
 | Arms Master, Weapons Master and Squire points shorten Expert sword, axe and bow recovery | `gameplay.fix_weapon_skill_hirelings` |
 | Armor and shield recovery penalty halved at Expert, gone at Master | Port bug against MM6.exe, no flag |
 
-Not yet: monster Paralyze, elemental weapon enchants through the monster resistance roll, Finger of Death experience for
+Not yet: monster Paralyze, elemental weapon enchants through the monster resistance roll (the relics have it), Finger of Death experience for
 the party, and the lava drop limit for monsters. That one hasn't reproduced, MM6.exe's
 walking edge check, ported in `ProcessActorCollisionsBLV`, already keeps a walking monster from stepping more than 100
 units down. Spell-side fixes (condition cures, Water Walk drain, stronger shorter buffs, Quick Spell school) are on

@@ -76,9 +76,11 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   Carnage arrow's explosion is the area damage a player can aim at monsters. Test
   `MM6GrayFaceShared.ExplosionHitsParalyzedMonster`.
 - **C4**. Elemental weapon enchants ignored resistances (`FixBonusDamageProc`, `Hooks.pas:1432`, routes the bonus
-  through the monster resistance roll). State: **absent**.
-  `MM6CombatRules.h` throws on any special enchantment other than Antique, so no enchant reaches the shared
-  resistance-aware path in `Actor.cpp`.
+  through the monster resistance roll). State: **partly fixed**.
+  The hooks at 0x430FD3, 0x430FE4 and 0x431628 cover Ares, Hades and Artemis, which `mm6::artifactExtraDamage` sends
+  through the roll behind `gameplay.fix_bonus_damage_resistance`, keeping it off a stoned monster too. Test
+  `MM6ArtifactEffects.RelicsAddElementalDamage`. `MM6CombatRules.h` still throws on any special enchantment other than
+  Antique, so no enchant reaches it.
 - **C5**. Second-hand weapon doubled recovery (`FixDualWeaponsRecovery=1`, works like MM7). State: **fixed by MM7
   rule**.
   `Character::GetAttackRecoveryTime` takes the slower weapon, no MM6 branch.

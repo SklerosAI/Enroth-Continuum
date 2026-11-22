@@ -106,8 +106,8 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   Expert staff and spear). The skills tab (0x415AEE) shows the bare skill, and the recovery routine 0x481A80 cuts
   Expert sword, axe and bow recovery by the bare skill (0x481E13), which is what GrayFace adds the points to. The port
   added Arms Master and Weapons Master to MM7's `SKILL_ARMSMASTER`, a hidden flat cut of every melee recovery, and
-  gave Squire nothing. Fixed 2026-11-19. MM6 no longer counts the masters toward Armsmaster, `Character::GetSkillBonus`
-  adds `mm6::weaponSkillHirelingBonus` and `mm6::armorSkillHirelingBonus` where MM6.exe does, and
+  gave Squire nothing. Fixed 2026-11-19. MM6 no longer counts the masters toward Armsmaster, `mm6::skillBonus` adds
+  `mm6::weaponSkillHirelingBonus` and `mm6::armorSkillHirelingBonus` where MM6.exe does, and
   `gameplay.fix_weapon_skill_hirelings` (default on) adds the weapon points to the Expert recovery cut too. Tests
   `MM6Hirelings.ArmsMasterAddsToWeaponSkillAttack` and `MM6Hirelings.ArmsMasterShortensOnlyExpertSwordRecovery`.
 - **C9**. Finger of Death gave no experience (`FixFingerDeathBug`, `Hooks.pas:1753`). State: **absent**.

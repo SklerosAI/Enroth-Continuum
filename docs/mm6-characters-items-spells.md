@@ -69,6 +69,40 @@ A character can learn a magic school's spells only when the family's starting-sk
 (`mm6::classCanLearnSpellSchool` in `MM6SpellLearning.h`). An empty or broken hand swings with the mace sound, as
 `MM6.exe` plays it.
 
+### Skill bonuses
+
+`Character::GetSkillBonus` hands every MM6 call to `mm6::skillBonus` (`MM6SkillBonus.h`), MM6.exe's skill bonus
+routine 0x483930. In the table L is the skill level, W the weapon points of hired Arms Masters, Weapons Masters and
+Squires (`mm6::weaponSkillHirelingBonus`) and A the Squire's armor points (`mm6::armorSkillHirelingBonus`).
+
+| Bonus | Skill | Normal | Expert | Master |
+|---|---|---|---|---|
+| Attack | Staff, Sword, Dagger, Axe, Spear, Mace | L + W | L + W | L + W |
+| Attack | Blaster | L + W | L + W | 3 × (L + W) |
+| Melee damage | Axe, Spear | 0 | 0 | L + W |
+| Melee damage | Mace | 0 | L + W | L + W |
+| Shooting | Bow | L + W | L + W | L + W |
+| Shooting | Blaster | L + W | L + W | 3 × L + W |
+| Armor class | Staff, Spear | 0 | L + A | L + A |
+| Armor class | Shield | L + A | 2 × (L + A) | 3 × (L + A) |
+| Armor class | Leather, Chain, Plate | L + A | L + A | L + A |
+| HP | Bodybuilding | `hpFactor` × L | `hpFactor` × 2L | `hpFactor` × 3L |
+| SP | Meditation | `spFactor` × L | `spFactor` × 2L | `spFactor` × 3L |
+
+- Attack (attribute 15) reads the first unbroken melee weapon in slot order, the off hand first, passing over a club,
+  whose skill is none of these. Melee damage (16, and 17 and 18, which nothing calls) passes over every weapon but an
+  axe, spear or mace and stops at the first of those, even when its mastery adds nothing. A Master axe in the main hand
+  keeps its bonus next to an Expert dagger in the off hand.
+- Shooting (19) reads the first bow or blaster in any slot. The shooting routine 0x47E810 sends a blaster in the main
+  hand, items 64 and 65, to the attack formula instead, so the stats screen's Shoot row repeats Attack.
+- Armor class (9) sums every worn item. There is no Dodge.
+- Every other attribute gets nothing, the ranged damage bonus (20) included.
+- `skilldes.txt` promises Expert blasters double effect, the routine gives single effect, see
+  [Open questions](open-questions.md).
+
+Game tests `MM6SkillBonus.*` check the stats screen for the spear, shield, leather and blaster rows and the off hand
+dagger.
+
 ## Conditions and recovery
 
 - The 19 runtime condition clocks are kept as they are. Stats are evaluated against the first active condition in
@@ -345,7 +379,7 @@ terms and arena wins) are not shown, their MM6 counters aren't mapped. Guild mem
 - [MM6ItemGenerator.h](../src/Engine/MM6/MM6ItemGenerator.h), [MM6ChestBaseItemPicker.h](../src/Engine/MM6/MM6ChestBaseItemPicker.h),
   [MM6ItemRecord28.h](../src/Engine/MM6/MM6ItemRecord28.h), [MM6StandardBonusMap.h](../src/Engine/MM6/MM6StandardBonusMap.h),
   [MM6AntiqueItemProjection.h](../src/Engine/MM6/MM6AntiqueItemProjection.h), [MM6BoundedItemProjection.h](../src/Engine/MM6/MM6BoundedItemProjection.h),
-  [MM6ArtifactBonus.h](../src/Engine/MM6/MM6ArtifactBonus.h)
+  [MM6ArtifactBonus.h](../src/Engine/MM6/MM6ArtifactBonus.h), [MM6SkillBonus.h](../src/Engine/MM6/MM6SkillBonus.h)
 - [MM6Potion.h](../src/Engine/MM6/MM6Potion.h), [MM6ConsumableRules.h](../src/Engine/MM6/MM6ConsumableRules.h),
   [MM6PotionCombinations.h](../src/Engine/Tables/MM6PotionCombinations.h)
 - [MM6PlayerSpell.h](../src/Engine/MM6/MM6PlayerSpell.h), [MM6SpellEffectGuard.h](../src/Engine/MM6/MM6SpellEffectGuard.h),

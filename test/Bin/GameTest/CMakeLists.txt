@@ -125,6 +125,7 @@ add_executable(OpenEnroth_GameTest ${GAME_TEST_MAIN_SOURCES} ${GAME_TEST_MAIN_HE
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Chest.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6AllArtifacts.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Artifacts.cpp)
+target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6SkillBonus.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6SaveDispatch.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Menus.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Hirelings.cpp)

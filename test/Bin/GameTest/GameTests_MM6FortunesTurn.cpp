@@ -24,8 +24,10 @@
 #include "Engine/MM6/MM6ChestTitleState.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/Objects/Actor.h"
+#include "Engine/Objects/ItemEnumFunctions.h"
 #include "Engine/Objects/Monsters.h"
 #include "Engine/Party.h"
+#include "Engine/Tables/ItemTable.h"
 #include "Engine/Tables/MapTable.h"
 
 #include "GUI/GUIButton.h"
@@ -42,6 +44,8 @@ static constexpr std::uint32_t kMerlinLuck = 17; // Item luck that rolls artifac
 static constexpr ItemId kMerlin = static_cast<ItemId>(404);
 static constexpr MonsterId kGreatWyrm = static_cast<MonsterId>(39); // Loot is gold and a level 6 item of any kind.
 static const Vec3f kTownHallDoor(-11090, -6536, 300); // New Sorpigal Town Hall, facing west.
+static constexpr ItemId kGoldenPyramid = static_cast<ItemId>(472);
+static const Vec3f kNajatTentDoor(-7300, -12048, 224); // Najat Ramadi's circus tent in Dragonsand, facing east.
 
 struct ScopedEnv {
     // Sets a launch variable the way Atlas does, and clears it when the test is done with it.
@@ -188,6 +192,13 @@ static void askJaniceForBounty(EngineController &game) {
     game.pressAndReleaseButton(BUTTON_LEFT, *portrait);
     game.tick();
     clickOption(game, window_SpeakInHouse.get(), "Bounty Hunt");
+}
+
+static void tradePyramidWithNajat(EngineController &game) {
+    // The party enters Najat Ramadi's circus tent and picks her pyramid trade.
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    clickOption(game, window_SpeakInHouse.get(), "Trade Pyramid for Armor");
 }
 
 static void leaveTownHall(EngineController &game) {
@@ -433,4 +444,80 @@ GAME_TEST(MM6FortunesTurn, SavesAfterThePopup) {
         EXPECT_EQ(slotTape, tape(false, true));
         EXPECT_EQ(merlinTape, take ? tape(0, 1, 0, 1) : tape(0)); // Taken, a new game, the load.
     }
+}
+
+GAME_TEST(MM6FortunesTurn, CircusPrizeTradeRerolls) {
+    // With Fortune's Turn Najat Ramadi's pyramid trade shows its armor in a popup that can reroll it. The pyramid goes
+    // once, and Take or Escape puts the shown armor on the cursor.
+    for (bool take : {true, false}) {
+        SCOPED_TRACE(fmt::format("take={}", take));
+        test.prepareForNextTest();
+        ScopedEnv mod("ENROTH_MM6_MONSTER_LOOT_REROLL", "1");
+        startNewGameThroughInput(game);
+        game.teleportTo(pMapTable->GetMapInfo("outb3.odm"), kNajatTentDoor, 0);
+        game.runGameRoutine([] { pParty->setHoldingItem(Item(kGoldenPyramid)); });
+        auto screenTape = tapes.screen();
+        auto offerTape = tapes.custom([] { return shownOffer() ? std::optional(shownOffer()->item.itemId) : std::nullopt; });
+        auto heldTape = tapes.custom([] { return pParty->pPickedItem.itemId; });
+        auto pyramidTape = tapes.custom([] { return std::ranges::count(carriedItems(), kGoldenPyramid); });
+        auto textTape = tapes.custom([] { return current_npc_text; });
+        auto drawnTape = tapes.drawnTexts();
+        test.startTaping();
+
+        tradePyramidWithNajat(game);
+        clickButton(game, "MonsterLoot_Reroll");
+        if (take) {
+            clickButton(game, "MonsterLoot_Take");
+        } else {
+            game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+            game.tick();
+        }
+
+        EXPECT_EQ(screenTape, tape(SCREEN_HOUSE, SCREEN_MONSTER_LOOT, SCREEN_HOUSE));
+        ASSERT_EQ(offerTape.size(), 4); // Closed, rolled, rerolled, closed.
+        EXPECT_NE(offerTape[1], offerTape[2]);
+        EXPECT_TRUE(isArmor(pItemTable->items[*offerTape[1]].type));
+        EXPECT_TRUE(isArmor(pItemTable->items[*offerTape[2]].type));
+        EXPECT_EQ(heldTape, tape(kGoldenPyramid, ITEM_NULL, *offerTape[2]));
+        EXPECT_EQ(pyramidTape, tape(1, 0));
+        EXPECT_TRUE(textTape.back().contains("here's your armor!"));
+        EXPECT_CONTAINS(drawnTape.flatten().map([](const DrawnText &text) { return text.text; }), "Circus prize trade");
+    }
+}
+
+GAME_TEST(MM6FortunesTurn, CircusPrizeTradeWithoutTheSwitch) {
+    // Without the launch flag Najat Ramadi's pyramid trade puts an armor on the cursor at once, as in MM6.
+    ScopedEnv mod("ENROTH_MM6_MONSTER_LOOT_REROLL", "0");
+    startNewGameThroughInput(game);
+    game.teleportTo(pMapTable->GetMapInfo("outb3.odm"), kNajatTentDoor, 0);
+    game.runGameRoutine([] { pParty->setHoldingItem(Item(kGoldenPyramid)); });
+    auto screenTape = tapes.screen();
+    auto heldTape = tapes.custom([] { return pParty->pPickedItem.itemId; });
+    auto textTape = tapes.custom([] { return current_npc_text; });
+    test.startTaping();
+
+    tradePyramidWithNajat(game);
+
+    EXPECT_EQ(screenTape, tape(SCREEN_HOUSE));
+    ASSERT_EQ(heldTape.size(), 2);
+    EXPECT_EQ(heldTape.front(), kGoldenPyramid);
+    EXPECT_TRUE(isArmor(pItemTable->items[heldTape.back()].type));
+    EXPECT_TRUE(textTape.back().contains("here's your armor!"));
+}
+
+GAME_TEST(MM6FortunesTurn, CircusPrizeTradeWithoutAPyramid) {
+    // With Fortune's Turn on, Najat Ramadi still turns down a party without a pyramid and opens no popup.
+    ScopedEnv mod("ENROTH_MM6_MONSTER_LOOT_REROLL", "1");
+    startNewGameThroughInput(game);
+    game.teleportTo(pMapTable->GetMapInfo("outb3.odm"), kNajatTentDoor, 0);
+    auto screenTape = tapes.screen();
+    auto itemsTape = tapes.custom([] { return carriedItems(); });
+    auto textTape = tapes.custom([] { return current_npc_text; });
+    test.startTaping();
+
+    tradePyramidWithNajat(game);
+
+    EXPECT_EQ(screenTape, tape(SCREEN_HOUSE));
+    EXPECT_EQ(itemsTape.size(), 1);
+    EXPECT_TRUE(textTape.back().contains("you don't have a golden pyramid"));
 }

@@ -332,8 +332,8 @@ sits between them when the chest has more than one page.
 - Each click puts the layout's markers and empty slots back over the chest's current record and runs the ordinary MM6
   chest generator and placement on it (`mm6::stageChestReroll`), with the chest random state and the map's treasure
   level, so the treasure-level ranges are those of the first roll. The chest type, flags, trap and fixed items stay.
-- An artifact of the discarded roll comes off the generated list. With [All Artifacts for MM6](#all-artifacts-for-mm6)
-  on, the collected ledger decides what rolls and the generated list keeps it.
+- An artifact of the discarded roll comes off the generated list, also with
+  [All Artifacts for MM6](#all-artifacts-for-mm6) on. The party never took it, so the collected ledger doesn't have it.
 - MM6 chests only let items be taken out. Taking an item or a gold pile forgets the chest's layout, so a looted chest
   can't be rerolled, also after a save and a load.
 - A chest rolled before the mod was on has no layout and can't be rerolled until its map refills.
@@ -356,6 +356,7 @@ without identifying the item. Escape takes nothing for a corpse and keeps the cu
 | Clicked heap, decoration or face that yields a random item | The item, at the event's treasure level and type | The event ran once and its other effects don't repeat. Take puts the item in hand. |
 | Monthly town-hall bounty | The monster, from that hall's normal eligible pool | The monthly deadline. A killed or claimed bounty can't be rerolled. |
 | Ore smith services, global events 501 to 503 | The item, at the ore's treasure level and the smith's item type | The ore is consumed once. Take or Escape puts the selected item in hand. |
+| MM6 Circus prize trades, global events 129 to 134 | The item, at the trade's treasure level and item type | The pyramid or keg is consumed once. Take or Escape puts the selected item in hand. |
 | Successful Enchant Item on a regular weapon | The special enchantment, from the spell's weapon and mastery pool | The cast's mana and recovery, charged once, and the weapon |
 
 Monsters with carried or stored items or gold, fixed drops, authored gold, failed casts, broken items, armor,
@@ -381,20 +382,22 @@ buttons and its exclusions, and rolls with MM6's own rules:
   `t5`, for example the hanging and bone cages of the Abandoned Temple (`d02`, events 16 to 23).
 - The New Sorpigal, Misty Islands and Silver Cove town halls open the popup when the bounty topic shows a live bounty.
   Reroll draws from MM6's one bounty pool (MM6.exe 0x4A3238), and the NPC text follows the new monster.
+- The Circus of the Sun's prize trades are MM6's closest match to the MM7 ore smith. Najat Ramadi, Kerman Murian and
+  Irbil Baktarian, in the three Dragonsand tents (`outb3`, houses 267, 555 and 556), take a Golden Pyramid (item 472)
+  for a level 6 armor, weapon or accessory (global events 129 to 131) or a Keg of Wine (473) for a level 4 one (132 to
+  134). A trade that finds the prize consumes it once and opens the popup. Reroll rolls the item again through the same
+  picker, and Take or Escape puts the shown item on the cursor the MM6 GiveItem way. `mm6::isCircusPrizeTrade` admits
+  only the shipped scripts. A party without the prize gets the trader's refusal, as in vanilla.
 - Each roll moves the item LCG on but leaves the generated artifact flags and the All Artifacts collected ledger alone,
   so a preview never uses up an artifact. A taken item carries the native record the picker made, so the game saves
   with it.
-- Escape takes nothing from a corpse or a clicked source, and keeps the bounty the popup showed.
+- Escape takes nothing from a corpse or a clicked source, keeps the bounty the popup showed, and takes the item a
+  Circus trade showed.
 
 The checkbox sits in the marble right of the fourth portrait's bars, with a dice under it, and is saved in the engine
 config as `mm6_monster_loot_reroll_in_game`. Its button exists only while the launch flag is set. MM6 has no Enchant
 Item player spell (`mm6::isVerifiedPlayerSpell`), so the enchantment reroll has no MM6 counterpart, and there is no
 new-game corpse setup.
-
-MM6 has no ore smith. Its closest trade is the Circus of the Sun prize exchange, global events 129 to 131, which take a
-held Golden Pyramid (item 472) for a level 6 armor, weapon or accessory, and 132 to 134, which take a Keg of Wine (473)
-for a level 4 one. They are the NPC topics of Kerman Murian, Irbil Baktarian and Najat Ramadi, so their GiveItem keeps
-its normal path, see [Open questions](open-questions.md).
 
 ### Candidate MM7 mods
 

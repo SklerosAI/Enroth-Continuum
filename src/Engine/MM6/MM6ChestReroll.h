@@ -86,7 +86,7 @@ struct ChestRerollCandidate {
  * Stages a new roll of a chest's random loot against the decoded active sidecar. The slots that held random-loot
  * markers or were empty go back to their layout, and the ordinary MM6 chest generator rolls them again with the chest
  * random state and the map's treasure level. A chest that was placed is placed again. The chest type, flags, trap and
- * fixed items stay.
+ * fixed items stay. An artifact of the discarded roll comes off the generated list.
  *
  * @param binding                       Live chests, sidecar, chest title state, overflow policy and All Artifacts
  *                                      ledger.
@@ -97,14 +97,13 @@ struct ChestRerollCandidate {
  * @param dchest                        Contents of `dchest.bin`.
  * @param iconLookup                    Item icon sizes, for the placement.
  * @param partyOwnedArtifactFlags       Artifacts the party carries.
- * @param releaseArtifacts              Whether an artifact of the discarded roll comes off the generated list.
  * @return                              The chests, sidecar, chest random state and generated artifacts after the
  *                                      reroll, or empty if anything refuses.
  */
 inline std::optional<ChestRerollCandidate> stageChestReroll(
     const ChestLiveBinding &binding, int chestIndex, const ChestRerollLayout &layout, MapTreasureLevel mapLevel,
     const ItemTable &table, std::span<const std::uint8_t> dchest, const ChestIconLookup &iconLookup,
-    const std::array<std::uint8_t, 30> &partyOwnedArtifactFlags, bool releaseArtifacts) {
+    const std::array<std::uint8_t, 30> &partyOwnedArtifactFlags) {
     if (binding.title != GameTitle::MM6 || !binding.chests || binding.chests->size() != 20 ||
         !binding.deltaBytes || binding.deltaBytes->empty() || !binding.titleState ||
         !binding.titleState->ready || chestIndex < 0 || chestIndex >= 20 ||
@@ -141,7 +140,7 @@ inline std::optional<ChestRerollCandidate> stageChestReroll(
                     return std::nullopt;
                 continue;
             }
-            if (releaseArtifacts && id >= 400 && id <= 429)
+            if (id >= 400 && id <= 429)
                 result.generatedArtifactFlags[id - 400] = 0;
             std::fill(item.begin(), item.end(), 0);
             writeChest32(item, 0, layout[slot]);

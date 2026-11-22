@@ -71,10 +71,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 - **Shop item hover.** Hovering an item on a shop shelf shows no name in the status bar. Not checked against MM6.exe.
 - **Street NPC news carry-over.** A street NPC slot keeps its news topic across map loads within one game, as in
   vanilla. GrayFace has no fix. Owner's call whether to clear it.
-- **Fortune's Turn for the Circus prize trades.** Kerman Murian, Irbil Baktarian and Najat Ramadi trade a held Golden
-  Pyramid or Keg of Wine for a random item (global events 129 to 134), MM6's closest match to the MM7 ore smith. MM6
-  Fortune's Turn leaves them on their normal path. Owner's call whether they get the reroll popup. See
-  [Fortune's Turn](mods-and-atlas.md#fortunes-turn).
 - **Potion mixing.** Item-on-item use of potions stays refused (`mm6::shouldBlockItemOnItemUse` in
   `src/Engine/MM6/MM6ConsumableRules.h`). The mixing outcomes are not traced.
 

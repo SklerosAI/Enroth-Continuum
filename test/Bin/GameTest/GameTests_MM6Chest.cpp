@@ -27,6 +27,7 @@
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Localization.h"
+#include "Engine/MM6/MM6ArtifactCollection.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/MM6/MM6ChestTitleState.h"
@@ -1046,9 +1047,9 @@ GAME_TEST(MM6ChestReroll, ChestRolledWithTheModOffHasNoButton) {
 }
 
 GAME_TEST(MM6ChestReroll, DiscardedArtifactLeavesTheGeneratedList) {
-    // An artifact that a reroll throws away was never found, so it comes off MM6's generated list and can be rolled
-    // again. With the All Artifacts mod the list doesn't decide what rolls, and the artifact stays on it. The hive's
-    // chest 4 rolls artifact 415 at this chest luck.
+    // An artifact that a reroll throws away was never found, so it comes off MM6's generated list, with or without the
+    // All Artifacts mod, and the All Artifacts ledger doesn't count it as collected. The hive's chest 4 rolls artifact
+    // 415 at this chest luck.
     constexpr ItemId hiveArtifact = static_cast<ItemId>(415);
     for (bool allArtifacts : {false, true}) {
         SCOPED_TRACE(fmt::format("allArtifacts={}", allArtifacts));
@@ -1060,6 +1061,7 @@ GAME_TEST(MM6ChestReroll, DiscardedArtifactLeavesTheGeneratedList) {
         game.teleportTo(pMapTable->GetMapInfo("hive.blv"), Vec3f(-3000, 4182, -1777), 0, -20); // West of chest 4, looking down at it.
         auto artifactsTape = tapes.custom([] { return chestArtifacts(4); });
         auto generatedTape = tapes.custom([] { return static_cast<int>(mm6::chestTitleState().generatedArtifactFlags[15]); });
+        auto collectedTape = tapes.custom([] { return static_cast<int>(mm6::artifactCollection().collected[15]); });
         test.startTaping();
 
         game.pointMouseAtFace(2960);
@@ -1069,10 +1071,7 @@ GAME_TEST(MM6ChestReroll, DiscardedArtifactLeavesTheGeneratedList) {
         game.tick();
 
         EXPECT_EQ(artifactsTape, tape(std::vector<int>{std::to_underlying(hiveArtifact)}, std::vector<int>{}));
-        if (allArtifacts) {
-            EXPECT_EQ(generatedTape, tape(1));
-        } else {
-            EXPECT_EQ(generatedTape, tape(1, 0));
-        }
+        EXPECT_EQ(generatedTape, tape(1, 0));
+        EXPECT_EQ(collectedTape, tape(0));
     }
 }

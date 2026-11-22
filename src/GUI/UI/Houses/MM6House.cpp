@@ -343,6 +343,24 @@ static int newsRegion() {
     return 1;
 }
 
+/**
+ * Plays the room's greeting, or its members only line at a guild the active character hasn't joined. A stable or boat
+ * with no route today stays silent.
+ *
+ * @offset 0x43C71C
+ * @param houseId                       House the party enters.
+ */
+static void playHouseEntrySound(HouseId houseId) {
+    if (mm6::isTransportIdleToday(houseId))
+        return;
+    const Character &character = pParty->hasActiveCharacter() ? pParty->activeCharacter() : pParty->pCharacters[0]; // MM6.exe asks the first character with nobody active.
+    if (mm6::guildMembershipAward(std::to_underlying(houseId)) && !mm6::isGuildMember(houseId, character)) {
+        mm6PlayHouseSound(houseId, HOUSE_SOUND_MAGIC_GUILD_MEMBERS_ONLY);
+        return;
+    }
+    mm6PlayHouseSound(houseId, HOUSE_SOUND_GENERAL_GREETING);
+}
+
 static std::string exitLabel(MapId map) {
     return localization->format(LSTR_ENTER_S, pMapTable->pInfos[map].name);
 }
@@ -1109,6 +1127,9 @@ bool mm6EnterHouse(HouseId requestedHouse) {
     jailedFrom = jailed ? requestedHouse : HOUSE_INVALID;
     if (jailed)
         serveJailSentence();
+    playHouseEntrySound(houseId);
+    if (id >= 204 && id <= 550 && pParty->hasActiveCharacter()) // MM6.exe 0x43C7A5, the residences.
+        pParty->activeCharacter().playReaction(SPEECH_HELLO_HOUSE);
     return true;
 }
 

@@ -100,9 +100,18 @@ Houses 600 and 601 are terminal pseudo-houses with no room.
 entry even when the movie is off or missing. If a loop restart fails, `HouseMovieLoop` unloads the track for MM6,
 which resumes time and audio.
 
-The port's MM6 house entry plays no greeting sound, see [open questions](open-questions.md). `planHousePresentation`
-computes a candidate greeting id (sound group, kind 1) but nothing plays it. Service sounds go through
-`mm6PlayHouseSound`, which plays `30000 + 100 * soundGroup + kind` for rooms with a nonzero sound group.
+Room sounds go through `mm6PlayHouseSound` (MM6.exe 0x496520), which plays `30000 + 100 * soundGroup + kind` for rooms
+with a nonzero sound group. Once a house is entered, MM6.exe (0x43C71C) plays the room's greeting, kind 1. A guild
+(houses 119 to 152) the active character hasn't joined plays kind 3 instead, its members only line, judged by the first
+character when nobody is active. A stable or boat (houses 48 to 68) with no route today (0x49CDA0) plays nothing. Then,
+in houses 204 to 550, the residences, the active character says speech 84 (0x43C7A5). Every one of those rooms has sound
+group 0. `planHousePresentation` still computes a candidate greeting id that nothing reads.
+
+The dungeon entry and exit dialog (0x43A070) plays the room's greeting of the event's house, if it has one, and the
+active character says speech 47 when the party is indoors under a red or yellow alert. The level type is MM6.exe's
+0x6107D4, 1 indoors and 2 outdoors, and the alert is bits 0x10 and 0x20 of the party flags at 0x90E838, as in the port.
+Of the `MoveToMap` events with a house in the 83 `.evt` files of MM6 `icons.lod`, only the castle doors (houses 153 to
+163, sound group 9) and the Oracle's door (house 170, sound group 2) have a sound group. No dungeon door does.
 
 ### The house screen
 

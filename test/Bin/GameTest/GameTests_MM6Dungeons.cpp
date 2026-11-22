@@ -674,6 +674,42 @@ GAME_TEST(MM6Dungeons, DragonsLairDoorText) {
     EXPECT_CONTAINS(lines, (DrawnLine{"dragon's treasure.", {493, 259}, colorTable.White}));
 }
 
+GAME_TEST(MM6Dungeons, DoorDialogSound) {
+    // The dungeon door dialogue played no sound. The Castle Ironfist door plays its room's greeting, the Abandoned
+    // Temple door's room has none.
+    auto screenTape = tapes.screen();
+    auto soundsTape = tapes.sounds();
+    auto speechTape = tapes.speeches();
+    startNewGameThroughInput(game);
+    test.startTaping();
+    for (const auto &[map, eventId] : {std::pair("outd3.odm", 43), std::pair("oute3.odm", 102)}) {
+        useMM6CampaignChainEventFace(game, pMapTable->GetMapInfo(map), eventId);
+        ASSERT_EQ(screenTape.back(), SCREEN_INPUT_BLV) << map;
+        game.pressGuiButton("Transition_No");
+        game.tick();
+    }
+
+    auto isRoomSound = [](SoundId sound) { return std::to_underlying(sound) >= 30000; }; // 30000 + 100 * the room's sound group + the line.
+    EXPECT_EQ(soundsTape.flatten().filter(isRoomSound), tape(static_cast<SoundId>(30901)));
+    EXPECT_TRUE(speechTape.flatten().empty());
+}
+
+GAME_TEST(MM6Dungeons, LeaveTempleUnderAlert) {
+    // Nobody spoke at the dungeon door dialogue. Leaving the Abandoned Temple with its bats about, the active character
+    // says so. The way in, under the open sky, is silent.
+    auto screenTape = tapes.screen();
+    auto speechTape = tapes.speeches();
+    auto alertTape = tapes.custom([] { return pParty->GetRedOrYellowAlert(); });
+    startNewGameThroughInput(game);
+    test.startTaping();
+    enterD02(game);
+    useIndoorEventFace(game, 50); // The way out.
+
+    EXPECT_EQ(screenTape.back(), SCREEN_INPUT_BLV);
+    EXPECT_EQ(alertTape.back(), true);
+    EXPECT_EQ(speechTape.flatten(), tape(SPEECH_LEAVE_DUNGEON));
+}
+
 GAME_TEST(MM6Dungeons, MoonAltarTouchedPast255Times) {
     // The 86th touch of the Altar of Might in the Temple of the Moon threw. Once its trap is sprung, each touch hurts
     // the party and adds 3 to a map byte, which MM6 stops at 255.

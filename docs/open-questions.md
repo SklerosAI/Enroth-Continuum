@@ -74,10 +74,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 - **Shop footer.** The footer draws over the status bar, so "Done!" and "Good as New!" never show. Not checked against
   MM6.exe.
 - **Shop item hover.** Hovering an item on a shop shelf shows no name in the status bar. Not checked against MM6.exe.
-- **House entry sounds.** On entering a house MM6.exe plays the room's sound 1 through 0x496520 at 0x43C77D, sound 3
-  instead at a guild the active character hasn't joined, and nothing at a stable or boat house with no route that day.
-  For houses 204 to 550 the active character then says speech 84 (0x43C7A5). The MM6 path plays neither.
-  `mm6EnterHouse` in `src/GUI/UI/Houses/MM6House.cpp`.
 - **Street NPC news carry-over.** A street NPC slot keeps its news topic across map loads within one game, as in
   vanilla. GrayFace has no fix. Owner's call whether to clear it.
 - **Potion mixing.** Item-on-item use of potions stays refused (`mm6::shouldBlockItemOnItemUse` in
@@ -90,9 +86,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 
 - **Look up and look down portraits.** MM6.exe's speech table gives speech 63 portrait 31 and speech 64 portrait 32.
   The shared `portraitVariants` table in `src/Engine/mm7_data.cpp`, which MM6 uses, gives 17 and 20.
-- **Dungeon door sounds.** When MM6.exe opens the dungeon entry and exit dialog (0x43A070) it calls 0x496520 with the
-  house if the room's sound byte is set, and 0x488CA0 with 47 on a character under a level and alert check. Neither
-  call is traced. The MM6 path plays nothing there. The d01 and d02 rooms have no sound byte.
 - **Oracle background.** A hidden capture of the Oracle's conversation draws the left view area plain white. Not checked
   in visible play, so it may be offscreen-only or a missing house picture.
 - **Missing chest button art.** Opening a chest logs a missing `ib-bcu-a`, the MM7 cancel button background loaded in

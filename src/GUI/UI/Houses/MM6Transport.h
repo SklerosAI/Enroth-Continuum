@@ -10,6 +10,23 @@
 #include "MM6House.h"
 #include "MM6TransportRules.h"
 
+namespace mm6 {
+
+/**
+ * @param houseId                       MM6 stable or boat.
+ * @return                              Route of each of the house's menu slots today, `nullptr` for a hidden slot.
+ */
+std::array<const TransportRoute *, 3> routesOfferedToday(HouseId houseId);
+
+/**
+ * @offset 0x49CDA0
+ * @param houseId                       MM6 house id.
+ * @return                              Whether the house is a stable or boat that offers no route today.
+ */
+bool isTransportIdleToday(HouseId houseId);
+
+} // namespace mm6
+
 /**
  * MM6 stable or boat. The proprietor lists the house's routes for today, and a paid trip passes its days with rest and
  * takes the party to the route's arrival point.
@@ -31,11 +48,6 @@ class GUIWindow_MM6Transport : public GUIWindow_MM6House {
      * @return                          Line above the routes with what a trip costs the active character.
      */
     std::string priceLine() const;
-
-    /**
-     * @return                          Route of each menu slot today, `nullptr` for a hidden slot.
-     */
-    std::array<const mm6::TransportRoute *, 3> offeredRoutes() const;
 
     /**
      * @return                          Gold a trip costs the active character.

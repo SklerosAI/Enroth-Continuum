@@ -31,6 +31,20 @@
 static constexpr QuestBit QBIT_MM6_PRICE_FIXING_TOPIC = static_cast<QuestBit>(116); // Loretta Fleise's topic sets it.
 static constexpr QuestBit QBIT_MM6_ALL_STABLE_PRICES_FIXED = static_cast<QuestBit>(117); // Her reward topic reads it.
 
+namespace mm6 {
+
+std::array<const TransportRoute *, 3> routesOfferedToday(HouseId houseId) {
+    return transportRules().offeredRoutes(std::to_underlying(houseId), pParty->uCurrentDayOfMonth % 7,
+                                          [](int bit) { return pParty->_questBits[static_cast<QuestBit>(bit)]; });
+}
+
+bool isTransportIdleToday(HouseId houseId) {
+    return transportRules().findHouse(std::to_underlying(houseId)) &&
+           std::ranges::none_of(routesOfferedToday(houseId), [](const TransportRoute *route) { return route != nullptr; });
+}
+
+} // namespace mm6
+
 GUIWindow_MM6Transport::GUIWindow_MM6Transport(HouseId houseId, const mm6::HousePresentationState &presentation)
     : GUIWindow_MM6House(houseId, presentation) {}
 
@@ -48,7 +62,7 @@ void GUIWindow_MM6Transport::Update() {
         drawPanelText(refusal, (212 - panelTextHeight(refusal)) / 2 + 101, colorTable.PaleCanary);
         return;
     }
-    const std::array<const mm6::TransportRoute *, 3> routes = offeredRoutes();
+    const std::array<const mm6::TransportRoute *, 3> routes = mm6::routesOfferedToday(houseId());
     const bool anyRoute = std::ranges::any_of(routes, [](const mm6::TransportRoute *route) { return route != nullptr; });
     if (anyRoute || offersToFixPrices()) {
         drawPanelText(priceLine(), 146, colorTable.White);
@@ -67,7 +81,7 @@ void GUIWindow_MM6Transport::selectService(int index) {
             fixPrices();
         return;
     }
-    const mm6::TransportRoute *route = offeredRoutes()[index];
+    const mm6::TransportRoute *route = mm6::routesOfferedToday(houseId())[index];
     if (!route)
         return;
 
@@ -106,7 +120,7 @@ std::string GUIWindow_MM6Transport::serviceLabel(int index) const {
         return {};
     if (_services[index] == mm6::HouseServiceOption::FixPrices)
         return offersToFixPrices() ? pNPCTopics[99].pTopic : std::string();
-    const mm6::TransportRoute *route = offeredRoutes()[index];
+    const mm6::TransportRoute *route = mm6::routesOfferedToday(houseId())[index];
     if (!route)
         return {};
     const MapId destination = pMapTable->GetMM6TransportMapInfo(*pGames_LOD, route->mapIndex);
@@ -119,11 +133,6 @@ int GUIWindow_MM6Transport::stackedMenuTop() const {
 
 std::string GUIWindow_MM6Transport::priceLine() const {
     return localization->format(LSTR_TRAVEL_COST_D_GOLD, price());
-}
-
-std::array<const mm6::TransportRoute *, 3> GUIWindow_MM6Transport::offeredRoutes() const {
-    return mm6::transportRules().offeredRoutes(std::to_underlying(houseId()), pParty->uCurrentDayOfMonth % 7,
-                                               [](int bit) { return pParty->_questBits[static_cast<QuestBit>(bit)]; });
 }
 
 int GUIWindow_MM6Transport::price() const {

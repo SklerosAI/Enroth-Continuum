@@ -59,6 +59,7 @@
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/UIStatusBar.h"
 #include "GUI/UI/UISpellbook.h"
+#include "GUI/UI/MM6FortunesTurn.h"
 #include "GUI/UI/MM6Spellbook.h"
 #include "GUI/UI/MM6GameMenuLayout.h"
 
@@ -1459,6 +1460,8 @@ void GameUI_DrawPortraits() {
         render->FillRect({16, 455, 2, 2}, colorTable.PaleCanary);
         render->FillRect({13, 452, 2, 2}, colorTable.PaleCanary);
     }
+    if (engine->gameTitle() == GameTitle::MM6)
+        mm6::updateFortunesTurnToggle();
 }
 
 //----- (00441D38) --------------------------------------------------------

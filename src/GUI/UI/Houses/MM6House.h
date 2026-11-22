@@ -82,11 +82,18 @@ class GUIWindow_MM6House : public GUIWindow_House {
     /**
      * Shows the town hall's bounty for this month in place of the NPC's topics, rolling a new monster when the month
      * has turned. When the party has killed the monster since, pays 100 gold per monster level, gives every character
-     * the bounties collected award and adds the level to the reputation.
+     * the bounties collected award and adds the level to the reputation. With Fortune's Turn on, a bounty that is still
+     * open opens its reroll popup.
      *
      * @offset 0x4A30B0 (MM6)
      */
     void huntBounty();
+
+    /**
+     * Fortune's Turn reroll of this town hall's bounty. Draws a new monster from the same pool as `huntBounty` and
+     * shows it, the monthly deadline stays.
+     */
+    void rerollBounty();
 
     /**
      * Shows the resident's join text with More Information and Hire in place of its topics.
@@ -272,6 +279,12 @@ class GUIWindow_MM6House : public GUIWindow_House {
      * confirmed. An amount above what the party has, or holds in the bank, moves all of it.
      */
     void updateBankTransfer();
+
+    /**
+     * @param text                      npctext.txt line, the bounty, its congratulations or the claimed note.
+     * @param monster                   Monster the line names, `MONSTER_INVALID` for the claimed note.
+     */
+    void showBounty(int text, MonsterId monster);
 
     GraphicsImage *_panel = nullptr;
     std::vector<Resident> _residents;

@@ -44,6 +44,7 @@
 #include "GUI/MM6TopPanelResources.h"
 #include "GUI/UI/MM6CharacterScreen.h"
 #include "GUI/UI/NPCTopics.h"
+#include "GUI/UI/UIMonsterLoot.h"
 #include "GUI/UI/UIStatusBar.h"
 #include "GUI/UI/Houses/MM6Guild.h"
 #include "GUI/UI/Houses/MM6Shop.h"
@@ -599,10 +600,10 @@ void GUIWindow_MM6House::huntBounty() {
         pParty->monster_id_for_hunting[slot] = randomBountyMonster();
     }
     const MonsterId monster = pParty->monster_id_for_hunting[slot];
-    const int level = monster == MONSTER_INVALID ? 0 : pMonsterStats->infos[monster].level;
     int text = monster == MONSTER_INVALID ? 369 : 367; // "Someone has already claimed the bounty", or "This month's bounty is on a %s".
     if (pParty->monster_for_hunting_killed[slot]) {
         if (monster != MONSTER_INVALID) {
+            const int level = pMonsterStats->infos[monster].level;
             pParty->partyFindsGold(100 * level, GOLD_RECEIVE_SHARE);
             for (Character &character : pParty->pCharacters)
                 mm6::writeCharacterEventVariable(character, EVENT_Set, std::to_underlying(VAR_Award), kBountiesAward);
@@ -613,11 +614,22 @@ void GUIWindow_MM6House::huntBounty() {
         }
         text = 368; // "Congratulations on defeating the %s!"
     }
+    showBounty(text, monster);
+    openBountyRerollPopup(slot);
+}
+
+void GUIWindow_MM6House::rerollBounty() {
+    const HouseId slot = bountySlot(houseId());
+    pParty->monster_id_for_hunting[slot] = randomBountyMonster();
+    showBounty(367, pParty->monster_id_for_hunting[slot]);
+}
+
+void GUIWindow_MM6House::showBounty(int text, MonsterId monster) {
     if (monster == MONSTER_INVALID) {
         current_npc_text = pNPCTopics[text].pText;
     } else {
         const std::string name = fmt::format("{::}{}{::}", colorTable.PaleCanary.tag(), pMonsterStats->infos[monster].name, colorTable.White.tag());
-        current_npc_text = fmt::sprintf(pNPCTopics[text].pText, name, 100 * level); // NOLINT: this is not ::sprintf.
+        current_npc_text = fmt::sprintf(pNPCTopics[text].pText, name, 100 * pMonsterStats->infos[monster].level); // NOLINT: this is not ::sprintf.
     }
     _bountyShown = true;
     refreshTopics();

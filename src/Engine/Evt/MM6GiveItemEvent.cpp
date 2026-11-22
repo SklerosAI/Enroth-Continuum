@@ -28,9 +28,13 @@ void giveEventItem(ItemTreasureLevel treasureLevel, RandomItemType requestedKind
         staged.item.mm6RawRecord->setWord(0, fixed);
     }
 
+    holdEventItem(staged.item);
+    chestTitleState() = staged.nextState;
+}
+
+void holdEventItem(const Item &item) {
     if (pParty->pPickedItem.itemId == ITEM_NULL) {
-        pParty->setHoldingItem(staged.item);
-        chestTitleState() = staged.nextState;
+        pParty->setHoldingItem(item);
         return;
     }
 
@@ -43,7 +47,7 @@ void giveEventItem(ItemTreasureLevel treasureLevel, RandomItemType requestedKind
     Pointi previousOffset = mouse->pickedItemOffset;
     InventoryEntry stored = relocateEventItemToInventory(*recipient, pParty->pPickedItem);
     try {
-        pParty->setHoldingItem(staged.item);
+        pParty->setHoldingItem(item);
     } catch (...) {
         pParty->pPickedItem = previous;
         recipient->inventory.take(stored);
@@ -54,7 +58,6 @@ void giveEventItem(ItemTreasureLevel treasureLevel, RandomItemType requestedKind
         mouse->pickedItemOffset = previousOffset;
         throw;
     }
-    chestTitleState() = staged.nextState;
 }
 
 } // namespace mm6

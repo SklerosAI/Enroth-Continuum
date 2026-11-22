@@ -214,4 +214,12 @@ bool allArtifactsEnabled(GameTitle title) {
     return allArtifactsEnabled(title, std::getenv("ENROTH_MM6_ALL_ARTIFACTS"));
 }
 
+bool monsterLootRerollEnabled(GameTitle title, const char *flag) {
+    return title == GameTitle::MM6 && flag && std::string_view(flag) == "1";
+}
+
+bool monsterLootRerollEnabled(GameTitle title) {
+    return monsterLootRerollEnabled(title, std::getenv("ENROTH_MM6_MONSTER_LOOT_REROLL"));
+}
+
 }  // namespace mm6::mods

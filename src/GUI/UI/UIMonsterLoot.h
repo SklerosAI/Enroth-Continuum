@@ -47,6 +47,12 @@ void beginClickedLootCapture();
 void finishClickedLootCapture();
 bool captureClickedRandomLoot(ItemTreasureLevel level, RandomItemType type);
 
+/**
+ * @return                              Whether Fortune's Turn is on for the running title, both its launch flag and
+ *                                      the in-game dice checkbox.
+ */
+bool fortunesTurnSwitchedOn();
+
 bool fortuneRerollActive();
 void openOreRerollPopup(ItemTreasureLevel level, RandomItemType type);
 void openBountyRerollPopup(HouseId hall);

@@ -12,6 +12,7 @@ set(GUI_UI_SOURCES
         MM6StreetNpcTalk.cpp
         UIChest.cpp
         UIMonsterLoot.cpp
+        MM6FortunesTurn.cpp
         UICredits.cpp
         UIDialogue.cpp
         UIBranchlessDialogue.cpp
@@ -47,6 +48,7 @@ set(GUI_UI_HEADERS
         MM6PaperdollArt.h
         UIChest.h
         UIMonsterLoot.h
+        MM6FortunesTurn.h
         UICredits.h
         UIDialogue.h
         UIBranchlessDialogue.h

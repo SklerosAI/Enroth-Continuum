@@ -178,7 +178,7 @@ are the four that items raise, Fire, Electricity, Cold and Poison, not Magic. A 
 | 405 | Percival | none | Swift (0x481E69), carnage arrows (0x45CD5D) | Done |
 | 406 | Galahad | Hit points +25, resistances +10 | none | Done |
 | 407 | Pellinore | Endurance +30 | A hit point per regeneration step (0x487BB5) | Done |
-| 408 | Valeria | Accuracy +30 | Halves arrows, but only from the armour slot (0x431F7E), where a shield can't go | As MM6.exe, see below |
+| 408 | Valeria | Accuracy +30 | Halves arrows, but only from the armour slot (0x431F7E), where a shield can't go | Done, from either hand with `fix_valeria_shield` |
 | 409 | Arthur | Seven stats +10, spell points +25 | none | Done |
 | 410 | Pendragon | Luck +30 | Wards off a monster's poison from the cloak slot (0x481250, 0x481318, 0x4813C3), double disarm skill (0x485409) | Done |
 | 411 | Lucius | Speed +30 | none | Done |
@@ -238,7 +238,9 @@ What the other addresses do, and where the port has it:
   off nothing, so only an unbroken Pendragon or Aegis wards.
 - **Shielding** (`mm6::arrowHalvings`, `MM6MonsterAttack.h`). The routine for an object that hits a character halves an
   arrow once for an unbroken Aegis in either hand (0x431FAA), and once for an unbroken Valeria in the armour slot
-  (0x431F7E). A shield can't go there, so Valeria never halves anything in MM6.exe, and the port does the same.
+  (0x431F7E). A shield can't go there, so Valeria never halves anything in MM6.exe. With `gameplay.fix_valeria_shield`,
+  default on and beyond GrayFace, an unbroken Valeria halves an arrow from either hand instead. Off, the port keeps the
+  armour slot check.
 
 ### Shops and value
 

@@ -508,6 +508,10 @@ Rules for every fix in this backlog:
   Done 2026-11-18 in `GameTests_MM6GrayFaceShared.cpp`. W4 turned out vanilla in MM6's own day check and is fixed behind
   `fix_new_day_at_month_start`.
 
+- **Valeria**. Not a GrayFace item. MM6.exe checks the armor slot for the shield Valeria before it halves an arrow
+  (0x431F7E), so Valeria never shields. Beyond GrayFace, owner decision 2026-11-21. Done behind `fix_valeria_shield`,
+  an unbroken Valeria in either hand halves arrows. Test `MM6ArtifactEffects.ValeriaHalvesArrows`.
+
 **Admission-time fixes.** C2 monster Paralyze applies the Paralyzed condition to one chosen member. C4 elemental weapon
 enchants go through the monster resistance roll. C9 Finger of Death awards experience. C11 Charm uses the corrected
 Master duration. C19 Starburst and Meteor Shower refuse targets beyond arrow range. W10 Lloyd's Beacon and Town Portal

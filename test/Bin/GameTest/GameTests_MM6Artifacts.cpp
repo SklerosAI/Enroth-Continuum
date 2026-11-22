@@ -446,6 +446,42 @@ GAME_TEST(MM6ArtifactEffects, AegisHalvesArrows) {
     }
 }
 
+GAME_TEST(MM6ArtifactEffects, ValeriaHalvesArrows) {
+    // Valeria never halved an arrow, MM6.exe looked for it in the armor slot. With fix_valeria_shield an unbroken Valeria
+    // in hand halves an archer's 2 to 7 damage to 1 to 3, a broken one doesn't.
+    struct Case {
+        bool fix;
+        bool broken;
+        bool halves;
+    };
+    for (const Case &c : {Case{true, false, true}, Case{false, false, false}, Case{true, true, false}}) {
+        SCOPED_TRACE(fmt::format("fix={} broken={}", c.fix, c.broken));
+        test.prepareForNextTest();
+        engine->config->gameplay.FixValeriaShield.setValue(c.fix);
+        startNewGameThroughInput(game);
+        wieldFromBackpack(game, SKILL_SHIELD, 408);
+        if (c.broken)
+            pParty->pCharacters[0].inventory.entry(ITEM_SLOT_OFF_HAND)->SetBroken();
+        paralyzeAllButTheKnight();
+        auto hpTape = charTapes.hp(0);
+        test.startTaping();
+
+        spawnAhead(game, static_cast<MonsterId>(1), 1500, SPAWN_STATIONARY);
+        for (int frame = 0; frame < 1000 && hpTape.size() < 4; frame++)
+            game.tick(); // The archer shoots until three arrows land.
+
+        ASSERT_EQ(hpTape.size(), 4);
+        std::vector<int> hits;
+        for (size_t i = 1; i < hpTape.size(); i++)
+            hits.push_back(hpTape[i - 1] - hpTape[i]);
+        if (c.halves) {
+            EXPECT_LE(*std::ranges::max_element(hits), 3);
+        } else {
+            EXPECT_GT(*std::ranges::max_element(hits), 3);
+        }
+    }
+}
+
 GAME_TEST(MM6ArtifactEffects, PendragonWardsOffPoison) {
     // Pendragon keeps a spider's bite from poisoning its wearer. A broken Pendragon doesn't, where MM6.exe lets it.
     enum class Cloak { CLOAK_NONE, CLOAK_PENDRAGON, CLOAK_BROKEN_PENDRAGON };

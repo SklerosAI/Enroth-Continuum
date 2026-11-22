@@ -97,6 +97,22 @@ int mm6::itemSalePayment(int value, float multiplier, int merchant, bool broken,
     return std::max(1, result);
 }
 
+int mm6::itemBaseServicePrice(HouseServiceOption option, int value, float multiplier, bool generalStore) {
+    const double val = multiplier;
+    switch (option) {
+        case HouseServiceOption::SellItems: {
+            const int full = std::max(1, static_cast<int>(value / (val + 2.0)));
+            return generalStore ? full / 2 : full;
+        }
+        case HouseServiceOption::IdentifyItems:
+            return std::max(1, static_cast<int>(val * 50.0));
+        case HouseServiceOption::RepairItems:
+            return std::max(1, static_cast<int>(value / (6.0 - val)));
+        default:
+            return std::max(1, static_cast<int>(value * val));
+    }
+}
+
 bool mm6::shopTradesItem(int houseId, ItemId item, const ItemData &data) {
     const int id = std::to_underlying(item);
     if ((id >= 430 && id < 436) || id > 445)

@@ -103,13 +103,38 @@ sound 27.
 ### Footer and status line
 
 A shop screen's footer is the status line's own spot. MM6.exe draws both the same way, the footer picture at (0, 352)
-and the text centred in 450 pixels plus 11, at y 355. The status line is drawn by the hover update 0x41F190, which
-the main loop calls at 0x453ACE before the frame is drawn, and on a full redraw at 0x43515E. The house window is drawn later in every
-frame, by the window pass 0x40FC60 at 0x4352F0, and the shop screens draw the footer and their "Select the item to ..."
-prompt there unconditionally (0x4A02B1 and 0x4A0832 in the weapon shop). The prompt wins every frame, so the status lines
-a shop sets, "Done!", "Good as New!", "You don't have enough gold" and "Pack is full!", never reach the screen in MM6.exe.
-The port draws in the same order, the status bar in `Engine::DrawGUI` and then the shop window in `GUI_UpdateWindows`,
-and shows the same thing.
+and the text centred in 450 pixels plus 11, at y 355. The status line is drawn by the hover update 0x41F190, which the
+main loop calls at 0x453ACE before the frame is drawn, and on a full redraw at 0x43515E. The house window is drawn later
+in every frame, by the window pass 0x40FC60 at 0x4352F0, and the shop screens draw the footer and their "Select the item
+to ..." prompt there unconditionally (0x4A02B1 and 0x4A0832 in the weapon shop). The prompt wins every frame, so the
+status lines a shop sets, "Done!", "Good as New!", "You don't have enough gold" and "Pack is full!", never reach the
+screen in MM6.exe. The port draws in the same order, the status bar in `Engine::DrawGUI` and then the shop window in
+`GUI_UpdateWindows`, and shows the same thing.
+
+### Merchant lines
+
+With the mouse over an item, a shop screen has the shopkeeper quote it in the right panel, centred on y 225 in white,
+from `merchant.txt` (MM6.exe's shop screen draws, 0x49A4A0, 0x49FF40, 0x4A1040, 0x4A1970 and the guild's 0x49B790).
+The buy screens, Buy Spells included, quote the shelf item, and the other screens the backpack item. MM6.exe picks the
+line at 0x485120:
+
+- An item outside the shop's kind gets line 4 ("Sorry, I am a %28..."). The kind goes by shop type: a weapon shop takes
+  item types 0 to 2, an armor shop 3 to 9, a magic shop and a spell guild items 436 to 445 or with the Misc skill, and a
+  general store anything. This is looser than the trade check, which goes by house id.
+- On the sell screen, items 430 to 435 and above 445 get line 5 ("... beyond my meager knowledge").
+- A character without the merchant skill of his own gets line 1. Hirelings still lower the quoted price.
+- Otherwise line 3 when the price equals the item value, line 2 when it doesn't.
+
+The codes are expanded by 0x489CF0: `%24` is the item name in pale yellow, `%25` the full price before the merchant
+discount, `%27` the price the character pays or gets, `%28` the shopkeeper's title from `2DEvents.txt` and `%29` the
+identify price. A general store quotes half for a sale. On the identify screen an identified item shows its name alone,
+and on the repair screen an item that isn't broken shows nothing. MM6.exe also puts the name of the shelf item under
+the mouse on the status line (0x41F420), on Buy Items only, and the footer prompt covers it in the same frame like any
+other status line, so the port doesn't draw it.
+
+With `gameplay.fix_shops_buying_blasters` a blaster gets line 5 on the sell screen, so the quote matches the refusal.
+GrayFace hooks this at 0x48519A for the sell screen only, and the port gives the general store's half price sale the
+same line.
 
 ### Stock and refresh
 

@@ -387,7 +387,8 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   anything up to 445, so a blaster sold for 1 gold. In MM6 items.txt the Value 0 items a shop would otherwise take are
   blasters 64 and 65 and gold 197 to 199. `GUIWindow_MM6Shop::sell` now refuses a Value 0 item. Identify and repair
   still take a blaster, as with the patch. Flag `gameplay.fix_shops_buying_blasters`. Test
-  `MM6Houses.WeaponShopRefusesBlaster`. Our MM6 shops show no sell hint, so the 0x485120 half has nothing to hook yet.
+  `MM6Houses.WeaponShopRefusesBlaster`. The 0x485120 half is the merchant line over a blaster on the sell screen,
+  which now says the blaster is beyond the shopkeeper. Test `MM6Houses.WeaponShopBlasterHover`.
 - **W27**. Buy dialog read out of bounds with no active member. State: **fixed**.
   `MM6Shop.cpp:141` returns without an active member.
 - **W28**. Unconscious members could identify and repair in shops (`FixDeadPlayerIdentifyItem=1`, `MMHooks.pas:3062`,

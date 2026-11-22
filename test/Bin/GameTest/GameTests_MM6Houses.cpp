@@ -1477,6 +1477,137 @@ GAME_TEST(MM6Houses, WeaponShopRepairSpeech) {
     }
 }
 
+static Pointi backpackItemCenter(int item) {
+    // The middle of the first item with this id in the backpack a shop screen shows.
+    for (InventoryEntry entry : pParty->pCharacters[0].inventory.entries())
+        if (entry.zone() == INVENTORY_ZONE_GRID && entry->itemId == static_cast<ItemId>(item))
+            return mapFromInventoryGrid(entry.geometry().topLeft(), Pointi(14, 17)) + Pointi(16, 16);
+    return {};
+}
+
+static std::vector<std::string> panelSentences(const TestMultiTape<DrawnLine> &tape) {
+    // What the right panel says in each frame, its lines joined by spaces, without repeating the frame before.
+    std::vector<std::string> result;
+    for (const AccessibleVector<DrawnLine> &frame : tape) {
+        std::string sentence;
+        for (const DrawnLine &line : panelLines(frame))
+            sentence += (sentence.empty() ? "" : " ") + line.text;
+        if (result.empty() || result.back() != sentence)
+            result.push_back(sentence);
+    }
+    return result;
+}
+
+static const std::string kWeaponShopMenu = "Buy Items Sell Items Identify Items Repair Items Special Items";
+
+static void openWeaponShopScreen(EngineController &game, int label) {
+    // Enters the New Sorpigal weapon shop and opens the screen behind this house option line.
+    enterThroughDoor(game, kWeaponShopDoor, 0);
+    clickHouseOption(game, localization->str(static_cast<LstrId>(label)));
+}
+
+GAME_TEST(MM6Houses, WeaponShopBuyHover) {
+    // Hovering an item on the New Sorpigal weapon shop's table said nothing. The shopkeeper quotes it in the right
+    // panel, and a character with the merchant skill hears the haggling line.
+    for (bool merchant : {false, true}) {
+        SCOPED_TRACE(fmt::format("merchant={}", merchant));
+        test.prepareForNextTest();
+        auto linesTape = tapes.titleLines();
+        startMM6NewGame(game);
+        if (merchant)
+            pParty->pCharacters[0].pActiveSkills[SKILL_MERCHANT] = CombinedSkillValue::novice();
+        test.startTaping();
+        openWeaponShopScreen(game, 539); // Buy Items.
+        GUIWindow_MM6Shop *shop = dynamic_cast<GUIWindow_MM6Shop *>(window_SpeakInHouse.get());
+        ASSERT_NE(shop, nullptr);
+        game.moveMouse(shop->stockItemRect(0).center());
+        game.tick();
+        const std::string quote = merchant ? "Ordinarily I sell things like this \f65523Mace\f00000 for 75 gold.  But you drive a hard bargain-- I'll sell it to you for 67."
+                                           : "An excellent choice!  This \f65523Mace\f00000 is of the finest quality.  I am willing to virtually give it away for 75 gold.";
+        EXPECT_EQ(panelSentences(linesTape), std::vector<std::string>({"", kWeaponShopMenu, "", quote}));
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopSellHover) {
+    // Hovering an item in the backpack on the New Sorpigal weapon shop's sell screen said nothing. The shopkeeper offers
+    // a price for a weapon and turns his nose up at armor.
+    for (int item : {1, 66}) { // The knight's sword, then his leather armor.
+        SCOPED_TRACE(fmt::format("item={}", item));
+        test.prepareForNextTest();
+        auto linesTape = tapes.titleLines();
+        startMM6NewGame(game);
+        test.startTaping();
+        openWeaponShopScreen(game, 540); // Sell Items.
+        game.moveMouse(backpackItemCenter(item));
+        game.tick();
+        const std::string quote = item == 1 ? "Hmph.  Looks like junk to me. <yawn> I suppose I could give you oh, say, 14 gold pieces for it."
+                                            : "Sorry, I am a Blacksmith.  I'm not interested in such things.";
+        EXPECT_EQ(panelSentences(linesTape), std::vector<std::string>({"", kWeaponShopMenu, "", quote}));
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopIdentifyHover) {
+    // Hovering an item on the New Sorpigal weapon shop's identify screen said nothing. The shopkeeper names his price for
+    // an unidentified weapon, and an identified one shows its name alone.
+    for (bool identified : {false, true}) {
+        SCOPED_TRACE(fmt::format("identified={}", identified));
+        test.prepareForNextTest();
+        auto linesTape = tapes.titleLines();
+        startMM6NewGame(game);
+        if (!identified)
+            knightSword()->flags &= ~ITEM_IDENTIFIED;
+        test.startTaping();
+        openWeaponShopScreen(game, 541); // Identify Items.
+        game.moveMouse(backpackItemCenter(1));
+        game.tick();
+        const std::string quote = identified ? "\f65523Longsword\f00000" : "I'll tell you what it is for 75 gold pieces.";
+        EXPECT_EQ(panelSentences(linesTape), std::vector<std::string>({"", kWeaponShopMenu, "", quote}));
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopRepairHover) {
+    // Hovering a broken weapon on the New Sorpigal weapon shop's repair screen said nothing. The shopkeeper names his
+    // price for it, and says nothing about a weapon that isn't broken.
+    for (bool broken : {false, true}) {
+        SCOPED_TRACE(fmt::format("broken={}", broken));
+        test.prepareForNextTest();
+        auto linesTape = tapes.titleLines();
+        startMM6NewGame(game);
+        if (broken)
+            knightSword()->flags |= ITEM_BROKEN;
+        test.startTaping();
+        openWeaponShopScreen(game, 542); // Repair Items.
+        game.moveMouse(backpackItemCenter(1));
+        game.tick();
+        if (broken) {
+            const std::string quote = "This \f65523Longsword\f00000 is nearly beyond repair.  It will take a superhuman effort to fix it!  I'll have to charge 11 gold.";
+            EXPECT_EQ(panelSentences(linesTape), std::vector<std::string>({"", kWeaponShopMenu, "", quote}));
+        } else {
+            EXPECT_EQ(panelSentences(linesTape), std::vector<std::string>({"", kWeaponShopMenu, ""}));
+        }
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopBlasterHover) {
+    // The New Sorpigal weapon shop offered gold for a blaster when the mouse was over it, and then refused to buy it.
+    // With fix_shops_buying_blasters the shopkeeper says the blaster is beyond him, without it he quotes 1 gold.
+    for (bool fix : {true, false}) {
+        SCOPED_TRACE(fmt::format("fix={}", fix));
+        test.prepareForNextTest();
+        auto linesTape = tapes.titleLines();
+        engine->config->gameplay.FixShopsBuyingBlasters.setValue(fix);
+        startMM6NewGame(game);
+        pParty->pCharacters[0].inventory.add(Item(static_cast<ItemId>(64)));
+        test.startTaping();
+        openWeaponShopScreen(game, 540); // Sell Items.
+        game.moveMouse(backpackItemCenter(64));
+        game.tick();
+        const std::string quote = fix ? "I'm a simple Blacksmith and that \f65523Ancient Weapon\f00000 is beyond my meager knowledge."
+                                      : "Hmph.  Looks like junk to me. <yawn> I suppose I could give you oh, say, 1 gold pieces for it.";
+        EXPECT_EQ(panelSentences(linesTape), std::vector<std::string>({"", kWeaponShopMenu, "", quote}));
+    }
+}
+
 GAME_TEST(MM6Houses, WeaponShopIdentifyUnconscious) {
     // An unconscious character had a weapon identified at the New Sorpigal weapon shop. The shop turns him away with
     // the no condition line and the error sound, and a conscious one still pays and gets it identified.

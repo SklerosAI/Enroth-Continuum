@@ -83,6 +83,23 @@ Vanilla MM6.exe let a weapon shop or the general store buy a blaster for 1 gold.
 `gameplay.fix_shops_buying_blasters` (default on) a shop refuses to buy an item with base value 0, as the GrayFace
 patch does.
 
+### Sounds and speech
+
+MM6.exe's shop click handler (0x4A4CA0) answers each click with a line from the active character, a shop sound or
+both, and the port matches it:
+
+| Screen | Done | Turned down |
+|---|---|---|
+| Buy, Special Items | Speech 75 | Short purse: house sound 2 and "You don't have enough gold". Full pack: speech 15 and "Pack is full!" |
+| Buy Spells | Nothing | Short purse as above. Full pack: nothing. |
+| Sell | Speech 77 | An item the shop doesn't deal in, or a blaster with `fix_shops_buying_blasters`: speech 79 and the error sound |
+| Identify | Speech 73 and "Done!" | Already identified: speech 76. Not dealt in: the error sound and speech 79. Short purse: house sound 2. |
+| Repair | Speech 74 and "Good as New!" | Not broken: speech 76. Not dealt in: the error sound and speech 79. Short purse: house sound 2. |
+
+House sound 2 is the shopkeeper's not enough gold line, `30000 + 100 * room sound group + 2`. A sale doesn't play a
+sound: the 479 pushed next to it at 0x4A54C4 is the bottom row of the z-buffer clear 0x48DF90. The error sound is
+sound 27.
+
 ### Stock and refresh
 
 - Stock lives in MM6's own layout: 120 physical rows of twelve 28-byte item records (`MM6ShopStockFields.h`). Shop rows

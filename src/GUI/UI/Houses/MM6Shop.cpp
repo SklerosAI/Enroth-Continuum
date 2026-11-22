@@ -290,10 +290,12 @@ void GUIWindow_MM6Shop::buy(int slot) {
     mm6::ShopTitleState &shops = mm6::shopTitleState();
     mm6::ItemRecord28 &source = shops.stock.records[stockRecordIndex(slot)];
     Character &buyer = pParty->activeCharacter();
+    const bool guild = _screen == mm6::HouseServiceOption::BuySpells;
     const int value = mm6::itemValue(source, *pItemTable);
     const int price = mm6::itemBuyPrice(value, multiplier(), mm6::merchantPercent(buyer));
     if (pParty->GetGold() < price) {
         engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD);
+        mm6PlayHouseSound(houseId(), HOUSE_SOUND_GENERAL_NOT_ENOUGH_GOLD);
         return;
     }
 
@@ -303,7 +305,10 @@ void GUIWindow_MM6Shop::buy(int slot) {
         Item item;
         item.itemId = static_cast<ItemId>(source.itemNumberRaw());
         if (!probe.tryAdd(item)) {
+            if (guild)
+                return; // A guild says nothing when the pack is full.
             engine->_statusBar->setEvent(LSTR_MM6_PACK_IS_FULL);
+            buyer.playReaction(SPEECH_NO_ROOM);
         } else {
             engine->_statusBar->setEvent("This item is not available yet.");
         }
@@ -311,14 +316,21 @@ void GUIWindow_MM6Shop::buy(int slot) {
     }
     source = staged;
     pParty->TakeGold(price);
+    if (!guild)
+        buyer.playReaction(SPEECH_ITEM_BUY);
 }
 
 void GUIWindow_MM6Shop::sell() {
     InventoryEntry entry = clickedBackpackEntry();
-    if (!entry || !mm6::shopTradesItem(std::to_underlying(houseId()), entry->itemId, pItemTable->items[entry->itemId]))
+    if (!entry)
         return;
-    if (engine->config->gameplay.FixShopsBuyingBlasters.value() && pItemTable->items[entry->itemId].baseValue == 0)
-        return; // Blasters 64 and 65 have no value in MM6 items.txt.
+    Character &seller = pParty->activeCharacter();
+    const bool blaster = engine->config->gameplay.FixShopsBuyingBlasters.value() && pItemTable->items[entry->itemId].baseValue == 0; // Blasters 64 and 65 have no value in MM6 items.txt.
+    if (blaster || !mm6::shopTradesItem(std::to_underlying(houseId()), entry->itemId, pItemTable->items[entry->itemId])) {
+        seller.playReaction(SPEECH_WRONG_SHOP);
+        pAudioPlayer->playUISound(SOUND_error);
+        return;
+    }
     int value = 0;
     try {
         value = mm6::itemValue(*entry, *pItemTable);
@@ -327,40 +339,63 @@ void GUIWindow_MM6Shop::sell() {
         engine->_statusBar->setEvent("This item can't be sold yet.");
         return;
     }
-    const int payment = mm6::itemSalePayment(value, multiplier(), mm6::merchantPercent(pParty->activeCharacter()),
+    const int payment = mm6::itemSalePayment(value, multiplier(), mm6::merchantPercent(seller),
                                              entry->IsBroken(), _house.type == HOUSE_TYPE_GENERAL_STORE);
-    pParty->activeCharacter().inventory.take(entry);
+    seller.inventory.take(entry);
     pParty->SetGold(pParty->GetGold() + payment);
+    seller.playReaction(SPEECH_ITEM_SOLD);
 }
 
 void GUIWindow_MM6Shop::identify() {
     InventoryEntry entry = clickedBackpackEntry();
-    if (!entry || entry->IsIdentified() ||
-        !mm6::shopTradesItem(std::to_underlying(houseId()), entry->itemId, pItemTable->items[entry->itemId]))
+    if (!entry)
         return;
-    const int price = mm6::itemIdentifyPrice(multiplier(), mm6::merchantPercent(pParty->activeCharacter()));
+    Character &character = pParty->activeCharacter();
+    if (entry->IsIdentified()) {
+        character.playReaction(SPEECH_ALREADY_INDENTIFIED);
+        return;
+    }
+    if (!mm6::shopTradesItem(std::to_underlying(houseId()), entry->itemId, pItemTable->items[entry->itemId])) {
+        pAudioPlayer->playUISound(SOUND_error);
+        character.playReaction(SPEECH_WRONG_SHOP);
+        return;
+    }
+    const int price = mm6::itemIdentifyPrice(multiplier(), mm6::merchantPercent(character));
     if (pParty->GetGold() < price) {
-        engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD);
+        mm6PlayHouseSound(houseId(), HOUSE_SOUND_GENERAL_NOT_ENOUGH_GOLD);
         return;
     }
     pParty->TakeGold(price);
     entry->flags |= ITEM_IDENTIFIED;
+    character.playReaction(SPEECH_SHOP_IDENTIFY);
     engine->_statusBar->setEvent(LSTR_MM6_DONE);
 }
 
 void GUIWindow_MM6Shop::repair() {
     InventoryEntry entry = clickedBackpackEntry();
-    if (!entry || !entry->IsBroken() || (!entry->mm6RawRecord && pItemTable->items[entry->itemId].type == ITEM_TYPE_POTION) ||
-        !mm6::shopTradesItem(std::to_underlying(houseId()), entry->itemId, pItemTable->items[entry->itemId]))
+    if (!entry)
         return;
+    Character &character = pParty->activeCharacter();
+    if (!entry->IsBroken()) {
+        character.playReaction(SPEECH_ALREADY_INDENTIFIED); // MM6 answers an unbroken item with the already identified line.
+        return;
+    }
+    if (!entry->mm6RawRecord && pItemTable->items[entry->itemId].type == ITEM_TYPE_POTION)
+        return;
+    if (!mm6::shopTradesItem(std::to_underlying(houseId()), entry->itemId, pItemTable->items[entry->itemId])) {
+        pAudioPlayer->playUISound(SOUND_error);
+        character.playReaction(SPEECH_WRONG_SHOP);
+        return;
+    }
     const int value = mm6::itemValue(*entry, *pItemTable);
-    const int price = mm6::itemRepairPrice(value, multiplier(), mm6::merchantPercent(pParty->activeCharacter()));
+    const int price = mm6::itemRepairPrice(value, multiplier(), mm6::merchantPercent(character));
     if (pParty->GetGold() < price) {
-        engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD);
+        mm6PlayHouseSound(houseId(), HOUSE_SOUND_GENERAL_NOT_ENOUGH_GOLD);
         return;
     }
     pParty->TakeGold(price);
     entry->flags = ITEM_IDENTIFIED; // MM6 overwrites the whole condition word.
+    character.playReaction(SPEECH_SHOP_REPAIR);
     engine->_statusBar->setEvent(LSTR_MM6_GOOD_AS_NEW);
 }
 

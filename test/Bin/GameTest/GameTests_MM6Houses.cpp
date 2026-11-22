@@ -184,6 +184,17 @@ static InventoryEntry knightSword() {
     return {};
 }
 
+static void clickBackpackItem(EngineController &game, int item) {
+    // Left click on the first item with this id in the backpack a shop screen shows.
+    InventoryEntry entry;
+    for (InventoryEntry candidate : pParty->pCharacters[0].inventory.entries())
+        if (candidate.zone() == INVENTORY_ZONE_GRID && candidate->itemId == static_cast<ItemId>(item) && !entry)
+            entry = candidate;
+    ASSERT_TRUE(entry) << "No item " << item << " in the backpack";
+    game.pressAndReleaseButton(BUTTON_LEFT, mapFromInventoryGrid(entry.geometry().topLeft(), Pointi(14, 17)) + Pointi(16, 16));
+    game.tick();
+}
+
 static void clickKnightSword(EngineController &game) {
     // Left click on the sword in the backpack a shop screen shows.
     ASSERT_TRUE(knightSword());
@@ -279,6 +290,8 @@ static void knockOut(Character *character) {
 
 static const Vec3f kTempleDoor(-9744, -1862, 700); // New Sorpigal Temple, facing north.
 static const Vec3f kWeaponShopDoor(-8422, -7392, 300); // Weapon shop, facing east.
+static constexpr SoundId kWeaponShopGreeting = static_cast<SoundId>(33301);
+static constexpr SoundId kWeaponShopNotEnoughGold = static_cast<SoundId>(33302);
 static const Vec3f kTownHallDoor(-11090, -6536, 300); // Town Hall, facing west.
 static const Vec3f kGeneralStoreDoor(-10333, -8532, 300); // General store, facing south.
 static const Vec3f kGuildDoor(-5384, -1276, 700); // Elemental guild.
@@ -575,6 +588,7 @@ GAME_TEST(MM6Houses, GuildBuySpellbook) {
     auto goldTape = tapes.gold();
     auto stockTape = tapes.custom([] { return guildStock(137); });
     auto backpackTape = tapes.custom([] { return backpackItems(0); });
+    auto speechTape = tapes.speeches();
     startMM6NewGame(game);
     pParty->pCharacters[0]._achievedAwardsBits.set(kElementalGuildMember);
     test.startTaping();
@@ -591,6 +605,7 @@ GAME_TEST(MM6Houses, GuildBuySpellbook) {
     EXPECT_EQ(stockTape, tape(std::vector<int>(12, 0), generated, afterSale));
     EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66, 505}, std::vector<int>{124, 1, 15, 23, 66, 505, 322}));
     EXPECT_EQ(goldTape, tape(200, 50));
+    EXPECT_MISSES(speechTape.flatten(), SPEECH_ITEM_BUY); // A guild sells without the bought line.
 }
 
 GAME_TEST(MM6Houses, WeaponShopVendorRefreshOnEntry) {
@@ -1280,6 +1295,186 @@ GAME_TEST(MM6Houses, WeaponShopRepair) {
     EXPECT_EQ(goldTape, tape(200, 189));
     EXPECT_EQ(brokenTape, tape(true, false));
     EXPECT_CONTAINS(statusTape, localization->str(static_cast<LstrId>(570))); // "Good as New!"
+}
+
+GAME_TEST(MM6Houses, WeaponShopBuySpeech) {
+    // The New Sorpigal weapon shop sold an item in silence and turned a short purse away without the shopkeeper's line.
+    // A purchase plays the bought line, a short purse the shopkeeper's not enough gold sound, and a full pack the no
+    // room line.
+    enum class Case { Bought, ShortPurse, FullPack };
+    for (Case buyCase : {Case::Bought, Case::ShortPurse, Case::FullPack}) {
+        SCOPED_TRACE(fmt::format("case={}", std::to_underlying(buyCase)));
+        test.prepareForNextTest();
+        auto goldTape = tapes.gold();
+        auto speechTape = tapes.speeches();
+        auto soundsTape = tapes.sounds();
+        auto statusTape = tapes.statusBar();
+        startMM6NewGame(game);
+        if (buyCase == Case::ShortPurse)
+            pParty->SetGold(0);
+        if (buyCase == Case::FullPack)
+            while (pParty->pCharacters[0].inventory.tryAdd(Item(static_cast<ItemId>(15)))) {}
+        test.startTaping();
+        enterThroughDoor(game, kWeaponShopDoor, 0);
+        clickHouseOption(game, localization->str(static_cast<LstrId>(539))); // Buy Items.
+        GUIWindow_MM6Shop *shop = dynamic_cast<GUIWindow_MM6Shop *>(window_SpeakInHouse.get());
+        ASSERT_NE(shop, nullptr);
+        game.pressAndReleaseButton(BUTTON_LEFT, shop->stockItemRect(0).center());
+        game.tick();
+
+        switch (buyCase) {
+            case Case::Bought:
+                EXPECT_EQ(goldTape, tape(200, 125));
+                EXPECT_EQ(speechTape.flatten(), tape(SPEECH_ITEM_BUY));
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, SOUND_gold01));
+                break;
+            case Case::ShortPurse:
+                EXPECT_EQ(goldTape, tape(0));
+                EXPECT_TRUE(speechTape.flatten().empty());
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, kWeaponShopNotEnoughGold));
+                EXPECT_CONTAINS(statusTape, localization->str(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD));
+                break;
+            case Case::FullPack:
+                EXPECT_EQ(goldTape, tape(200));
+                EXPECT_EQ(speechTape.flatten(), tape(SPEECH_NO_ROOM));
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, static_cast<SoundId>(5042))); // Zoltan saying the no room line.
+                EXPECT_CONTAINS(statusTape, localization->str(static_cast<LstrId>(563))); // "Pack is full!"
+                break;
+        }
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopSaleSpeech) {
+    // The New Sorpigal weapon shop bought and refused items in silence. A sale plays the sold line, and an item the shop
+    // doesn't deal in gets the wrong shop line with the error sound.
+    for (int item : {1, 66}) { // The knight's sword, then his leather armor.
+        SCOPED_TRACE(fmt::format("item={}", item));
+        test.prepareForNextTest();
+        auto goldTape = tapes.gold();
+        auto speechTape = tapes.speeches();
+        auto soundsTape = tapes.sounds();
+        startMM6NewGame(game);
+        test.startTaping();
+        enterThroughDoor(game, kWeaponShopDoor, 0);
+        clickHouseOption(game, localization->str(static_cast<LstrId>(540))); // Sell Items.
+        clickBackpackItem(game, item);
+
+        if (item == 1) {
+            EXPECT_EQ(goldTape, tape(200, 214));
+            EXPECT_EQ(speechTape.flatten(), tape(SPEECH_ITEM_SOLD));
+            EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, SOUND_gold01));
+        } else {
+            EXPECT_EQ(goldTape, tape(200));
+            EXPECT_EQ(speechTape.flatten(), tape(SPEECH_WRONG_SHOP));
+            EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, SOUND_error));
+        }
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopIdentifySpeech) {
+    // The New Sorpigal weapon shop identified in silence and ignored every click it turned down. Identifying plays the
+    // identify line, an identified item the already identified line, an item the shop doesn't deal in the wrong shop
+    // line with the error sound, and a short purse the shopkeeper's not enough gold sound.
+    enum class Case { Identified, AlreadyKnown, WrongShop, ShortPurse };
+    for (Case identifyCase : {Case::Identified, Case::AlreadyKnown, Case::WrongShop, Case::ShortPurse}) {
+        SCOPED_TRACE(fmt::format("case={}", std::to_underlying(identifyCase)));
+        test.prepareForNextTest();
+        auto goldTape = tapes.gold();
+        auto speechTape = tapes.speeches();
+        auto soundsTape = tapes.sounds();
+        auto statusTape = tapes.statusBar();
+        startMM6NewGame(game);
+        for (InventoryEntry entry : pParty->pCharacters[0].inventory.entries())
+            if (identifyCase != Case::AlreadyKnown)
+                entry->flags &= ~ITEM_IDENTIFIED;
+        if (identifyCase == Case::ShortPurse)
+            pParty->SetGold(0);
+        test.startTaping();
+        enterThroughDoor(game, kWeaponShopDoor, 0);
+        clickHouseOption(game, localization->str(static_cast<LstrId>(541))); // Identify Items.
+        clickBackpackItem(game, identifyCase == Case::WrongShop ? 66 : 1);
+
+        const std::string done = localization->str(static_cast<LstrId>(569)); // "Done!"
+        switch (identifyCase) {
+            case Case::Identified:
+                EXPECT_EQ(goldTape, tape(200, 125));
+                EXPECT_EQ(speechTape.flatten(), tape(SPEECH_SHOP_IDENTIFY));
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, SOUND_gold01));
+                EXPECT_CONTAINS(statusTape, done);
+                break;
+            case Case::AlreadyKnown:
+                EXPECT_EQ(goldTape, tape(200));
+                EXPECT_EQ(speechTape.flatten(), tape(SPEECH_ALREADY_INDENTIFIED));
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting));
+                EXPECT_MISSES(statusTape, done);
+                break;
+            case Case::WrongShop:
+                EXPECT_EQ(goldTape, tape(200));
+                EXPECT_EQ(speechTape.flatten(), tape(SPEECH_WRONG_SHOP));
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, SOUND_error));
+                EXPECT_MISSES(statusTape, done);
+                break;
+            case Case::ShortPurse:
+                EXPECT_EQ(goldTape, tape(0));
+                EXPECT_TRUE(speechTape.flatten().empty());
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, kWeaponShopNotEnoughGold));
+                EXPECT_MISSES(statusTape, done);
+                break;
+        }
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopRepairSpeech) {
+    // The New Sorpigal weapon shop repaired in silence and ignored every click it turned down. Repairing plays the
+    // repair line, an unbroken item the already identified line, an item the shop doesn't deal in the wrong shop line
+    // with the error sound, and a short purse the shopkeeper's not enough gold sound.
+    enum class Case { Repaired, NotBroken, WrongShop, ShortPurse };
+    for (Case repairCase : {Case::Repaired, Case::NotBroken, Case::WrongShop, Case::ShortPurse}) {
+        SCOPED_TRACE(fmt::format("case={}", std::to_underlying(repairCase)));
+        test.prepareForNextTest();
+        auto goldTape = tapes.gold();
+        auto speechTape = tapes.speeches();
+        auto soundsTape = tapes.sounds();
+        auto statusTape = tapes.statusBar();
+        startMM6NewGame(game);
+        for (InventoryEntry entry : pParty->pCharacters[0].inventory.entries())
+            if (repairCase != Case::NotBroken)
+                entry->flags |= ITEM_BROKEN;
+        if (repairCase == Case::ShortPurse)
+            pParty->SetGold(0);
+        test.startTaping();
+        enterThroughDoor(game, kWeaponShopDoor, 0);
+        clickHouseOption(game, localization->str(static_cast<LstrId>(542))); // Repair Items.
+        clickBackpackItem(game, repairCase == Case::WrongShop ? 66 : 1);
+
+        const std::string goodAsNew = localization->str(static_cast<LstrId>(570)); // "Good as New!"
+        switch (repairCase) {
+            case Case::Repaired:
+                EXPECT_EQ(goldTape, tape(200, 189));
+                EXPECT_EQ(speechTape.flatten(), tape(SPEECH_SHOP_REPAIR));
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, SOUND_gold01));
+                EXPECT_CONTAINS(statusTape, goodAsNew);
+                break;
+            case Case::NotBroken:
+                EXPECT_EQ(goldTape, tape(200));
+                EXPECT_EQ(speechTape.flatten(), tape(SPEECH_ALREADY_INDENTIFIED));
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting));
+                EXPECT_MISSES(statusTape, goodAsNew);
+                break;
+            case Case::WrongShop:
+                EXPECT_EQ(goldTape, tape(200));
+                EXPECT_EQ(speechTape.flatten(), tape(SPEECH_WRONG_SHOP));
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, SOUND_error));
+                EXPECT_MISSES(statusTape, goodAsNew);
+                break;
+            case Case::ShortPurse:
+                EXPECT_EQ(goldTape, tape(0));
+                EXPECT_TRUE(speechTape.flatten().empty());
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, kWeaponShopNotEnoughGold));
+                EXPECT_MISSES(statusTape, goodAsNew);
+                break;
+        }
+    }
 }
 
 GAME_TEST(MM6Houses, WeaponShopIdentifyUnconscious) {

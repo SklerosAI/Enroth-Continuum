@@ -40,6 +40,10 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   from the bolt's byte at 0x54, read statically as its distance, and uses 1 only at Expert and Master. At Master it also
   adds the skill to hit. The port's `SPELL_BLASTER_PROJECTILE` case in `Actor.cpp` uses 1 at every mastery, so a Novice
   bolt at long range may hit more often than in MM6. The 0x54 byte isn't confirmed at runtime.
+- **Border autosave after a bad fall.** In one throwaway run a character fell to -4 HP before the party crossed an
+  oute3 edge. Loading that border autosave put the party at the New Sorpigal start instead of the edge, with
+  `fix_border_autosave` on and off alike. Possibly the death and respawn path. Not reproduced or checked against
+  MM6.exe.
 - **Any-item roll.** Chests and `GiveItem` kind 0 keep MM6.exe's off-by-one, which favours item 1, because the GrayFace
   patch leaves that roll alone. Fixing it changes chest contents on every map. Owner's call. `mm6::generateAnyItem`.
 - **MM7 monster types on MM6 paths.** `supertypeForMonsterId` makes MM6's Genies and Plate Knights undead and its

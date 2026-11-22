@@ -48,3 +48,13 @@ Blob encodeMM6OutdoorParkedState(const OutdoorLocation &location);
 Actor_MM7 projectMM6ActorRecord(std::span<const std::uint8_t> record);
 SpriteObject_MM7 projectMM6GroundItemRecord(std::span<const std::uint8_t> record);
 Chest_MM7 projectMM6ChestRecord(std::span<const std::uint8_t> record);
+
+struct SpriteObject;
+/**
+ * Puts the ground items of an MM6 delta into the level. Each item keeps its native record, which the save writes for
+ * it once the party picks it up.
+ *
+ * @param records                       The delta's ground item records, 100 bytes each.
+ * @param[out] dst                      The level's ground items.
+ */
+void reconstructMM6GroundItems(std::span<const std::uint8_t> records, std::vector<SpriteObject> *dst);

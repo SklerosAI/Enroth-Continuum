@@ -113,7 +113,8 @@ body location at +24, max charges at +25, and two bytes the original keeps but t
 is the authority: the save writes it back, and the shop price reads it. An item that arrives without a record, or with
 fields the bounded projections don't cover, can't be saved, see [Save format](mm6-save-format.md#what-is-and-isnt-saved).
 Event item gifts (`MM6ItemEventWrite.cpp`) and monster carried items (`mm6CarriedItem` in `Actor.cpp`) build their
-record the way the original does.
+record the way the original does. Items a map's delta puts on the ground take theirs from bytes 36 to 63 of their
+100-byte ground record (`reconstructMM6GroundItems` in `MM6OutdoorDeltaSnapshot.h`), outdoors and indoors.
 
 ### Generation
 

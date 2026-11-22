@@ -550,7 +550,7 @@ void OutdoorLocation::Load(std::string_view filename, int days_played, int respa
             pActors[i].monsterInfo.mm6Resistances = mm6::MonsterResistances{
                 res[0], res[1], res[2], res[3], res[4], res[5]};
         }
-        reconstruct(delta.spriteObjects, &pSpriteObjects);
+        reconstructMM6GroundItems(delta.wire.part(mm6::OutdoorDeltaPart::GroundItems).subspan(4), &pSpriteObjects);
         vChests.resize(delta.chests.size());
         for (size_t i = 0; i < delta.chests.size(); ++i) {
             // This location's position is derived later from its own chest

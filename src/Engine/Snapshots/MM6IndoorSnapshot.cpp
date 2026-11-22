@@ -487,7 +487,8 @@ void reconstructMM6IndoorDelta(const MM6IndoorRuntimeDelta &delta, IndoorLocatio
         pActors[i].monsterInfo.mm6Resistances = mm6::MonsterResistances{
             res[0], res[1], res[2], res[3], res[4], res[5]};
     }
-    reconstruct(delta.spriteObjects, &pSpriteObjects);
+    const Blob &groundItems = delta.wire.section(MM6IndoorSectionKind::GroundItems).bytes;
+    reconstructMM6GroundItems(std::span(static_cast<const uint8_t *>(groundItems.data()), groundItems.size()).subspan(4), &pSpriteObjects);
     vChests.resize(delta.chests.size());
     for (size_t i = 0; i < delta.chests.size(); ++i) {
         vChests[i].position.reset(); // Derived later from this map's own chest events, the vector still holds the previous map's.

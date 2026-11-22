@@ -113,13 +113,19 @@ static FirstMapManualSaveResult saveSlot(std::string_view fileName, std::string_
             throw std::runtime_error("MM6 manual save refuses an item held on the cursor"); // A load admits only an empty cursor.
         result.fileName = fileName.empty() ? firstFreeSlot(*root) : std::string(fileName);
         if (armedSourceV4) {
-            result.outcome = manualSaveOutcome(writeV5FirstMapNativeLiveSave({*root, *root}, result.fileName, *armedSourceV4, displayName,
-                                                                             boundary, GameTitle::MM6, numberedSlotValidator(), testFault).outcome);
-        } else {
-            const std::vector<std::uint8_t> candidate = captureSessionSave(*sessionTemplate, displayName, GameTitle::MM6);
-            result.outcome = manualSaveOutcome(writeNumberedSlotCandidate({*root, *root}, result.fileName, candidate, GameTitle::MM6,
-                                                                          numberedSlotValidator(), testFault));
+            try {
+                result.outcome = manualSaveOutcome(writeV5FirstMapNativeLiveSave({*root, *root}, result.fileName, *armedSourceV4, displayName,
+                                                                                 boundary, GameTitle::MM6, numberedSlotValidator(), testFault).outcome);
+                return result;
+            } catch (const std::exception &e) {
+                // A v5 save holds the first map's ground items and actors in their native slots, an emptied or added
+                // slot doesn't fit.
+                MM_INFO("MM6 save to '{}' falls back to a v7 save, the v5 capture refused: {}", result.fileName, e.what());
+            }
         }
+        const std::vector<std::uint8_t> candidate = captureSessionSave(*sessionTemplate, displayName, GameTitle::MM6);
+        result.outcome = manualSaveOutcome(writeNumberedSlotCandidate({*root, *root}, result.fileName, candidate, GameTitle::MM6,
+                                                                      numberedSlotValidator(), testFault));
     } catch (const std::exception &e) {
         MM_WARNING("MM6 save to '{}' refused before writing: {}", fileName, e.what());
         result.outcome = MANUAL_SAVE_REFUSED;

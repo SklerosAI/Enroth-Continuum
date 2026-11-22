@@ -338,6 +338,11 @@ class GameConfig : public Config {
             "MM6 only. Don't offer the trip to the next map while the party flies, as the GrayFace patch does. In vanilla, "
             "flying low over the map edge offered the trip, and accepting it did nothing."};
 
+        Bool FixBorderAutosave = {this, "fix_border_autosave", true,
+            "MM6 only. Write the autosave of a walk to the next map with the party standing inside the edge it crossed, in "
+            "the middle of the nearest terrain tile it can stand on. In vanilla, the autosave held the party past the edge, "
+            "so loading it offered the trip again at once."};
+
         Bool FixSpellsCost = {this, "fix_spells_cost", true,
             "MM6 only. Take every spell's cost from spells.txt, as the GrayFace patch does. In vanilla the costs came from a "
             "table in MM6.exe, where Expert Static Charge costs 2 spell points and its description says 1."};

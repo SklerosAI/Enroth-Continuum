@@ -11,10 +11,12 @@
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Objects/Actor.h"
+#include "Engine/Objects/Decoration.h"
 #include "Engine/Objects/NPC.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
 #include "Engine/SaveLoad.h"
+#include "Engine/Tables/DecorationTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Timer.h"
 #include "Engine/mm7_data.h"
@@ -78,6 +80,33 @@ static void parkActiveMap() {
     }
 }
 
+static bool partyCanStandAt(Vec2f point) {
+    const Vec3f pos(point.x, point.y, 0);
+    if (pOutdoor->pTerrain.isWaterByPos(pos) || pOutdoor->pTerrain.isSlopeTooHighByPos(pos))
+        return false;
+    const float radius = pParty->radius;
+    for (const BSPModel &model : pOutdoor->pBModels) {
+        const BBoxi &box = model.boundingBox;
+        if (point.x >= box.x1 - radius && point.x <= box.x2 + radius && point.y >= box.y1 - radius &&
+            point.y <= box.y2 + radius)
+            return false;
+    }
+    for (const LevelDecoration &decoration : pLevelDecorations) {
+        const DecorationData *desc = pDecorationTable->decoration(decoration.uDecorationDescID);
+        if (decoration.uFlags & LEVEL_DECORATION_INVISIBLE || desc->canMoveThrough())
+            continue;
+        if ((decoration.vPosition.xy() - point).length() < desc->uRadius + radius)
+            return false;
+    }
+    return true;
+}
+
+static void standInsideBorder() {
+    const Vec2f point = borderAutosavePosition(pParty->pos.x, pParty->pos.y, partyCanStandAt);
+    pParty->pos = Vec3f(point.x, point.y, pOutdoor->pTerrain.heightByPos(Vec3f(point.x, point.y, 0)));
+    pParty->uFallStartZ = pParty->pos.z;
+}
+
 MapDestination borderTravelDestination(int partyX, int partyY) {
     const BorderTravelAssessment route = assessOutdoorBorderTravel(
         GameTitle::MM6, pMapTable->pInfos[engine->_currentLoadedMapId].fileName, partyX, partyY, {});
@@ -105,7 +134,9 @@ bool confirmBorderTravel(const MapDestination &offered) {
     pAudioPlayer->stopSounds();
     gameTimer->setPaused(true);
     leaveMap(offered.map());
-    autoSave(); // The original saves before the trip's days pass, with the party still at the edge.
+    if (engine->config->gameplay.FixBorderAutosave.value())
+        standInsideBorder(); // Only the autosave sees this, the trip runs on the party copy.
+    autoSave(); // The original saves before the trip's days pass, with the party still past the edge.
     *pParty = std::move(*confirmed.party);
     notePartyRested();
     for (int character : confirmed.weakReactions)

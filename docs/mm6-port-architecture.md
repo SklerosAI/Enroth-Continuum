@@ -109,6 +109,7 @@ Current MM6 flags, by key:
 | `fix_map_timers` | [Processor.cpp](../src/Engine/Evt/Processor.cpp) |
 | `fix_travel_autosave`, `fix_travel_speech_delay` | [MM6Transport.cpp](../src/GUI/UI/Houses/MM6Transport.cpp) |
 | `fix_flying_border_offer` | [Outdoor.cpp](../src/Engine/Graphics/Outdoor.cpp) |
+| `fix_border_autosave` | [MM6MapTransition.cpp](../src/Engine/MM6/MM6MapTransition.cpp) |
 | `fix_chest_overflow` | [Chest.cpp](../src/Engine/Objects/Chest.cpp) |
 
 `fix_water_walk_mana_drain` is an upstream flag that applies to every title.

@@ -12,9 +12,12 @@
 #include "Engine/MM6/MM6V5OutdoorMapIdentity.h"
 #include "Engine/Objects/NPCEnums.h"
 
+#include "Library/Geometry/Vec.h"
+
 namespace mm6 {
 
 inline constexpr float MM6_OUTDOOR_BORDER_EDGE = 22528.0f;
+inline constexpr float MM6_TERRAIN_TILE_SIZE = 512.0f; // The edge lies on a tile boundary, 44 tiles from the middle.
 
 /**
  * Neighbouring outdoor map that walking off the edge of an MM6 outdoor map leads to, and where the party arrives.
@@ -122,6 +125,36 @@ struct BorderTravelAssessment {
     candidate.crossedX = columnChange != 0;
     candidate.crossedY = rowChange != 0;
     return {.candidate = std::move(candidate), .refusal = BorderTravelRefusal::None};
+}
+
+/**
+ * Where the autosave of a confirmed border crossing stands the party with `gameplay.fix_border_autosave`, inside every
+ * edge it crossed, so that loading the autosave doesn't offer the trip again.
+ *
+ * @param partyX                        Party X.
+ * @param partyY                        Party Y.
+ * @param standable                     Whether the party can stand at a point of the map.
+ * @return                              The first standable point in the middle of a terrain tile on each crossed axis,
+ *                                      the tile next to the edge first, then a tile further in at a time, with the
+ *                                      other axis kept. When no such point is standable, the party clamped to the
+ *                                      edge, where the travel dialogue's No puts it.
+ */
+[[nodiscard]] inline Vec2f borderAutosavePosition(float partyX, float partyY,
+                                                  const std::function<bool(Vec2f)> &standable) {
+    constexpr float edge = MM6_OUTDOOR_BORDER_EDGE;
+    const auto inward = [](float coordinate, float distance) {
+        if (coordinate > edge)
+            return edge - distance;
+        if (coordinate < -edge)
+            return -edge + distance;
+        return coordinate;
+    };
+    for (float distance = MM6_TERRAIN_TILE_SIZE / 2; distance < 2 * edge; distance += MM6_TERRAIN_TILE_SIZE) {
+        const Vec2f candidate(inward(partyX, distance), inward(partyY, distance));
+        if (standable(candidate))
+            return candidate;
+    }
+    return Vec2f(std::clamp(partyX, -edge, edge), std::clamp(partyY, -edge, edge));
 }
 
 } // namespace mm6

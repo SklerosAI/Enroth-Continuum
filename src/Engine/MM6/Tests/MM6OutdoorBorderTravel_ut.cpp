@@ -116,3 +116,34 @@ UNIT_TEST(MM6OutdoorBorderTravel, HirelingsAreGuideTrackerPathfinderAndExplorer)
     EXPECT_EQ(mm6::borderTravelDays(hiring(NPC_PROFESSION_EXPLORER)), 4);
     EXPECT_EQ(mm6::borderTravelDays(hiring(NPC_PROFESSION_SAILOR)), 5);
 }
+
+UNIT_TEST(MM6OutdoorBorderTravel, AutosaveStandsInsideTheCrossedEdges) {
+    // The border autosave stands the party in the middle of the tile next to each crossed edge, a tile further in at a
+    // time where it can't stand, and at the edge when it can't stand anywhere on the way across.
+    std::vector<Vec2f> asked;
+    const auto anywhere = [&](Vec2f point) {
+        asked.push_back(point);
+        return true;
+    };
+    EXPECT_EQ(mm6::borderAutosavePosition(-22606, -10000, anywhere), Vec2f(-22272, -10000));
+    EXPECT_EQ(mm6::borderAutosavePosition(-10000, 22600, anywhere), Vec2f(-10000, 22272));
+    EXPECT_EQ(mm6::borderAutosavePosition(22530, -22530, anywhere), Vec2f(22272, -22272));
+    EXPECT_EQ(asked.size(), 3u);
+
+    asked.clear();
+    const auto pastOneTile = [&](Vec2f point) {
+        asked.push_back(point);
+        return point.x < 22016;
+    };
+    EXPECT_EQ(mm6::borderAutosavePosition(22600, 22600, pastOneTile), Vec2f(21760, 21760));
+    EXPECT_EQ(asked, (std::vector<Vec2f>{Vec2f(22272, 22272), Vec2f(21760, 21760)}));
+
+    asked.clear();
+    const auto nowhere = [&](Vec2f point) {
+        asked.push_back(point);
+        return false;
+    };
+    EXPECT_EQ(mm6::borderAutosavePosition(22600, 300, nowhere), Vec2f(22528, 300));
+    ASSERT_EQ(asked.size(), 88u); // Every tile across the map.
+    EXPECT_EQ(asked.back(), Vec2f(-22272, 300));
+}

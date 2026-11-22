@@ -1032,7 +1032,10 @@ int Character::CalculateMeleeDmgToEnemyWithWeapon(Item *weapon,
     int totalDmg =
             pItemTable->items[itemId].damageMod + diceResult;  // add modifer
 
-    if (uTargetActorID > MONSTER_INVALID) {  // if an actor has been provided
+    if (engine->gameTitle() == GameTitle::MM6) {
+        if (uTargetActorID > MONSTER_INVALID && mm6::weaponSlays(itemId, weapon->specialEnchantment, std::to_underlying(uTargetActorID)))
+            totalDmg *= 2;
+    } else if (uTargetActorID > MONSTER_INVALID) {  // if an actor has been provided
         ItemEnchantment enchType =
             weapon->specialEnchantment;  // check against enchantments
 

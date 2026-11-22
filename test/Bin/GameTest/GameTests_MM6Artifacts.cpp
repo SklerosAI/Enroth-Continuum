@@ -344,3 +344,35 @@ GAME_TEST(MM6ArtifactEffects, RelicsAddElementalDamage) {
         EXPECT_LE(damage, maxDamage + c.expectedExtra);
     }
 }
+
+GAME_TEST(MM6ArtifactEffects, ConanSlaysDevilsAndDragons) {
+    // Conan dealt the same damage to every monster. Its 3d7+10 roll doubles against devils and dragons, so a devil
+    // loses an even 26 to 62 on top of the knight's own bonus, and a veteran no more than the stats tab shows.
+    for (MonsterId monster : {static_cast<MonsterId>(63), static_cast<MonsterId>(29)}) {
+        SCOPED_TRACE(fmt::format("monster={}", std::to_underlying(monster)));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        wieldFromBackpack(game, SKILL_AXE, 402);
+        const int minDamage = pParty->pCharacters[0].GetMeleeDamageMinimal();
+        const int maxDamage = pParty->pCharacters[0].GetMeleeDamageMaximal();
+        const int target = spawnAhead(game, monster, 150, SPAWN_DUMMY | SPAWN_FRIENDLY);
+        auto monsterHpTape = actorTapes.hp(target);
+        test.startTaping();
+
+        for (int hit = 0; hit < 2; hit++)
+            attackUntilHit(game, target);
+
+        ASSERT_EQ(monsterHpTape.size(), 3);
+        for (size_t i = 1; i < monsterHpTape.size(); i++) {
+            const int damage = monsterHpTape[i - 1] - monsterHpTape[i];
+            if (monster == static_cast<MonsterId>(63)) {
+                EXPECT_LE(damage, maxDamage);
+            } else {
+                const int roll = damage - (minDamage - 13); // The rest of the shown minimum is the knight's bonus.
+                EXPECT_EQ(roll % 2, 0);
+                EXPECT_GE(roll, 26);
+                EXPECT_LE(roll, 62);
+            }
+        }
+    }
+}

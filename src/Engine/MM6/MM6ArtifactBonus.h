@@ -120,4 +120,25 @@ constexpr bool isSwiftArtifact(ItemId item) {
     return std::to_underlying(item) == 404 || std::to_underlying(item) == 405;
 }
 
+/**
+ * @offset 0x47E4B0
+ *
+ * @param weapon                        MM6 weapon that hits.
+ * @param enchantment                   Its special enchantment.
+ * @param monster                       MM6 monster ID of the target, its row in `monsters.txt`.
+ * @return                              Whether the weapon's damage roll doubles against the monster. Conan doubles
+ *                                      against the devils, 25 to 30, and the lizards, drakes, wyrms and dragons, 31
+ *                                      to 42, and ignores its enchantment. Demon and Dragon Slaying each take one of
+ *                                      the two ranges.
+ */
+constexpr bool weaponSlays(ItemId weapon, ItemEnchantment enchantment, int monster) {
+    if (std::to_underlying(weapon) == 402) // Conan.
+        return monster >= 25 && monster <= 42;
+    if (enchantment == ITEM_ENCHANTMENT_DEMON_SLAYING)
+        return monster >= 25 && monster <= 30;
+    if (enchantment == ITEM_ENCHANTMENT_DRAGON_SLAYING)
+        return monster >= 31 && monster <= 42;
+    return false;
+}
+
 } // namespace mm6

@@ -5,8 +5,6 @@
 #include <stdexcept>
 #include <utility>
 
-#include "Engine/Objects/MonsterEnumFunctions.h"
-
 #include "MM6NativeActorNpcPolicy.h"
 
 namespace mm6 {
@@ -68,7 +66,7 @@ size_t requirePostMapGeneratedNpcLinks(std::span<const Actor> actors,
         const NPCData &row = npcs.pAdditionalNPC[generated];
         if (row.name.empty() || row.portraitId == 0 || !row.canJoin ||
             row.field_24 != 1 || row.house != HOUSE_INVALID ||
-            row.sex != sexForMonsterType(monsterTypeForMonsterId(monster)) ||
+            (row.sex != SEX_MALE && row.sex != SEX_FEMALE) ||
             row.profession < NPC_PROFESSION_FIRST ||
             row.profession >= NPC_PROFESSION_MM6_LAST)
             throw std::runtime_error("MM6 generated NPC row is incomplete");

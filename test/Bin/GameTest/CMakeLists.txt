@@ -174,6 +174,7 @@ target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Finale.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Bow.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6FirstCombat.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Dungeons.cpp)
+target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6MonsterFamilies.cpp)
 target_link_libraries(OpenEnroth_GameTest PUBLIC application testing_game library_cli library_platform_main library_stack_trace
         engine_mm6_save_runtime engine_mm6_spawn_actor_section)
 

@@ -74,6 +74,32 @@ runtime or its table hostility isn't friendly. The rest check, the alert gems an
 
 Alert gems (MM6.exe 0x401134): yellow within 5120 units of a hostile monster, red within 307.2.
 
+## Peasants, reputation and families
+
+MM6 has no fines and no fine award. Hurting and killing monsters works on reputation and on monster families
+instead:
+
+- **Death** (0x403050). Outside an Arena fight, the death of a monster whose `monsters.txt` hostility is 0 costs 100
+  reputation, whoever dealt the blow. The Arena flag is the byte at 0x908DBD, set when a fight starts and cleared on
+  map load. In the shipped `monsters.txt` only the Peasant F1, F2 and M1 families (IDs 121 to 126 and 133 to 135) have
+  hostility 0. `mm6::reputationAfterMonsterDeath`, called from `Actor::Die`. `Actor::ApplyFineForKillingPeasant` does
+  nothing under MM6.
+- **Hurt** (0x403730). A monster whose own hostility byte isn't 4 turns hostile, and that costs 50 reputation. The port
+  charges it when `mm6::isMonsterHostileToParty` says the monster wasn't hostile. `mm6::reputationAfterPain`, called
+  from `Actor::AI_Pain`.
+- **Bystanders** (0x432550, called from both). Monsters within 4096 units turn hostile: all three peasant families
+  when the victim is one of them, otherwise only the victim's own family. `mm6::bystanderTurnsHostile`, called from
+  `Actor::AggroSurroundingPeasants`.
+- MM6 has no reagent drops. MM7's chance of one on a monster's death is off under MM6.
+
+Outdoors, the actor mover (0x461590, family checks at 0x4615FB and 0x46230B) keeps the Water Elemental (58 to 60) and
+Sea Serpent (151 to 153) families on water the way it keeps every other monster on land: a step from water onto land
+is undone and the monster turns away. `mm6::keepsToWater`, used in the water check of `UpdateActors_ODM`.
+
+The shared MM7 type helpers (`monsterTypeForMonsterId`, `isPeasant`, `supertypeForMonsterId`, `sexForMonsterType`)
+map an MM6 family onto whatever MM7 type has its number, so MM6 ID 115 onwards (oozes, rats, sea serpents, the hive
+bosses) lands on MM7's peasants. MM6 paths that still reach them are listed in [open questions](open-questions.md).
+
 ## Monster attacks
 
 `mm6::monsterAttackDamage` (`MM6MonsterAttack.h`) rolls the attack's dice and adds the first attack's bonus. MM6 adds
@@ -245,6 +271,7 @@ units down. Spell-side fixes (condition cures, Water Walk drain, stronger shorte
   [MM6MonsterSpells.h](../src/Engine/MM6/MM6MonsterSpells.h),
   [MM6MonsterPreferences.h](../src/Engine/MM6/MM6MonsterPreferences.h)
 - [MM6EncounterMonster.h](../src/Engine/MM6/MM6EncounterMonster.h),
+  [MM6MonsterRules.h](../src/Engine/MM6/MM6MonsterRules.h),
   [MM6PartyHostility.h](../src/Engine/MM6/MM6PartyHostility.h),
   [MM6NativeActorNpcPolicy.h](../src/Engine/MM6/MM6NativeActorNpcPolicy.h),
   [MM6NativeActorResistanceBytes.h](../src/Engine/MM6/MM6NativeActorResistanceBytes.h),
@@ -256,7 +283,8 @@ units down. Spell-side fixes (condition cures, Water Walk drain, stronger shorte
 - Unit tests in [src/Engine/MM6/Tests](../src/Engine/MM6/Tests): `MM6CombatRules_ut.cpp`, `MM6MonsterAttack_ut.cpp`,
   `MM6MonsterDamage_ut.cpp`, `MM6MapStatsEncounterColumns_ut.cpp`, `MM6PartyDeath_ut.cpp`
 - Game tests: `GameTests_MM6Combat.cpp`, `GameTests_MM6FirstCombat.cpp`, `GameTests_MM6Dungeons.cpp`,
-  `GameTests_MM6PartyDeath.cpp`, `GameTests_MM6GrayFaceShared.cpp`, `GameTests_MM6MapSweep.cpp` in
+  `GameTests_MM6PartyDeath.cpp`, `GameTests_MM6GrayFaceShared.cpp`, `GameTests_MM6MapSweep.cpp`,
+  `GameTests_MM6MonsterFamilies.cpp` in
   [test/Bin/GameTest](../test/Bin/GameTest)
 - [run_mm6_combat_sweep.py](../tools/run_mm6_combat_sweep.py)
 

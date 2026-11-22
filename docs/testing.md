@@ -107,8 +107,11 @@ A tape records one value every frame while taping is on. `GAME_TEST` hands the b
 recorded until `test.startTaping()`. Compare whole tapes with `EXPECT_EQ`, `EXPECT_CONTAINS` or `delta()` as
 [.claude/CLAUDE.md](../.claude/CLAUDE.md) describes.
 
-`test.prepareForNextTest()` resets every config entry to its default, clears the RAM profile and goes back to the main
-menu. A test that sets a config value, such as a `gameplay.fix_*` flag, does so after the reset.
+`test.prepareForNextTest()` resets every config entry to its default, clears the RAM profile, goes back to the main
+menu, zeroes the game clock and restarts the random number generators. A test that sets a config value, such as a
+`gameplay.fix_*` flag, does so after the reset. A new game keeps the game clock, and AI and walking animations run off
+it, so without the reset a test would depend on the tests that ran before it in the same process. The UI animation
+clock isn't reset.
 
 ### Fixtures and test data
 

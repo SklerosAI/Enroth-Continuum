@@ -13,6 +13,7 @@
 #include "Engine/Objects/NPC.h"
 #include "Engine/Objects/MonsterEnumFunctions.h"
 #include "Engine/Objects/NPCEnumFunctions.h"
+#include "Engine/MM6/MM6NativeActorNpcPolicy.h"
 #include "Engine/MM6/MM6StreetNpcPortraits.h"
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/Random/Random.h"
@@ -311,7 +312,7 @@ void NPCStats::InitializeAdditionalNPCs(NPCData *pNPCDataBuff, MonsterId npc_uid
     int uPortretMax;
 
     MonsterType monsterType = monsterTypeForMonsterId(npc_uid);
-    Sex uNPCSex = sexForMonsterType(monsterType);
+    Sex uNPCSex = engine->gameTitle() == GameTitle::MM6 ? mm6::nativeStreetNpcSex(npc_uid) : sexForMonsterType(monsterType);
     uRace = raceForMonsterType(monsterType);
     pNPCDataBuff->sex = uNPCSex;
     pNPCDataBuff->name = grng->randomSample(pNPCNames[uNPCSex]);

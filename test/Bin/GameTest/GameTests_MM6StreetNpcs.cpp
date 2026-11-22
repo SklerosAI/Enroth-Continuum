@@ -1,6 +1,9 @@
 #include <algorithm>
+#include <cctype>
+#include <limits>
 #include <memory>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
@@ -12,6 +15,7 @@
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6NativeActorNpcPolicy.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
+#include "Engine/MM6/MM6StreetNpcPortraits.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Party.h"
@@ -29,6 +33,33 @@ static AccessibleVector<RenderBillboardD3D::OpacityType> drawnBlendModes(ObjectT
         if (billboard.sParentBillboardID >= 0 && pBillboardRenderList[billboard.sParentBillboardID].object_pid.type() == type &&
             !std::ranges::contains(result, billboard.opacity))
             result.push_back(billboard.opacity);
+    }
+    return result;
+}
+
+static std::vector<int> drawnNpcPortraits(const TestMultiTape<std::string> &texturesTape) {
+    // Numbers of the NPC portraits drawn on the taped frames, in the order they were first drawn.
+    std::vector<int> result;
+    for (const std::string &texture : texturesTape.flatten()) {
+        if (texture.size() != 6 || !texture.starts_with("npc") || !std::isdigit(static_cast<unsigned char>(texture[3])))
+            continue;
+        const int portrait = std::stoi(texture.substr(3));
+        if (!std::ranges::contains(result, portrait))
+            result.push_back(portrait);
+    }
+    return result;
+}
+
+static int nearestActor(Vec3f pos, int monster) {
+    // The map's actor of this MM6 monster ID nearest to the given point.
+    int result = -1;
+    float bestDistance = std::numeric_limits<float>::max();
+    for (const Actor &actor : pActors) {
+        const float distance = (actor.pos - pos).length();
+        if (actor.monsterInfo.id == static_cast<MonsterId>(monster) && distance < bestDistance) {
+            bestDistance = distance;
+            result = actor.id;
+        }
     }
     return result;
 }
@@ -120,4 +151,30 @@ GAME_TEST(MM6StreetNpcs, VillagersDrawOpaque) {
 
     EXPECT_EQ(actorsTape, tape(std::vector{RenderBillboardD3D::Transparent})); // Alpha blended, the opaque modes are additive.
     EXPECT_EQ(decorationsTape, tape(std::vector{RenderBillboardD3D::Transparent}));
+}
+
+GAME_TEST(MM6StreetNpcs, StreetNpcPortraitMatchesSex) {
+    // The male peasants of New Sorpigal talked with a woman's portrait and name, because MM7's peasant types disagree
+    // with MM6's on sex. MM6 gives the Peasant F1 and F2 families women and the Peasant M1 family men.
+    enterFirstMapFromNewGame(game);
+    const int man = nearestActor(pParty->pos, 134);
+    const int woman = nearestActor(pParty->pos, 121);
+    auto screenTape = tapes.screen();
+    auto texturesTape = tapes.hudTextures();
+    test.startTaping();
+
+    for (int peasant : {man, woman}) {
+        game.teleportTo(engine->_currentLoadedMapId, pActors[peasant].pos - Vec3f(150, 0, 0), 0); // West of the peasant, facing east.
+        game.pointMouseAtActor(peasant);
+        game.pressAndReleaseButton(BUTTON_LEFT);
+        game.tick();
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+    }
+
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_NPC_DIALOGUE, SCREEN_GAME, SCREEN_NPC_DIALOGUE, SCREEN_GAME));
+    const std::vector<int> portraits = drawnNpcPortraits(texturesTape);
+    ASSERT_EQ(portraits.size(), 2);
+    EXPECT_TRUE(std::ranges::contains(mm6StreetNpcMalePortraits, portraits[0])) << portraits[0];
+    EXPECT_TRUE(std::ranges::contains(mm6StreetNpcFemalePortraits, portraits[1])) << portraits[1];
 }

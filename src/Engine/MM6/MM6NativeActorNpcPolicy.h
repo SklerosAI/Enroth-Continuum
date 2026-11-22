@@ -1,5 +1,9 @@
 #pragma once
 
+#include <cassert>
+#include <utility>
+
+#include "Engine/Objects/CharacterEnums.h"
 #include "Engine/Objects/MonsterEnums.h"
 
 namespace mm6 {
@@ -34,6 +38,19 @@ constexpr bool getsStreetNpc(MonsterId monster, int npcId) {
  */
 constexpr bool clearsNativeActorNpc(MonsterId monster, int npcId) {
     return npcId != 0 && !nativeStreetNpcEligible(monster);
+}
+
+/**
+ * @offset 0x469210
+ *
+ * @param monster                       MM6 monster ID of an actor that gets a street NPC.
+ * @return                              Sex of its street NPC, which picks the name and the portrait. MM6.exe reads a
+ *                                      byte per monster ID at 0x4BF8B4, female for the Peasant F1 and F2 families and
+ *                                      male for Peasant M1.
+ */
+constexpr Sex nativeStreetNpcSex(MonsterId monster) {
+    assert(nativeStreetNpcEligible(monster));
+    return (std::to_underlying(monster) - 1) / 3 == 44 ? SEX_MALE : SEX_FEMALE;
 }
 
 } // namespace mm6

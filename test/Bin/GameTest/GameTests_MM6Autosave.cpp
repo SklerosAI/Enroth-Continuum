@@ -31,6 +31,7 @@
 #include "Engine/MM6/MM6SaveMetadata.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
+#include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/ChestTable.h"
 #include "Engine/Tables/MapTable.h"
@@ -329,6 +330,18 @@ static void takeShieldFromHiveChest1(EngineController &game) {
     game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
     game.tick();
     game.pressGuiButton("Game_Character2");
+    game.tick();
+}
+
+static constexpr ItemId kCobraEgg = static_cast<ItemId>(474); // Lies on the floor of the Abandoned Temple.
+
+static void pickUpFromGround(EngineController &game, ItemId item) {
+    // The party looks down at the first item of that kind lying on the map and clicks it.
+    auto sprite = std::ranges::find_if(pSpriteObjects, [&](const SpriteObject &object) { return object.uObjectDescID && object.containing_item.itemId == item; });
+    ASSERT_NE(sprite, pSpriteObjects.end());
+    game.teleportTo(engine->_currentLoadedMapId, sprite->vPosition - Vec3f(0, 150, 0), 90, -20);
+    game.pointMouseAtSprite(sprite - pSpriteObjects.begin());
+    game.pressAndReleaseButton(BUTTON_LEFT);
     game.tick();
 }
 
@@ -991,6 +1004,37 @@ GAME_TEST(MM6InGameSave, SavesWithAPoisonResistanceShield) {
     auto poisonRow = statsScreen.filter([](const DrawnText &text) { return text.text.starts_with("Poison"); }).map([](const DrawnText &text) { return text.text; });
     EXPECT_EQ(poisonRow, tape(std::string("Poison\f65535\t11023\f00000 / 23\n"))); // The Cleric's 5 and the shield's 18.
     EXPECT_EQ(shieldTape, tape(ITEM_NULL, kOlympianShield));
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
+    EXPECT_EQ(slotTape, tape(false, true));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6InGameSave, SavesWithACobraEggFromTheFloor) {
+    // The game couldn't be saved once the party picked up a Cobra Egg lying in the Abandoned Temple, an item a
+    // dungeon's own data puts on the floor had no record to save.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    startNewGameThroughInput(game);
+    engine->config->debug.NoActors.setValue(true); // The temple's monsters would come for the party.
+    game.teleportTo(pMapTable->GetMapInfo("d02.blv"), Vec3f(-24320, -7830, -2201), 90); // In the room with the eggs.
+    engine->config->debug.NoActors.setValue(false); // A new game without its monsters can't be saved.
+    auto eggTape = tapes.hasItem(kCobraEgg);
+    auto statusTape = tapes.statusBar();
+    auto slotTape = tapes.custom([&] { return std::filesystem::exists(profile / "saves/save000.ec6"); });
+    test.startTaping();
+
+    pickUpFromGround(game, kCobraEgg);
+    saveFromMenu(game);
+    game.goToMainMenu();
+    startNewGameThroughInput(game);
+    loadFromEscapeMenu(game, 1);
+
+    EXPECT_EQ(eggTape, tape(false, true, false, true)); // Picked up, a new game, the load.
     EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
     EXPECT_EQ(slotTape, tape(false, true));
     game.runGameRoutine([&] {

@@ -153,6 +153,22 @@ Chest_MM7 projectMM6ChestRecord(std::span<const std::uint8_t> record) {
     return chestForRuntime(record);
 }
 
+void reconstructMM6GroundItems(std::span<const std::uint8_t> records, std::vector<SpriteObject> *dst) {
+    if (records.size() % 100)
+        throw std::runtime_error("MM6 ground item records must be 100 bytes each");
+    dst->clear();
+    dst->reserve(records.size() / 100);
+    for (size_t offset = 0; offset < records.size(); offset += 100) {
+        const auto record = records.subspan(offset, 100);
+        SpriteObject &sprite = dst->emplace_back();
+        reconstruct(projectMM6GroundItemRecord(record), &sprite);
+        mm6::ItemRecord28 item;
+        std::copy_n(record.begin() + 36, item.size(), item.begin());
+        if (item.itemNumberRaw())
+            sprite.containing_item.mm6RawRecord = item;
+    }
+}
+
 MM6OutdoorDeltaSnapshot decodeMM6OutdoorDelta(const Blob &source) {
     MM6OutdoorDeltaSnapshot result;
     result.wire = mm6::decodeOutdoorDelta({static_cast<const std::uint8_t *>(source.data()), source.size()});

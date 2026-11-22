@@ -255,7 +255,7 @@ plan carries none for an occupied cursor. `requirePostWorldEmptyCursorReady` che
 | Calendar | [CalendarBook.cpp](../src/GUI/UI/Books/CalendarBook.cpp) | `time_bg` page and MM6 moon phases |
 | Autonotes | [AutonotesBook.cpp](../src/GUI/UI/Books/AutonotesBook.cpp) | `note_bg`, MM6 categories (potion, fountain, obelisk, seer, misc) |
 | Map book | [MapBook.cpp](../src/GUI/UI/Books/MapBook.cpp) | `zoom+`/`zoom-` tabs and four scroll tabs |
-| Spellbook | [MM6Spellbook.h](../src/GUI/UI/MM6Spellbook.h) | Eleven spells per school page, quick spell hot spots |
+| Spellbook | [MM6Spellbook.h](../src/GUI/UI/MM6Spellbook.h) | Eleven spells per school page, quick spell hot spots, right-click popup from `0x40C580` |
 | Character screen | [MM6CharacterScreen.h](../src/GUI/UI/MM6CharacterScreen.h) | MM6 tab art, five resistances, side borders over the paperdoll |
 | Chest | [UIChest.cpp](../src/GUI/UI/UIChest.cpp) | `buttesc1`/`buttesc2` exit at (392, 318), character-screen side borders |
 | Quick reference | [UIQuickReference.cpp](../src/GUI/UI/UIQuickReference.cpp) | `leather` background, reputation colour from the MM6 effective reputation |
@@ -264,6 +264,16 @@ plan carries none for an occupied cursor. `requirePostWorldEmptyCursorReady` che
 | Indoor entry and exit | [MM6TransitionDialog.h](../src/GUI/UI/MM6TransitionDialog.h) | `backevt` background, exit picture from the eight-entry `MM6.exe` table |
 | Loading screen | [LoadingScreenResources.h](../src/GUI/LoadingScreenResources.h) | One `loading.pcx`, no progress art and no hourglass animation |
 | Game over | [UIGameOver.h](../src/GUI/UI/UIGameOver.h) | `GUIWindow_MM6GameOver` for the MM6 finale |
+
+### Spell popup
+
+Right-clicking a known spell in the spellbook draws `drawMM6SpellPopup`, after `MM6.exe`'s `0x40C580`. The box starts
+at x 90, 30 pixels below the mouse, or at y 30 when the mouse is below y 250. It is 460 wide and at least 150 tall. The
+spell's book picture sits 17 pixels in from its top left corner. The spell name is the title. The text is the
+`spells.txt` description, then three lines labelled Normal, Expert and Master (`global.txt` 431, 433 and 432) with
+`spells.txt`'s Normal, Expert and Master columns. MM6 has no Grandmaster line. No colour marks the masteries the
+character has, all text is white. The left column shows the school's skill name and the SP cost for the character's
+mastery, from `spells.txt`'s cost columns whatever `gameplay.fix_spells_cost` says.
 
 ## Outdoor sky
 

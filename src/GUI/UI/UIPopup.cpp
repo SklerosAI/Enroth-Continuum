@@ -41,6 +41,7 @@
 #include "GUI/GUIButton.h"
 #include "GUI/GUIMessageQueue.h"
 #include "GUI/UI/Books/MapBook.h"
+#include "GUI/UI/MM6Spellbook.h"
 #include "GUI/UI/UICharacter.h"
 #include "GUI/UI/UIPopup.h"
 
@@ -1883,8 +1884,14 @@ void UI_OnMouseRightClick(Pointi mousePos) {
             break;
         }
         case SCREEN_SPELL_BOOK: {
-            if (dword_507B00_spell_info_to_draw_in_popup != SPELL_NONE)
+            if (dword_507B00_spell_info_to_draw_in_popup == SPELL_NONE)
+                break;
+            if (engine->gameTitle() == GameTitle::MM6) {
+                drawMM6SpellPopup(dword_507B00_spell_info_to_draw_in_popup);
+                dword_507B00_spell_info_to_draw_in_popup = SPELL_NONE;
+            } else {
                 DrawSpellDescriptionPopup(dword_507B00_spell_info_to_draw_in_popup);
+            }
             break;
         }
         case SCREEN_HOUSE: {

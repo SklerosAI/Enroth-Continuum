@@ -40,6 +40,14 @@ void createMM6SpellbookButtons(GUIWindow *window);
 void drawMM6Spellbook(const std::array<GraphicsImage *, 12> &page);
 
 /**
+ * Draws MM6's right-click popup for a spell on the open spellbook page.
+ *
+ * @offset 0x40C580
+ * @param spell                         Spell under the mouse.
+ */
+void drawMM6SpellPopup(SpellId spell);
+
+/**
  * Handles a click on TABSPELL or on the header picture.
  *
  * @param action                        Which of the two was clicked.

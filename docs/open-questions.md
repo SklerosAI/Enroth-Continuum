@@ -50,6 +50,13 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   add up to a multiple of 100, which needs one of the cheap professions 52 to 77 hired, and by at most a few gold.
 - **Any-item roll.** Chests and `GiveItem` kind 0 keep MM6.exe's off-by-one, which favours item 1, because the GrayFace
   patch leaves that roll alone. Fixing it changes chest contents on every map. Owner's call. `mm6::generateAnyItem`.
+- **MM7 monster types on MM6 paths.** `supertypeForMonsterId` makes MM6's Genies and Plate Knights undead and its
+  Ghosts, Liches and Skeletons not. It decides Turn Undead, Destroy Undead, Control Undead, Mass Fear, Enslave and the
+  slaying enchantments, which MM6 refuses or throws on today. Each needs MM6's own families before it is admitted.
+  `CastSpellInfo.cpp`, `SpriteObject.cpp`, `Vis.cpp`, `Character.cpp`.
+- **Monster popup.** The right-click popup offsets the monster picture by MM7 type (`monster_popup_y_offsets`) and
+  never plays the attack animation for MM7's peasant types, MM6 IDs 115 onwards. MM6.exe's popup was not traced.
+  `UIPopup.cpp`.
 - **Retracting lava bridges.** The Supreme Temple of Baa's four lava bridges are doors 12 to 15. A monster on one when
   it retracts falls into the lava. GrayFace's C24 limit wouldn't stop that either.
 

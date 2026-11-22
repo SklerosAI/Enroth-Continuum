@@ -19,6 +19,7 @@
 #include "Engine/MM6/MM6EventSpell.h"
 #include "Engine/MM6/MM6MonsterAttack.h"
 #include "Engine/MM6/MM6MonsterProjectile.h"
+#include "Engine/MM6/MM6MonsterRules.h"
 #include "Engine/MM6/MM6MonsterSpellEffect.h"
 #include "Engine/MM6/MM6PlayerSpell.h"
 #include "Engine/MM6/MM6RandomTreasure.h"
@@ -745,7 +746,9 @@ void Actor::AggroSurroundingPeasants(unsigned int uActorID, int a2) {
         Actor *actor = &pActors[i];
         if (!actor->CanAct() || i == uActorID) continue;
 
-        if (Actor::ArePeasantsOfSameFaction(victim, actor)) {
+        const bool joins = engine->gameTitle() == GameTitle::MM6 ? mm6::bystanderTurnsHostile(victim->monsterInfo.id, actor->monsterInfo.id)
+                                                                 : Actor::ArePeasantsOfSameFaction(victim, actor);
+        if (joins) {
             int deltaX = actor->pos.x - victim->pos.x;
             int deltaY = actor->pos.y - victim->pos.y;
             int deltaZ = actor->pos.z - victim->pos.z;
@@ -1119,6 +1122,9 @@ void Actor::AI_MeleeAttack(unsigned int uActorID, Pid sTargetPid,
 
 //----- (00438CF3) --------------------------------------------------------
 void Actor::ApplyFineForKillingPeasant(unsigned int uActorID) {
+    if (engine->gameTitle() == GameTitle::MM6)
+        return; // MM6 has no fines, Actor::Die charges reputation instead.
+
     if (engine->_currentLoadedMapId == MAP_INVALID || !pActors[uActorID].IsPeasant())
         return;
 
@@ -1734,6 +1740,8 @@ void Actor::AI_Pain(unsigned int uActorID, Pid edx0,
     if (pActors[uActorID].aiState == Fleeing)
         pActors[uActorID].attributes |= ACTOR_FLEEING;
     if (pActors[uActorID].monsterInfo.hostilityType != HOSTILITY_LONG) {
+        if (engine->gameTitle() == GameTitle::MM6)
+            pParty->mm6Reputation = mm6::reputationAfterPain(pParty->mm6Reputation, mm6::isMonsterHostileToParty(pActors[uActorID]));
         pActors[uActorID].attributes &= ~ACTOR_UNKNOWN_4;
         pActors[uActorID].monsterInfo.hostilityType = HOSTILITY_LONG;
     }
@@ -1852,9 +1860,14 @@ void Actor::Die(unsigned int uActorID) {
     for (SpellBuff &buff : actor->buffs)
         buff.Reset();
 
+    if (engine->gameTitle() == GameTitle::MM6)
+        pParty->mm6Reputation = mm6::reputationAfterMonsterDeath(pParty->mm6Reputation, pMonsterStats->infos[actor->monsterInfo.id].hostilityType,
+                                                                 pParty->arenaLevel != ARENA_LEVEL_INVALID);
+
     Item drop;
     drop.Reset();
-    drop.itemId = itemDropForMonsterType(monsterTypeForMonsterId(actor->monsterInfo.id));
+    if (engine->gameTitle() != GameTitle::MM6) // MM6 monsters drop no reagents.
+        drop.itemId = itemDropForMonsterType(monsterTypeForMonsterId(actor->monsterInfo.id));
 
     if (grng->random(100) < 20 && drop.itemId != ITEM_NULL) {
         SpriteObject::dropItemAt(pItemTable->items[drop.itemId].spriteId,

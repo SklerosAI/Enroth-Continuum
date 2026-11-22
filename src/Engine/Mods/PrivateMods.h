@@ -72,4 +72,20 @@ bool allArtifactsEnabled(GameTitle title, const char *flag);
  */
 bool allArtifactsEnabled(GameTitle title);
 
+/**
+ * Fortune's Turn for MM6 shows random monster loot, clicked random event items and the monthly town-hall bounty in a
+ * popup that can reroll them. Atlas sets `ENROTH_MM6_MONSTER_LOOT_REROLL` for an MM6 launch from its own preference.
+ *
+ * @param title                         Running game title.
+ * @param flag                          Value of `ENROTH_MM6_MONSTER_LOOT_REROLL`, or `nullptr` if it isn't set.
+ * @return                              Whether the mod is on, which takes MM6 and the exact string `1`.
+ */
+bool monsterLootRerollEnabled(GameTitle title, const char *flag);
+
+/**
+ * @param title                         Running game title.
+ * @return                              Whether `ENROTH_MM6_MONSTER_LOOT_REROLL` turns Fortune's Turn on.
+ */
+bool monsterLootRerollEnabled(GameTitle title);
+
 }  // namespace mm6::mods

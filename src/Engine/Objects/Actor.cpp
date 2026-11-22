@@ -9,7 +9,6 @@
 #include <optional>
 
 #include "Engine/Engine.h"
-#include "Engine/Mods/PrivateMods.h"
 #include "Engine/MM6/MM6ArtifactEffects.h"
 #include "Engine/MM6/MM6CombatRules.h"
 #include "Engine/MM6/MM6PartyHostility.h"
@@ -54,6 +53,7 @@
 
 #include "Utility/Exception.h"
 
+#include "GUI/UI/MM6FortunesTurn.h"
 #include "GUI/UI/UIGame.h"
 #include "GUI/UI/UIMonsterLoot.h"
 #include "GUI/UI/UIStatusBar.h"
@@ -3736,9 +3736,7 @@ void Actor::LootActor() {
 }
 
 bool Actor::canRerollLoot() const {
-    if (!engine || !mm7::mods::monsterLootRerollEnabled(engine->gameTitle()) ||
-        !engine->config->gameplay.MonsterLootRerollInGame.value() ||
-        current_screen_type != SCREEN_GAME || aiState != Dead || ActorHasItem() ||
+    if (!fortunesTurnSwitchedOn() || current_screen_type != SCREEN_GAME || aiState != Dead || ActorHasItem() ||
         carriedItemId != ITEM_NULL ||
         ((monsterInfo.treasureDropChance == 0 || monsterInfo.treasureLevel == ITEM_TREASURE_LEVEL_INVALID) &&
          (monsterInfo.goldDiceRolls == 0 || monsterInfo.goldDiceSides == 0)))
@@ -3753,6 +3751,8 @@ MonsterLootOffer Actor::rollRerollLoot() {
     MonsterLootOffer offer;
     if (aiState != Dead || ActorHasItem() || carriedItemId != ITEM_NULL)
         return offer;
+    if (engine->gameTitle() == GameTitle::MM6)
+        return mm6::rollCorpseFortune(*this);
 
     MersenneTwisterRandomEngine seeded;
     seeded.seed(grng->random(INT_MAX) + 1);
@@ -3791,7 +3791,9 @@ void Actor::takeRerollLoot(const MonsterLootOffer &offer) {
         pParty->partyFindsGold(offer.gold, GOLD_RECEIVE_SHARE);
     if (offer.item.itemId != ITEM_NULL) {
         Item item = offer.item;
-        if (isSpawnableArtifact(item.itemId))
+        if (engine->gameTitle() == GameTitle::MM6)
+            mm6::claimFortuneItem(item.itemId);
+        else if (isSpawnableArtifact(item.itemId))
             pParty->isArtifactGenerated[item.itemId] = true;
         StatusBarItemFound(offer.gold, pItemTable->items[item.itemId].unidentifiedName);
         if (!pParty->addItemToParty(&item))

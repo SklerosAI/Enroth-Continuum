@@ -22,7 +22,9 @@
 #include "Engine/Timer.h"
 #include "Engine/Mods/PrivateMods.h"
 #include "GUI/GUIFont.h"
+#include "GUI/UI/Houses/MM6House.h"
 #include "GUI/UI/Houses/TownHall.h"
+#include "GUI/UI/MM6FortunesTurn.h"
 #include "GUI/UI/UIPopup.h"
 #include "Library/Random/MersenneTwisterRandomEngine.h"
 #include "Utility/String/Format.h"
@@ -92,6 +94,8 @@ std::vector<std::string> itemStatLines(const Item &item) {
 }
 
 Item rollClickedItem(ItemTreasureLevel level, RandomItemType type) {
+    if (engine->gameTitle() == GameTitle::MM6)
+        return mm6::rollFortuneItem(level, type);
     MersenneTwisterRandomEngine seeded;
     seeded.seed(grng->random(INT_MAX) + 1);
     RandomEngine *previous = grng;
@@ -170,6 +174,8 @@ void GUIWindow_MonsterLoot::initializeControls() {
 }
 
 void GUIWindow_MonsterLoot::Update() {
+    if (engine->gameTitle() == GameTitle::MM6)
+        render->EndTextNew(); // MM6's status line and house text lie under the frame, and queued text draws after quads.
     DrawPopupWindow(95, 35, 450, 380);
     if (_kind == Kind::Bounty) {
         MonsterId monster = pParty->monster_id_for_hunting[_bountyHall];
@@ -242,6 +248,11 @@ void GUIWindow_MonsterLoot::reroll() {
             _offer = pActors[_actorId].rollRerollLoot();
             break;
         case Kind::Bounty:
+            if (engine->gameTitle() == GameTitle::MM6) {
+                if (GUIWindow_MM6House *house = mm6HouseWindow())
+                    house->rerollBounty();
+                break;
+            }
             pParty->monster_id_for_hunting[_bountyHall] = GUIWindow_TownHall::randomMonsterForHunting(_bountyHall);
             if (auto *hall = dynamic_cast<GUIWindow_TownHall *>(window_SpeakInHouse.get()))
                 hall->refreshBountyPreview();
@@ -309,7 +320,9 @@ void takeMonsterLootPopup() {
         kind == GUIWindow_MonsterLoot::Kind::Enchantment)
         return;
     if (kind == GUIWindow_MonsterLoot::Kind::Clicked) {
-        if (offer.item.itemId != ITEM_NULL) {
+        if (offer.item.itemId != ITEM_NULL && engine->gameTitle() == GameTitle::MM6) {
+            mm6::takeFortuneItem(offer.item);
+        } else if (offer.item.itemId != ITEM_NULL) {
             if (isSpawnableArtifact(offer.item.itemId))
                 pParty->isArtifactGenerated[offer.item.itemId] = true;
             pParty->setHoldingItem(offer.item);
@@ -354,9 +367,7 @@ void openNextClickedReward() {
 }
 
 void beginClickedLootCapture() {
-    capturingClickedLoot = engine && mm7::mods::monsterLootRerollEnabled(engine->gameTitle()) &&
-                           engine->config->gameplay.MonsterLootRerollInGame.value() &&
-                           current_screen_type == SCREEN_GAME && !lootPopup;
+    capturingClickedLoot = fortunesTurnSwitchedOn() && current_screen_type == SCREEN_GAME && !lootPopup;
     clickedRewards.clear();
 }
 
@@ -372,9 +383,15 @@ bool captureClickedRandomLoot(ItemTreasureLevel level, RandomItemType type) {
     return true;
 }
 
-bool fortuneRerollActive() {
+bool fortunesTurnSwitchedOn() {
+    if (engine && engine->gameTitle() == GameTitle::MM6)
+        return mm6::fortunesTurnOn();
     return engine && mm7::mods::monsterLootRerollEnabled(engine->gameTitle()) &&
-           engine->config->gameplay.MonsterLootRerollInGame.value() && !lootPopup;
+           engine->config->gameplay.MonsterLootRerollInGame.value();
+}
+
+bool fortuneRerollActive() {
+    return fortunesTurnSwitchedOn() && !lootPopup;
 }
 
 void openOreRerollPopup(ItemTreasureLevel level, RandomItemType type) {

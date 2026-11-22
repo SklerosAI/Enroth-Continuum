@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Engine/Objects/Item.h"
 #include "Engine/Objects/ItemEnums.h"
 
 namespace mm6 {
@@ -18,5 +19,13 @@ namespace mm6 {
  * @param fixedId                       Item ID that replaces the rolled one, or `ITEM_NULL`.
  */
 void giveEventItem(ItemTreasureLevel treasureLevel, RandomItemType requestedKind, ItemId fixedId);
+
+/**
+ * Puts an item on the cursor the way MM6 GiveItem does. A previously held item moves to the active character, then to
+ * characters 0..3. Throws before changing anything when no character has room for the held item.
+ *
+ * @param item                          Item to hold.
+ */
+void holdEventItem(const Item &item);
 
 } // namespace mm6

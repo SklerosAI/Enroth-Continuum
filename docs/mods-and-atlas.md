@@ -186,7 +186,7 @@ four MM7 boolean flags to `0`.
 | `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.vendorRefreshOnEntry` | `mm6::vendorRefreshPolicy` |
 | `ENROTH_MM6_ALL_ARTIFACTS` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.allArtifacts` | `mm6::mods::allArtifactsEnabled` |
 | `ENROTH_MM6_CHEST_REROLL` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.chestReroll` | The MM6 engine, see [Chest reroll](#chest-reroll) |
-| `ENROTH_MM6_MONSTER_LOOT_REROLL` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.monsterLootReroll` | The MM6 engine, see [Fortune's Turn](#fortunes-turn) |
+| `ENROTH_MM6_MONSTER_LOOT_REROLL` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.monsterLootReroll` | `mm6::mods::monsterLootRerollEnabled`, see [Fortune's Turn](#fortunes-turn) |
 
 Every MM7 reader checks `GameTitle::MM7` first, so the MM7 variables do nothing in an MM6 run, and the MM6 readers
 check `GameTitle::MM6`. The boolean flags
@@ -335,11 +335,44 @@ deterministic weapon effects and ground items that already exist keep their norm
 the mod on arms a one-time test setup. On the first visit to Emerald Isle's Dragon's Lair in that session the first live
 dragon is already a lootable corpse. Loading another save cancels it.
 
+#### MM6
+
+`ENROTH_MM6_MONSTER_LOOT_REROLL` accepts only the exact string `1` (`mm6::mods::monsterLootRerollEnabled` in
+`src/Engine/Mods/PrivateMods.{h,cpp}`). The MM6 logic is in `src/GUI/UI/MM6FortunesTurn.{h,cpp}`, with thin
+`GameTitle::MM6` hooks in the shared popup, `Actor`, the event interpreter and the HUD. It shares the MM7 popup, its
+buttons and its exclusions, and rolls with MM6's own rules:
+
+- A corpse rolls its gold dice and drop chance on the gameplay RNG and its item through MM6's item picker on the item
+  LCG, the way `Actor::LootActor` does for MM6. Take gives both, removes the corpse, and marks a taken artifact
+  generated in the `CHST` flags.
+- A clicked decoration or face whose event runs GiveItem with no fixed item rolls through the same picker. The rest
+  of the event runs as usual, once. Take puts the item on the cursor the way MM6 GiveItem does (`mm6::holdEventItem`),
+  moving a held item to a backpack. GiveItem with a fixed item, which MM6 rolls and then renumbers, keeps its normal
+  path. The shipped sources are the interactive decorations whose global events 426 to 428, 432 to 434, 437 and 439 to
+  442 give random items, and map events of `cd2`, `d01`, `d02`, `d03`, `d05`, `d10`, `d12` to `d16`, `t3`, `t4` and
+  `t5`, for example the hanging and bone cages of the Abandoned Temple (`d02`, events 16 to 23).
+- The New Sorpigal, Misty Islands and Silver Cove town halls open the popup when the bounty topic shows a live bounty.
+  Reroll draws from MM6's one bounty pool (MM6.exe 0x4A3238), and the NPC text follows the new monster.
+- Each roll moves the item LCG on but leaves the generated artifact flags and the All Artifacts collected ledger alone,
+  so a preview never uses up an artifact. A taken item carries the native record the picker made, so the game saves
+  with it.
+- Escape takes nothing from a corpse or a clicked source, and keeps the bounty the popup showed.
+
+The checkbox sits in the marble right of the fourth portrait's bars, with a dice under it, and is saved in the engine
+config as `mm6_monster_loot_reroll_in_game`. Its button exists only while the launch flag is set. MM6 has no Enchant
+Item player spell (`mm6::isVerifiedPlayerSpell`), so the enchantment reroll has no MM6 counterpart, and there is no
+new-game corpse setup.
+
+MM6 has no ore smith. Its closest trade is the Circus of the Sun prize exchange, global events 129 to 131, which take a
+held Golden Pyramid (item 472) for a level 6 armor, weapon or accessory, and 132 to 134, which take a Keg of Wine (473)
+for a level 4 one. They are the NPC topics of Kerman Murian, Irbil Baktarian and Najat Ramadi, so their GiveItem keeps
+its normal path, see [Open questions](open-questions.md).
+
 ### Candidate MM7 mods
 
 - A read-only game-menu panel that lists the MM7 options Atlas supplied at launch and the live Fortune's Turn checkbox.
   The owner selected it for the backlog. It is not implemented.
-- Loot reroll for MM6 and MM8 is future work.
+- Loot reroll for MM8 is future work.
 - From the save-and-reload tactics reviewed on 2026-11-20: an in-shop reroll button needs a purchase guard and is
   deferred, since vendor refresh on entry already covers the shortcut. Rerolling hireling professions would mutate the
   map's generated NPCs and is deferred. Repeating a dragon corpse's payout after Take is excluded.
@@ -403,7 +436,8 @@ it as `ENROTH_MM6_ALL_ARTIFACTS=1`, or `0` when off. The MM7 and upstream launch
   [MM6ChestBaseItemPicker.h](../src/Engine/MM6/MM6ChestBaseItemPicker.h),
   [MM6ChestDirectArtifactPicker.h](../src/Engine/MM6/MM6ChestDirectArtifactPicker.h)
 - [Chest.cpp](../src/Engine/Objects/Chest.cpp), [UIChest.cpp](../src/GUI/UI/UIChest.cpp),
-  [UIMonsterLoot.cpp](../src/GUI/UI/UIMonsterLoot.cpp), [TownHall.cpp](../src/GUI/UI/Houses/TownHall.cpp)
+  [UIMonsterLoot.cpp](../src/GUI/UI/UIMonsterLoot.cpp), [TownHall.cpp](../src/GUI/UI/Houses/TownHall.cpp),
+  [MM6FortunesTurn.cpp](../src/GUI/UI/MM6FortunesTurn.cpp), [MM6House.cpp](../src/GUI/UI/Houses/MM6House.cpp)
 - [AssetsManager.cpp](../src/Engine/AssetsManager.cpp), [ItemTable.cpp](../src/Engine/Tables/ItemTable.cpp),
   [Item.cpp](../src/Engine/Objects/Item.cpp), [Party.cpp](../src/Engine/Party.cpp),
   [EntitySnapshots.cpp](../src/Engine/Snapshots/EntitySnapshots.cpp)
@@ -420,7 +454,8 @@ it as `ENROTH_MM6_ALL_ARTIFACTS=1`, or `0` when off. The MM7 and upstream launch
   preview test, which always runs. The vendor tests
   skip unless `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY=1` is set. The MM6 vendor tests in
   [GameTests_MM6Houses.cpp](../test/Bin/GameTest/GameTests_MM6Houses.cpp) (`MM6Houses.*VendorRefresh*`) and the MM6
-  artifact tests in [GameTests_MM6AllArtifacts.cpp](../test/Bin/GameTest/GameTests_MM6AllArtifacts.cpp) set their own
-  flag. The MM6 ledger's fresh-process pair runs in `tools/run_mm6_firstmap_gate.py`.
+  artifact tests in [GameTests_MM6AllArtifacts.cpp](../test/Bin/GameTest/GameTests_MM6AllArtifacts.cpp) and the MM6
+  Fortune's Turn tests in [GameTests_MM6FortunesTurn.cpp](../test/Bin/GameTest/GameTests_MM6FortunesTurn.cpp) set their
+  own flag. The MM6 ledger's fresh-process pair runs in `tools/run_mm6_firstmap_gate.py`.
 
 See also: [Build setup](build-and-dev-setup.md), [Testing](testing.md), [MM7 status](mm7-status.md), [Upstream](upstream.md), [Source and privacy](source-and-privacy.md)

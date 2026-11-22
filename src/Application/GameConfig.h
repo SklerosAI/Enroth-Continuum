@@ -177,6 +177,9 @@ class GameConfig : public Config {
         Bool MonsterLootRerollInGame = {this, "mm7_monster_loot_reroll_in_game", true,
             "In-game dice checkbox for the opt-in MM7 Fortune's Turn reroll mod."};
 
+        Bool MM6MonsterLootRerollInGame = {this, "mm6_monster_loot_reroll_in_game", true,
+            "In-game dice checkbox for the opt-in MM6 Fortune's Turn reroll mod."};
+
         Int Gravity = {this, "gravity", 5,
             "Gravity strength, the higher the more gravity, 0 disables gravity completely."};
 

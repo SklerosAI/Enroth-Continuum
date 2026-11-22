@@ -1517,6 +1517,8 @@ void Game::processQueuedMessages() {
                     current_screen_type == SCREEN_GAME)
                     engine->config->gameplay.MonsterLootRerollInGame.setValue(
                         !engine->config->gameplay.MonsterLootRerollInGame.value());
+                if (mm6::mods::monsterLootRerollEnabled(engine->gameTitle()) && current_screen_type == SCREEN_GAME)
+                    engine->config->gameplay.MM6MonsterLootRerollInGame.toggle();
                 continue;
             case UIMSG_InventoryLeftClick:
                 pParty->activeCharacter().OnInventoryLeftClick();

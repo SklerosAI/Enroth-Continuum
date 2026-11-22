@@ -1873,6 +1873,9 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
         case EVENT_GiveItem:
         {
             if (engine->gameTitle() == GameTitle::MM6) {
+                if (ir.data.give_item_descr.item_id == ITEM_NULL &&
+                    captureClickedRandomLoot(ir.data.give_item_descr.treasure_level, ir.data.give_item_descr.treasure_type))
+                    break;
                 mm6::giveEventItem(ir.data.give_item_descr.treasure_level, ir.data.give_item_descr.treasure_type,
                                    ir.data.give_item_descr.item_id);
                 break;

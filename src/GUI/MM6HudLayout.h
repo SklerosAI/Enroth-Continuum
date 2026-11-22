@@ -97,3 +97,7 @@ inline constexpr Recti mm6HudDateTimeHoverRect = {481, 0, 153, 67};
 inline constexpr std::array<Pointi, 4> mm6HudPortraitCenters = {{{52, 422}, {165, 422}, {280, 422}, {390, 422}}};
 inline constexpr int mm6HudPortraitRadius = 35;
 inline constexpr std::array<Recti, 4> mm6HudVitalsHoverRects = {{{90, 378, 21, 89}, {203, 378, 21, 89}, {316, 378, 21, 89}, {428, 378, 21, 89}}};
+
+inline constexpr Recti mm6HudFortunesTurnCheckboxRect = {451, 386, 12, 12}; // In the marble right of the fourth bars.
+inline constexpr Recti mm6HudFortunesTurnDiceRect = {451, 401, 12, 12};
+inline constexpr Recti mm6HudFortunesTurnButtonRect = {450, 385, 14, 29};

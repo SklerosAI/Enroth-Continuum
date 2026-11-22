@@ -8,8 +8,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 
 ## MM6: campaign and gates
 
-- **Chain C9.** C8 releases Archibald and ends with the Ritual, blasters and the Blaster skill. A C9 finale chapter
-  that loads `save008.ec6` and plays the hive is not written. `test/Bin/GameTest/MM6CampaignChain.cpp`.
 - **Owner sessions.** The working gate needs visible owner play beyond New Sorpigal: travel, a later dungeon, chain
   checkpoints and the ending.
 - **Research-folder tests.** `mm6::PrivateMapSource`, `saveNewGameMM6ScopedForTest` and the `GameTests_MM6Save` cases
@@ -24,6 +22,12 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 
 ## MM6: rules and combat
 
+- **MM6 monsters taken for MM7 peasants.** `monsterTypeForMonsterId` maps MM6 monster ids through MM7's monster types,
+  so MM6 ids 115 to 173, oozes, rats, sea serpents, wolfmen and the hive bosses among them, land in MM7's peasant
+  types 39 to 58 (`monsters.txt` of the owner's MM6 data). Killing one runs `Actor::ApplyFineForKillingPeasant`, which
+  adds a fine and sets MM7's `AWARD_FINE`, award 1, which MM6 calls "Returned the Prince". In chain C9 the Demon Queen
+  gives every character that award and the party a fine of 10,000. `AggroSurroundingPeasants` and the other
+  `isPeasant` callers read the same types. What MM6.exe does on a peasant kill is not checked yet.
 - **Encounter spawner.** MM6.exe rings extra monsters 128 (outdoor) or 64 (indoor) units around the spawn point,
   caps the level odds at difficulty 4 and keeps table hostility. The port stacks them, caps at 5 and spawns friendly
   aggressors. Not changed because it reaches every MM6 map. `SpawnEncounter` in `src/Engine/Objects/Actor.cpp`.

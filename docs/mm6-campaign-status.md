@@ -73,7 +73,7 @@ The last map sweep on record loaded all 67 MM6 maps and ran every phase on all 2
 | M1 | Production New Game, Save, fresh-process Load | Done (first-map gate) |
 | M2 | Live travel, Save on any map, fresh-process Load restoring chests, dead monsters and doors on active and parked maps | Done headless |
 | M3 | Party death and respawn, in-game Load, autosave and quick save | Done headless |
-| M4 | Main-quest chain from New Game to the finale with fresh-process checkpoints | C0 to C7 merged, C8 ready, C9 open |
+| M4 | Main-quest chain from New Game to the finale with fresh-process checkpoints | C0 to C8 merged, C9 passes on the real C8 save |
 | M5 | Owner sessions: the first hours, travel and a dungeon, chain checkpoints and the ending | Partial, New Sorpigal playtests only |
 | M6 | The Atlas installs a sibling MM6 helper with its own profile, MM7 untouched | Helper ships in `ECv0.1.0` on `Profiles/MM6-Atlas` |
 | M7 | MM7 stays working after every shared-core merge | Continuous |
@@ -97,7 +97,7 @@ in front of doors, crystals and exits.
 | C6 | The three castle crystals (Alamos, Darkmoor, Kriegspire) and the Oracle hand-in | Merged |
 | C7 | The Tomb of VARN and the Control Cube | Merged-ready, passes on the real C6 save, see below |
 | C8 | The Control Center's blasters and the NPC 12 release, through the room chain between houses 168, 553 and 554 | Passes on the real C7 save, see below |
-| C9 | The hive finale | Not written as a chapter. `MM6Finale.*` covers the hive itself. |
+| C9 | The hive: the sanctum key, the Demon Queen, the reactor, the exit obelisk and the winning ending | Passes on the real C8 save, see below |
 
 The chapter helpers live in [MM6CampaignChain.h](../test/Bin/GameTest/MM6CampaignChain.h). Private event traces for
 each chapter stay in the ignored `local-game-data/private-wiki/mm6/`.
@@ -176,6 +176,26 @@ equipped.
 
 With nine saves the chain's save helper scrolled the Save menu one slot short of the top and saved over
 `save000.ec6`. It now clicks up until the new slot is selected, and checks that before it saves.
+
+### C9 route
+
+C9 passes on the real C8 save, with C1's party strength and no damage inside the hive, the C4 fixture. It ends the
+chain with the game won and the party in New Sorpigal.
+
+- Starts on `outd3`. The first character hands a blaster to each of the others through their portraits, each wears
+  it from the backpack, and the first character wears the blaster rifle. Nobody wore anything before.
+- `outa1` event 90 leads into `hive.blv`, unless quest bit 237 says the party already escaped.
+- Chest 2 (event 42) holds the Hive Sanctum Key 570. The sanctum door (event 6, door 6) reads the active character's
+  items, takes the key and opens, and says "The door is locked" otherwise.
+- The Demon Queen (actor 1, monster 172) and the reactor (actor 0, monster 173) each have 1,300 hit points. Four
+  blasters at Blaster 1 kill both. The queen sets bit 202. The reactor, with the Ritual carried, sets bit 180, summons
+  16 hive guards and puts the party at the hive exit.
+- The exit obelisk (event 60) needs bit 202. With the Ritual it sets bit 237, clears bit 198, takes the Ritual, gives
+  award 36 "Destroyed the Hive and Saved Enroth" and opens the win screen. Without it the game is lost. The win screen
+  writes `MM6_Win.Pcx`, the farewell box follows, and the party goes on at New Sorpigal's start.
+
+Killing the queen also sets award 1, which MM6 calls "Returned the Prince", and a fine of 10,000, see
+[open questions](open-questions.md). C9 doesn't tape award 1 or the fine.
 
 ## GrayFace fix progress
 

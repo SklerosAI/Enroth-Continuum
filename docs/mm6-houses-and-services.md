@@ -100,6 +100,17 @@ House sound 2 is the shopkeeper's not enough gold line, `30000 + 100 * room soun
 sound: the 479 pushed next to it at 0x4A54C4 is the bottom row of the z-buffer clear 0x48DF90. The error sound is
 sound 27.
 
+### Footer and status line
+
+A shop screen's footer is the status line's own spot. MM6.exe draws both the same way, the footer picture at (0, 352)
+and the text centred in 450 pixels plus 11, at y 355. The status line is drawn by the hover update 0x41F190, which
+the main loop calls at 0x453ACE before the frame is drawn, and on a full redraw at 0x43515E. The house window is drawn later in every
+frame, by the window pass 0x40FC60 at 0x4352F0, and the shop screens draw the footer and their "Select the item to ..."
+prompt there unconditionally (0x4A02B1 and 0x4A0832 in the weapon shop). The prompt wins every frame, so the status lines
+a shop sets, "Done!", "Good as New!", "You don't have enough gold" and "Pack is full!", never reach the screen in MM6.exe.
+The port draws in the same order, the status bar in `Engine::DrawGUI` and then the shop window in `GUI_UpdateWindows`,
+and shows the same thing.
+
 ### Stock and refresh
 
 - Stock lives in MM6's own layout: 120 physical rows of twelve 28-byte item records (`MM6ShopStockFields.h`). Shop rows

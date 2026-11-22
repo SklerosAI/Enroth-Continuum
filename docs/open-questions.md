@@ -68,8 +68,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   recruiters included, lack their first topic. `GUIWindow_MM6House::refreshTopics`.
 - **Shop item info box.** MM6 shops have no right-click item info box. When it is ported, GrayFace's W28 check (no
   skill identify or repair by a member who can't act) comes with it. `src/GUI/UI/Houses/MM6Shop.cpp`.
-- **Shop footer.** The footer draws over the status bar, so "Done!" and "Good as New!" never show. Not checked against
-  MM6.exe.
 - **Shop item hover.** Hovering an item on a shop shelf shows no name in the status bar. Not checked against MM6.exe.
   GrayFace's hint half of W26 (0x485120, the sell hint) waits for whatever the hover shows.
 - **Street NPC news carry-over.** A street NPC slot keeps its news topic across map loads within one game, as in

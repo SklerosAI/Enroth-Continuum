@@ -33,6 +33,7 @@
 #include "Engine/MM6/MM6MonsterPreferences.h"
 #include "Engine/MM6/MM6Portraits.h"
 #include "Engine/MM6/MM6Potion.h"
+#include "Engine/MM6/MM6SkillBonus.h"
 #include "Engine/MM6/MM6SpellItems.h"
 #include "Engine/MM6/MM6SpellLearning.h"
 #include "Engine/MM6/MM6VoiceRules.h"
@@ -1803,10 +1804,6 @@ static int hiredWeaponSkillBonus() {
     return engine->gameTitle() == GameTitle::MM6 ? mm6::weaponSkillHirelingBonus() : 0;
 }
 
-static int hiredArmorSkillBonus() {
-    return engine->gameTitle() == GameTitle::MM6 ? mm6::armorSkillHirelingBonus() : 0;
-}
-
 static int hiredWeaponSkillRecoveryBonus() {
     return engine->config->gameplay.FixWeaponSkillHirelings.value() ? hiredWeaponSkillBonus() : 0;
 }
@@ -2817,6 +2814,9 @@ CombinedSkillValue Character::getActualSkillValue(Skill skill) const {
 
 //----- (0048FC00) --------------------------------------------------------
 int Character::GetSkillBonus(Attribute inSkill) const {
+    if (engine->gameTitle() == GameTitle::MM6)
+        return mm6::skillBonus(*this, inSkill);
+
                     // TODO(_): move the individual implementations to attribute
                     // classes once possible ?? check
     int armsMasterBonus = 0;
@@ -2841,24 +2841,12 @@ int Character::GetSkillBonus(Attribute inSkill) const {
             return 0;
 
         case ATTRIBUTE_HEALTH: {
-            if (engine->gameTitle() == GameTitle::MM6) {
-                const int classId = std::to_underlying(classType);
-                if (!mm6::isValidClass(classId))
-                    throw std::runtime_error("Invalid MM6 class ID for Bodybuilding bonus");
-                return mm6::creationRules().hpFactor[classId] * GetBodybuilding();
-            }
             int base_value = pBaseHealthPerLevelByClass[classType];
             int attrib_modif = GetBodybuilding();
             return base_value * attrib_modif;
         }
 
         case ATTRIBUTE_MANA: {
-            if (engine->gameTitle() == GameTitle::MM6) {
-                const int classId = std::to_underlying(classType);
-                if (!mm6::isValidClass(classId))
-                    throw std::runtime_error("Invalid MM6 class ID for Meditation bonus");
-                return mm6::creationRules().spFactor[classId] * GetMeditation();
-            }
             int base_value = pBaseManaPerLevelByClass[classType];
             int attrib_modif = GetMeditation();
             return base_value * attrib_modif;
@@ -2868,7 +2856,6 @@ int Character::GetSkillBonus(Attribute inSkill) const {
             bool wearingArmor = false;
             bool wearingLeather = false;
             int ACSum = 0;
-            const int hirelingBonus = hiredArmorSkillBonus();
 
             for (InventoryConstEntry item : inventory.functionalEquipment()) {
                 Skill itemSkillType = item->skill();
@@ -2907,7 +2894,7 @@ int Character::GetSkillBonus(Attribute inSkill) const {
                     default:
                         break;
                 }
-                ACSum += multiplier * (currArmorSkillLevel + hirelingBonus);
+                ACSum += multiplier * currArmorSkillLevel;
             }
 
             CombinedSkillValue dodgeValue = getActualSkillValue(SKILL_DODGE);
@@ -2931,7 +2918,7 @@ int Character::GetSkillBonus(Attribute inSkill) const {
             for (InventoryConstEntry item : inventory.functionalEquipment()) {
                 if (item->isMeleeWeapon()) {
                     Skill currItemSkillType = item->skill();
-                    int currentItemSkillLevel = this->getActualSkillValue(currItemSkillType).level() + hiredWeaponSkillBonus();
+                    int currentItemSkillLevel = this->getActualSkillValue(currItemSkillType).level();
                     if (currItemSkillType == SKILL_BLASTER) {
                         int multiplier = GetMultiplierForSkillLevel(currItemSkillType, 1, 2, 3, 5);
                         return multiplier * currentItemSkillLevel;
@@ -2950,7 +2937,7 @@ int Character::GetSkillBonus(Attribute inSkill) const {
             for (InventoryConstEntry item : inventory.functionalEquipment()) {
                 if (item->isWeapon()) {
                     Skill currentItemSkillType = item->skill();
-                    int currentItemSkillLevel = this->getActualSkillValue(currentItemSkillType).level() + hiredWeaponSkillBonus();
+                    int currentItemSkillLevel = this->getActualSkillValue(currentItemSkillType).level();
                     if (currentItemSkillType == SKILL_BOW) {
                         int multiplier = GetMultiplierForSkillLevel(SKILL_BOW, 1, 1, 1, 1);
                         return multiplier * currentItemSkillLevel;
@@ -2974,7 +2961,7 @@ int Character::GetSkillBonus(Attribute inSkill) const {
             for (InventoryConstEntry item : inventory.functionalEquipment()) {
                 if (item->isMeleeWeapon()) {
                     Skill currItemSkillType = item->skill();
-                    int currItemSkillLevel = this->getActualSkillValue(currItemSkillType).level() + hiredWeaponSkillBonus();
+                    int currItemSkillLevel = this->getActualSkillValue(currItemSkillType).level();
                     int baseSkillBonus;
                     int multiplier;
                     switch (currItemSkillType) {

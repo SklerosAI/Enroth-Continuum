@@ -60,7 +60,8 @@ data path and user path. It does not package original Might & Magic data.
 - The Atelier provides private portrait moods for four party positions,
   one MM7 armor template AC override, an optional fresh-vendor-stock-on-entry
   setting for MM6 and MM7, the MM7-only **All Artifacts + Storage** option,
-  and a Vanilla/Private mods switch.
+  chest reroll and Fortune's Turn rows for MM7 and for MM6, an MM6-only
+  **All Artifacts** option, and a Vanilla/Private mods switch.
   Portrait moods can replace normal, condition and reaction art in party creation
   and game play. Voices and body art remain original; death and eradication art
   remain original unless their own mood PNGs are supplied. An armor AC change
@@ -121,6 +122,10 @@ The separate click-loot toggle passes `ENROTH_MM7_MONSTER_LOOT_REROLL=1` only
 to a Private mods MM7 launch. Its in-game dice checkbox controls whether an
 eligible random-loot corpse or clicked random script item opens a paused
 Reroll/Take popup. See [mods and Atlas](../docs/mods-and-atlas.md) for the click-loot contract.
+Play MM6 passes `ENROTH_MM6_CHEST_REROLL` and `ENROTH_MM6_MONSTER_LOOT_REROLL`
+as `1` or `0` from their own MM6 toggles (`mods.mm6.chestReroll`,
+`mods.mm6.monsterLootReroll`), with or without Private mods. MM7 and upstream
+never receive them.
 
 The source defaults for a future MM7 Atlas build are
 `~/Library/Application Support/Enroth Continuum/Game Data/MM7` and the fresh

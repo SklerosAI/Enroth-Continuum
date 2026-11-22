@@ -36,7 +36,7 @@ function state(overrides) {
     recordingFinalizing: false, recordingEnabled: false, recordVideo: false, recordDiagnostics: false,
     recordingPath: '', recordingSession: '', modsEnabled: false, vendorRefreshOnEntry: false,
     mm6VendorRefreshOnEntry: false, allArtifactsStorage: false, chestReroll: false, monsterLootReroll: false,
-    mm6AllArtifacts: false,
+    mm6AllArtifacts: false, mm6ChestReroll: false, mm6MonsterLootReroll: false,
     portraits: [false, false, false, false], portraitMoods: [{}, {}, {}, {}],
     armor: {saved: false}, ...overrides,
   };
@@ -132,6 +132,26 @@ assert.strictEqual(mm6ArtifactsToggle.textContent, 'Turn on');
 assert.strictEqual(mm6ArtifactsStatus.textContent, 'Off · normal artifact cap');
 mm6ArtifactsToggle.click();
 assert.strictEqual(sent.at(-1), 'mm6-all-artifacts-on');
+
+// The MM6 chest reroll and Fortune's Turn toggles save MM6's own choices, apply without Private mods and leave MM7's
+// toggles alone.
+for (const [name, key, mm7Name, off] of [['mm6-chest-reroll', 'mm6ChestReroll', 'chest-reroll', 'Off · normal chest loot'],
+                                          ['mm6-monster-loot-reroll', 'mm6MonsterLootReroll', 'monster-loot-reroll',
+                                           'Off · normal rewards']]) {
+  const toggle = document.getElementById(`${name}-toggle`);
+  const status = document.getElementById(`${name}-status`);
+  window.Atlas.receive(state({[key]: true}));
+  assert.strictEqual(toggle.textContent, 'Turn off');
+  assert.strictEqual(status.textContent, 'On for next MM6 launch');
+  assert.strictEqual(document.getElementById(`${mm7Name}-toggle`).textContent, 'Turn on');
+  toggle.click();
+  assert.strictEqual(sent.at(-1), `${name}-off`);
+  window.Atlas.receive(state({modsEnabled: true, chestReroll: true, monsterLootReroll: true}));
+  assert.strictEqual(toggle.textContent, 'Turn on');
+  assert.strictEqual(status.textContent, off);
+  toggle.click();
+  assert.strictEqual(sent.at(-1), `${name}-on`);
+}
 
 // The vendor toggle saves a choice for each title. MM6 applies its own without Private mods, MM7 only with them.
 const vendorToggle = document.getElementById('vendor-refresh-toggle');

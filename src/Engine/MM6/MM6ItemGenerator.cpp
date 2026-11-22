@@ -4,6 +4,17 @@
 
 namespace mm6 {
 
+ItemRecord28 generatedItemRecord(const ChestFinalizedItem &fields) {
+    ItemRecord28 result;
+    result.setWord(0, fields.itemId);
+    result.setWord(4, fields.standardAttributeIndex);
+    result.setWord(8, fields.standardStrength);
+    result.setWord(12, fields.specialEnchantmentId);
+    result.setWord(16, fields.numCharges);
+    result.setWord(20, fields.flags);
+    return result;
+}
+
 Item generatedRuntimeItem(const ChestFinalizedItem &fields) {
     if (fields.itemId < 1 || fields.itemId > 429 ||
         (fields.standardAttributeIndex && !attributeForStandardBonus(fields.standardAttributeIndex)) ||
@@ -18,6 +29,7 @@ Item generatedRuntimeItem(const ChestFinalizedItem &fields) {
     item.specialEnchantment = static_cast<ItemEnchantment>(fields.specialEnchantmentId);
     item.numCharges = fields.numCharges;
     item.flags = ItemFlags(fields.flags);
+    item.mm6RawRecord = generatedItemRecord(fields);
     return item;
 }
 

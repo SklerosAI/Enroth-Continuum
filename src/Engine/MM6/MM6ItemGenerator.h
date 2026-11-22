@@ -9,6 +9,7 @@
 #include "Engine/MM6/MM6ChestBaseItemPicker.h"
 #include "Engine/MM6/MM6ChestItemFinalizer.h"
 #include "Engine/MM6/MM6ChestTitleState.h"
+#include "Engine/MM6/MM6ItemRecord28.h"
 #include "Engine/MM6/MM6StandardBonusMap.h"
 #include "Engine/Objects/Item.h"
 #include "Engine/Tables/ItemTable.h"
@@ -264,10 +265,20 @@ inline std::optional<ChestFinalizedItem> generateItem(GameTitle title, const Ite
 }
 
 /**
+ * Native record of a generated MM6 item. MM6.exe's generator (0x448790) zeroes all 28 bytes of the item first, then
+ * writes the item number, the standard bonus and its strength, the special bonus, the charges and the condition.
+ *
+ * @param fields                        Item fields from `generateItem`.
+ * @return                              The item's 28-byte record.
+ */
+ItemRecord28 generatedItemRecord(const ChestFinalizedItem &fields);
+
+/**
  * Runtime view of a generated MM6 item.
  *
  * @param fields                        Item fields from `generateItem`.
- * @return                              Item with its one-based MM6 bonus indices mapped to runtime enums.
+ * @return                              Item with its one-based MM6 bonus indices mapped to runtime enums, and its native
+ *                                      record from `generatedItemRecord`.
  */
 Item generatedRuntimeItem(const ChestFinalizedItem &fields);
 

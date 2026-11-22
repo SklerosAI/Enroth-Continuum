@@ -203,4 +203,9 @@ UNIT_TEST(MM6ItemGenerator, TitleStagingMapsFieldsAndKeepsStateUntilPublished) {
     EXPECT_EQ(ring.standardEnchantment, ATTRIBUTE_RESIST_AIR);
     EXPECT_EQ(ring.standardEnchantmentStrength, 3);
     EXPECT_EQ(ring.specialEnchantment, ITEM_ENCHANTMENT_NULL);
+    mm6::ItemRecord28 ringRecord;
+    ringRecord.setWord(0, 80);
+    ringRecord.setWord(4, 12);
+    ringRecord.setWord(8, 3);
+    EXPECT_EQ(ring.mm6RawRecord, ringRecord);
 }

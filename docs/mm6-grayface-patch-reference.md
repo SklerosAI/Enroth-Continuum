@@ -519,6 +519,11 @@ Rules for every fix in this backlog:
   (0x431F7E), so Valeria never shields. Beyond GrayFace, owner decision 2026-11-21. Done behind `fix_valeria_shield`,
   an unbroken Valeria in either hand halves arrows. Test `MM6ArtifactEffects.ValeriaHalvesArrows`.
 
+- **Expert blaster**. Not a GrayFace item. `skilldes.txt` promises Expert blasters double effect on attack, MM6.exe's
+  skill bonus routine multiplies by 1 at Expert (0x483AC0, 0x483C3A) and the patch leaves the routine alone. Beyond
+  GrayFace, owner decision 2026-11-22. Done behind `fix_expert_blaster`, Expert multiplies by 2. Test
+  `MM6SkillBonus.ExpertBlasterDoublesAttack`.
+
 **Admission-time fixes.** C2 monster Paralyze applies the Paralyzed condition to one chosen member. C4 elemental weapon
 enchants go through the monster resistance roll. C9 Finger of Death awards experience. C11 Charm uses the corrected
 Master duration. C19 Starburst and Meteor Shower refuse targets beyond arrow range. W10 Lloyd's Beacon and Town Portal

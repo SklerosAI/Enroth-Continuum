@@ -297,6 +297,10 @@ class GameConfig : public Config {
             "MM6 only. Let the shield Valeria halve the arrows that hit its bearer, as its description says. In vanilla MM6.exe "
             "looked for it in the armor slot, where a shield can't go, so it never did. The GrayFace patch doesn't fix it."};
 
+        Bool FixExpertBlaster = {this, "fix_expert_blaster", true,
+            "MM6 only. Add the blaster skill to attack twice at Expert, as its description says. In vanilla MM6.exe "
+            "added it once at Novice and Expert and three times at Master. The GrayFace patch doesn't fix it."};
+
         Bool FixWeaponSkillHirelings = {this, "fix_weapon_skill_hirelings", true,
             "MM6 only. Let the weapon skill points of a hired Arms Master, Weapons Master or Squire also shorten the "
             "recovery of Expert Sword, Axe and Bow, as the GrayFace patch does. In vanilla they counted for attack, damage and shooting only."};

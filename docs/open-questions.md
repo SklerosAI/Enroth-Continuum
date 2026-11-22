@@ -33,9 +33,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   assert. Divine Intervention's Zombie exception is MM7-gated until MM6 evidence exists. `Character.cpp`.
 - **Question inside another window.** A Question reached while another branchless window is open throws, where MM6
   ends the event. No shipped script reaches it.
-- **Expert blaster.** `skilldes.txt` says Expert adds the blaster skill to attack with double effect. MM6.exe's skill
-  bonus routine (0x483930) adds it once at Novice and Expert and three times at Master, and the GrayFace patch leaves
-  that alone. The port follows the executable. Owner's call. `mm6::skillBonus`.
 - **Hireling share rounding.** MM6.exe's gold-find routine 0x41EDE0 takes `(salaries / 100) * gold / 100` from a find,
   at least 1. `Party::foundGold` takes `gold * salaries / 100 / 100`. They differ only when the hirelings' prices don't
   add up to a multiple of 100, which needs one of the cheap professions 52 to 77 hired, and by at most a few gold.

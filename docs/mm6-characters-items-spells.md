@@ -78,11 +78,11 @@ Squires (`mm6::weaponSkillHirelingBonus`) and A the Squire's armor points (`mm6:
 | Bonus | Skill | Normal | Expert | Master |
 |---|---|---|---|---|
 | Attack | Staff, Sword, Dagger, Axe, Spear, Mace | L + W | L + W | L + W |
-| Attack | Blaster | L + W | L + W | 3 × (L + W) |
+| Attack | Blaster | L + W | 2 × (L + W) with the fix, L + W without | 3 × (L + W) |
 | Melee damage | Axe, Spear | 0 | 0 | L + W |
 | Melee damage | Mace | 0 | L + W | L + W |
 | Shooting | Bow | L + W | L + W | L + W |
-| Shooting | Blaster | L + W | L + W | 3 × L + W |
+| Shooting | Blaster | L + W | 2 × L + W with the fix, L + W without | 3 × L + W |
 | Armor class | Staff, Spear | 0 | L + A | L + A |
 | Armor class | Shield | L + A | 2 × (L + A) | 3 × (L + A) |
 | Armor class | Leather, Chain, Plate | L + A | L + A | L + A |
@@ -97,8 +97,9 @@ Squires (`mm6::weaponSkillHirelingBonus`) and A the Squire's armor points (`mm6:
   hand, items 64 and 65, to the attack formula instead, so the stats screen's Shoot row repeats Attack.
 - Armor class (9) sums every worn item. There is no Dodge.
 - Every other attribute gets nothing, the ranged damage bonus (20) included.
-- `skilldes.txt` promises Expert blasters double effect, the routine gives single effect, see
-  [Open questions](open-questions.md).
+- `skilldes.txt` promises Expert blasters double effect, MM6.exe multiplies by 1 (0x483AC0 for attack, 0x483C3A for
+  shooting). With `gameplay.fix_expert_blaster`, default on and beyond GrayFace, Expert multiplies by 2. Off, the port
+  keeps 1. Damage is untouched, the description promises accuracy only and the routine has no blaster damage term.
 
 Game tests `MM6SkillBonus.*` check the stats screen for the spear, shield, leather and blaster rows and the off hand
 dagger.

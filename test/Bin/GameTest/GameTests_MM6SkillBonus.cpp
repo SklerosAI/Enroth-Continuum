@@ -189,8 +189,9 @@ GAME_TEST(MM6SkillBonus, LeatherArmorClassIgnoresMastery) {
 }
 
 GAME_TEST(MM6SkillBonus, BlasterAttackFollowsMastery) {
-    // The blaster skill added to attack once, twice and three times by mastery, as in MM7. MM6 adds it once at Novice
-    // and Expert and three times at Master, and a hired Arms Master's two points are multiplied with it.
+    // The blaster skill added to attack once, twice and three times by mastery, as in MM7. MM6.exe adds it once at
+    // Novice and Expert and three times at Master, and a hired Arms Master's two points are multiplied with it.
+    engine->config->gameplay.FixExpertBlaster.setValue(false);
     startNewGameThroughInput(game);
     learnSkill(SKILL_BLASTER, MASTERY_NOVICE);
     pParty->pCharacters[0].inventory.add(Item(static_cast<ItemId>(64))); // Blaster.
@@ -213,6 +214,35 @@ GAME_TEST(MM6SkillBonus, BlasterAttackFollowsMastery) {
     EXPECT_EQ(masteryTape, tape(MASTERY_NOVICE, MASTERY_EXPERT, MASTERY_MASTER, MASTERY_NOVICE, MASTERY_EXPERT, MASTERY_MASTER));
     EXPECT_EQ(statsRows(textTape, {"Attack", "Shoot"}),
               tape("Attack +12, Shoot +12", "Attack +20, Shoot +20", "Attack +14, Shoot +14", "Attack +26, Shoot +26"));
+}
+
+GAME_TEST(MM6SkillBonus, ExpertBlasterDoublesAttack) {
+    // An Expert blaster added its skill to attack once, where its description promises double effect. With
+    // fix_expert_blaster it adds it twice, while Novice and Master stay at once and three times.
+    for (bool fix : {true, false}) {
+        SCOPED_TRACE(fmt::format("fix={}", fix));
+        test.prepareForNextTest();
+        engine->config->gameplay.FixExpertBlaster.setValue(fix);
+        startNewGameThroughInput(game);
+        learnSkill(SKILL_BLASTER, MASTERY_NOVICE);
+        pParty->pCharacters[0].inventory.add(Item(static_cast<ItemId>(64))); // Blaster.
+        wearFromBackpack(game, static_cast<ItemId>(64));
+        auto textTape = tapes.drawnTexts();
+        auto masteryTape = charTapes.custom(0, [](const Character &character) { return character.getSkillValue(SKILL_BLASTER).mastery(); });
+        test.startTaping();
+
+        for (Mastery mastery : {MASTERY_NOVICE, MASTERY_EXPERT, MASTERY_MASTER}) {
+            learnSkill(SKILL_BLASTER, mastery);
+            viewStats(game);
+        }
+
+        EXPECT_EQ(masteryTape, tape(MASTERY_NOVICE, MASTERY_EXPERT, MASTERY_MASTER));
+        if (fix) {
+            EXPECT_EQ(statsRows(textTape, {"Attack", "Shoot"}), tape("Attack +12, Shoot +12", "Attack +16, Shoot +16", "Attack +20, Shoot +20"));
+        } else {
+            EXPECT_EQ(statsRows(textTape, {"Attack", "Shoot"}), tape("Attack +12, Shoot +12", "Attack +20, Shoot +20"));
+        }
+    }
 }
 
 GAME_TEST(MM6SkillBonus, OffHandDaggerLeavesAxeDamage) {

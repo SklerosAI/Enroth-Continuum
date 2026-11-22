@@ -137,18 +137,31 @@ Walking off an outdoor map's edge offers the neighbouring map (`MM6OutdoorBorder
   `gameplay.fix_flying_border_offer` (default on) the offer also checks flying, as GrayFace does.
 - Travel takes 5 days, less 1 for a Guide, 2 for a Tracker, 3 for a Pathfinder and 1 for an Explorer, at least 1.
 
-Confirming (`confirmBorderTravel`) parks the map, autosaves with the party still at the edge, then applies the trip on
-a copy of the party (`MM6OutdoorBorderConfirmation.h`). The trip's days pass with the travel rest below, then the party
-rests once more if it has any food, eats one food per day, and is left Weak if the food ran short. Characters who just
-became Weak say so. The party arrives at the wrapped position, and its height is set from the target terrain once the
-map has loaded.
+Confirming (`confirmBorderTravel`) parks the map, autosaves, then applies the trip on a copy of the party
+(`MM6OutdoorBorderConfirmation.h`). The trip's days pass with the travel rest below, then the party rests once more if
+it has any food, eats one food per day, and is left Weak if the food ran short. Characters who just became Weak say so.
+The party arrives at the wrapped position, and its height is set from the target terrain once the map has loaded.
 
-Loading that autosave opens the travel dialog again at once, as it does in MM6.exe. MM6.exe's confirmation (the case at
+In MM6.exe, loading that autosave opens the travel dialog again at once. MM6.exe's confirmation (the case at
 0x42C03B) calls its save routine 0x44F320 before the trip's days pass and before X and Y wrap. The save routine writes
 the position the last drawn frame recorded (party offset 0x3C, copied every frame by the draw routine 0x435130) and
 then puts the live one back. At least one frame is drawn between the crossing and the click on Yes, so the save holds
-the party past the edge. Nothing on load clamps it, and the border check 0x45C560 offers the trip again. The port
-saves the live position, which is the same one. GrayFace leaves this alone.
+the party past the edge. Nothing on load clamps it, and the border check 0x45C560 offers the trip again. GrayFace
+leaves this alone.
+
+With `gameplay.fix_border_autosave` (default on, an owner decision rather than a GrayFace fix) the autosave stands the
+party inside every edge it crossed, both at a corner, on the terrain (`borderAutosavePosition`). The edge is a terrain
+tile boundary, and the party goes to the middle of the tile next to it, 256 units in, unless it can't stand there: on
+water, on a slope too steep to stand on, or within its radius of a model's bounding box or of a decoration that blocks
+movement. Then it tries the middle of the next tile in, one tile at a time straight across the map, and with nowhere to
+stand all the way across it stays at the edge, where the dialog's No leaves it. Loading the autosave doesn't offer the
+trip, and the party can walk away from the edge or back over it. Only the autosave's position changes, the trip, the
+arrival and the parked map are the same. Without the flag the port saves the live position past the edge, which is
+MM6.exe's.
+
+On all 15 outdoor maps, along every edge that leads somewhere, sampled every 64 units where the ground inside the edge
+is dry, most crossings get the tile next to the edge. The deepest is the twelfth tile in, on outa2's east edge, and none
+stays at the edge. A crossing that needs a deeper tile can end up on a hilltop above the slope the party walked down.
 
 ## Travel rest
 

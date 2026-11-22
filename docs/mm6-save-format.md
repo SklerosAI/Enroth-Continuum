@@ -256,8 +256,9 @@ The port autosaves through `autoSave()`:
   coach and boat trips. The active map is parked first, so the autosave sees it as left.
 - On Town Portal and Lloyd's Beacon, whose books call `autoSave()` themselves. The capture parks the active map the
   way leaving it would. Neither spell is castable by the MM6 player yet.
-- On a confirmed walk across an outdoor map border, before the trip's days, rest and food apply, with the party still
-  past the edge (`confirmBorderTravel`). Loading it offers the trip again, as in MM6.exe, see
+- On a confirmed walk across an outdoor map border, before the trip's days, rest and food apply
+  (`confirmBorderTravel`). With `gameplay.fix_border_autosave` the party stands inside the edge in it.
+  Without the flag it's still past the edge and loading it offers the trip again, as in MM6.exe, see
   [outdoor borders](mm6-travel-and-maps.md#outdoor-borders).
 - With `gameplay.fix_travel_autosave`, a coach or boat trip pays its fare and spends its days after the autosave, so
   loading the autosave doesn't lose the fare.

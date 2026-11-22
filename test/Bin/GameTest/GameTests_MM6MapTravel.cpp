@@ -1,14 +1,23 @@
+#include <unistd.h>
+
+#include <algorithm>
 #include <cstdint>
+#include <filesystem>
 #include <optional>
+#include <stdexcept>
+#include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
 
+#include "Application/GameConfig.h"
+
 #include "Engine/Engine.h"
 #include "Engine/MM6/MM6ChestBaseItemPicker.h"
 #include "Engine/MM6/MM6ChestTitleState.h"
+#include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/MM6/MM6PlayerSpell.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
@@ -19,8 +28,11 @@
 #include "Engine/Tables/MapTable.h"
 
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/UISaveLoad.h"
 
 #include "Library/Color/ColorTable.h"
+
+#include "Utility/ScopeGuard.h"
 
 static void startNewGameThroughInput(EngineController &game) {
     // Each character takes its first three optional skills and up to three points in every attribute, then the party
@@ -118,6 +130,30 @@ static void castFly(EngineController &game) {
 static void confirmTransition(EngineController &game) {
     game.pressGuiButton("Transition_Yes");
     game.tick();
+    game.skipLoadingScreen();
+    game.tick();
+}
+
+static std::filesystem::path createTempProfile() {
+    // An owner-only mm6-restart- folder in the system temp folder, the only kind of profile a test saves into.
+    const std::filesystem::path tempRoot = std::filesystem::canonical(std::filesystem::temp_directory_path());
+    std::string created = (tempRoot / "mm6-restart-travel-XXXXXX").string();
+    if (!mkdtemp(created.data()))
+        throw std::runtime_error("Can't create a temporary MM6 profile");
+    return std::filesystem::canonical(created);
+}
+
+static void loadAutosaveFromMenu(EngineController &game) {
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressGuiButton("GameMenu_LoadGame");
+    game.tick(3);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto slot = std::ranges::find(slots, std::string("autosave.ec6"), &SavegameSlot::fileName);
+    ASSERT_NE(slot, slots.end());
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", slot - slots.begin()));
+    game.tick(2);
+    game.pressGuiButton("LoadMenu_Load");
     game.skipLoadingScreen();
     game.tick();
 }
@@ -401,4 +437,83 @@ GAME_TEST(MM6MapTravel, BorderTripClearsRecoveryAndDailyCasts) {
     EXPECT_EQ(mapTape, tape(oute3, outd3));
     EXPECT_EQ(recoveringTape, tape(std::tuple(0, true, true), std::tuple(5, false, false)));
     EXPECT_EQ(castsTape, tape(std::pair(1, 1), std::pair(0, 0)));
+}
+
+GAME_TEST(MM6MapTravel, BorderAutosaveStandsInsideTheEdge) {
+    // Loading the autosave of a walk to the next map offered the trip again at once, the autosave had the party past
+    // the edge.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const MapId oute3 = pMapTable->GetMapInfo("oute3.odm");
+    const MapId outd3 = pMapTable->GetMapInfo("outd3.odm");
+    auto mapTape = tapes.map();
+    auto screenTape = tapes.screen();
+    auto positionTape = tapes.custom([] { return pParty->pos; });
+    auto groundTape = tapes.custom([] { return pParty->uFlags & (PARTY_FLAG_AIRBORNE | PARTY_FLAG_STANDING_ON_WATER | PARTY_FLAG_WATER_DAMAGE); });
+    test.startTaping();
+
+    for (bool fix : {false, true}) {
+        engine->config->gameplay.FixBorderAutosave.setValue(fix);
+        game.teleportTo(oute3, Vec3f(-22450, -10000, 100), 180); // Next to the west edge, facing it.
+        game.pressKey(PlatformKey::KEY_UP);
+        game.tick(2); // The party walks off the edge and the travel dialogue opens.
+        game.releaseKey(PlatformKey::KEY_UP);
+        confirmTransition(game);
+        loadAutosaveFromMenu(game);
+        EXPECT_EQ(screenTape.back(), fix ? SCREEN_GAME : SCREEN_CHANGE_LOCATION) << fix;
+        EXPECT_EQ(positionTape.back(), fix ? Vec3f(-22272, -10000, 78) : Vec3f(-22606, -10000, 158)) << fix;
+        EXPECT_EQ(groundTape.back(), PartyFlags()) << fix;
+        if (!fix) {
+            game.pressGuiButton("Transition_No");
+            game.tick();
+        }
+    }
+    game.pressKey(PlatformKey::KEY_UP);
+    game.tick(2); // The party walks towards the edge and stops short of it.
+    game.releaseKey(PlatformKey::KEY_UP);
+
+    EXPECT_EQ(mapTape, tape(oute3, outd3, oute3, outd3, oute3));
+    EXPECT_EQ(screenTape.back(), SCREEN_GAME);
+    EXPECT_EQ(positionTape.back(), Vec3f(-22428, -10000, 87));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6MapTravel, BorderAutosaveSkipsASteepSlope) {
+    // Where the tile next to the edge is too steep to stand on, the autosave of a walk to the next map stands the party
+    // a tile further in.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const MapId oute3 = pMapTable->GetMapInfo("oute3.odm");
+    const MapId outd3 = pMapTable->GetMapInfo("outd3.odm");
+    auto mapTape = tapes.map();
+    auto screenTape = tapes.screen();
+    auto positionTape = tapes.custom([] { return pParty->pos; });
+    auto groundTape = tapes.custom([] { return pParty->uFlags & (PARTY_FLAG_AIRBORNE | PARTY_FLAG_STANDING_ON_WATER | PARTY_FLAG_WATER_DAMAGE); });
+    test.startTaping();
+
+    game.teleportTo(oute3, Vec3f(-22450, -2960, 0), 180); // On a hillside next to the west edge, facing it.
+    game.pressKey(PlatformKey::KEY_UP);
+    game.tick(2); // The party walks off the edge and the travel dialogue opens.
+    game.releaseKey(PlatformKey::KEY_UP);
+    confirmTransition(game);
+    loadAutosaveFromMenu(game);
+
+    EXPECT_EQ(mapTape, tape(oute3, outd3, oute3));
+    EXPECT_EQ(screenTape.back(), SCREEN_GAME);
+    EXPECT_CONTAINS(positionTape, Vec3f(-22606, -2960, 1499)); // Past the edge when the dialogue opened.
+    EXPECT_EQ(positionTape.back(), Vec3f(-21760, -2960, 1462));
+    EXPECT_EQ(groundTape, tape(PartyFlags()));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
 }

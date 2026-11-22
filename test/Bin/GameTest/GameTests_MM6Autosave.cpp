@@ -907,8 +907,6 @@ GAME_TEST(MM6InGameSave, BountyKillSurvivesAutosave) {
     killBountyMonster(game);
     walkOverWestEdge(game);
     loadFromEscapeMenu(game, 0);
-    game.pressGuiButton("Transition_No"); // The autosave has the party at the edge, so the travel dialogue is up again.
-    game.tick();
     askJaniceForBounty(game);
     saveFromMenu(game);
 

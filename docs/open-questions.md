@@ -67,8 +67,10 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 
 - **Temple blessings.** Above reputation 200 a matching donation casts Guardian Angel through Day of Protection at
   master rank. Not done, the spells aren't verified MM6 player spells. TODO in `GUIWindow_MM6House::donate`.
-- **House residents can't be hired.** Joinable residents such as the New Sorpigal healer and scholar show only their
-  scripted topics. `mm6SelectHouseTopic` in `src/GUI/UI/Houses/MM6House.cpp`.
+- **House resident topic of the day and news.** MM6.exe 0x4998A0 lists a resident's profession topic of the day
+  (`proftext.txt`) before Join, and its news (`npcnews.txt`, picked by 0x43BC20 as the house lists its people) after
+  Join, when its `npcdata.txt` News column is set. The port shows neither, so most residents, teachers and guild
+  recruiters included, lack their first topic. `GUIWindow_MM6House::refreshTopics`.
 - **Shop sounds and hints.** The MM6 sell screen is silent. MM6.exe plays sound 479 and speech 77 on a sale and speech
   79 with sound 27 on a refusal. There is no sell hint, so GrayFace's hint half of W26 has nothing to attach to.
 - **Shop item info box.** MM6 shops have no right-click item info box. When it is ported, GrayFace's W28 check (no

@@ -294,6 +294,7 @@ static const Vec3f kBladesEndDoor(-6504, -6090, 300); // Blades' End, a mercenar
 static const Vec3f kBuccaneersLairDoor(-12632, -5946, 300); // Buccaneers' Lair, a thieves' guild.
 static const Vec3f kIsaoHouseDoor(-12528, -5814, 300); // In front of Isao Magistrus' house, facing north.
 static const Vec3f kJezebelHouseDoor(4688, -17668, 192); // In front of Jezebel's house on the Misty Islands, facing south.
+static const Vec3f kNaomiHighlandDoor(12498, 18464, 86); // In front of Naomi Highland's house, facing east.
 static constexpr AwardId kElementalGuildMember = static_cast<AwardId>(64);
 static constexpr AwardId kSelfGuildMember = static_cast<AwardId>(65);
 static constexpr AwardId kBuccaneersLairMember = static_cast<AwardId>(66);
@@ -1760,4 +1761,59 @@ GAME_TEST(MM6Houses, TavernTip) {
     EXPECT_EQ(tipsTape, tape(0, 29));
     EXPECT_CONTAINS(portraitTape, PORTRAIT_45); // The tip reaction.
     EXPECT_CONTAINS(drawnTape.flatten(), "Berserker's Fury in Castle Ironfist can teach you\nbow, shield, chain, plate, and repair item.");
+}
+
+GAME_TEST(MM6Houses, HireHouseResident) {
+    // Naomi Highland, a healer who joins, showed only her scripted topics in her house and couldn't be hired. She offers
+    // Join, and once hired she leaves her house. Harold Hess doesn't join and has no Join topic.
+    using Lines = std::vector<std::string>;
+    struct Case {
+        Vec3f door;
+        int yaw;
+        bool joins;
+    };
+    for (auto [door, yaw, joins] : {Case{kNaomiHighlandDoor, 0, true}, Case{kHaroldHessDoor, 270, false}}) {
+        SCOPED_TRACE(joins ? "Naomi Highland" : "Harold Hess");
+        test.prepareForNextTest();
+        engine->config->debug.NoVideo.setValue(false); // With Naomi hired, her house has only its room movie to open for.
+        startMM6NewGame(game);
+        pParty->SetGold(1000);
+        auto screenTape = tapes.screen();
+        auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+        auto goldTape = tapes.gold();
+        auto hirelingsTape = tapes.custom([] { return Lines{pParty->pHirelings[0].name, pParty->pHirelings[1].name}; });
+        auto quadsTape = tapes.hudQuads();
+        test.startTaping();
+
+        enterThroughDoor(game, door, yaw);
+        if (joins) {
+            clickHouseOption(game, "Join");
+            clickHouseOption(game, "Hire");
+        }
+        game.pressGuiButton("House_Exit");
+        game.tick();
+        enterThroughDoor(game, door, yaw);
+        game.pressGuiButton("House_Exit");
+        game.tick();
+
+        auto portraitsTape = quadsTape.map([](const AccessibleVector<DrawnQuad> &frame) {
+            Lines result; // The house's portraits. The hireling portraits beside the game view sit at other columns.
+            for (const DrawnQuad &quad : frame)
+                if (quad.texture.starts_with("npc") && (quad.position.x == 486 || quad.position.x == 525 || quad.position.x == 564))
+                    result.push_back(quad.texture);
+            return result;
+        }).unique();
+        EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE, SCREEN_GAME, SCREEN_HOUSE, SCREEN_GAME));
+        if (joins) {
+            EXPECT_EQ(optionsTape, tape(Lines(), Lines{"Join"}, Lines{"More Information", "Hire"}, Lines()));
+            EXPECT_EQ(goldTape, tape(1000, 500));
+            EXPECT_EQ(hirelingsTape, tape(Lines{"", ""}, Lines{"Naomi Highland", ""}));
+            EXPECT_EQ(portraitsTape, tape(Lines(), Lines{"npc069"}, Lines()));
+        } else {
+            EXPECT_EQ(optionsTape, tape(Lines(), Lines{"Blade's End Membership"}, Lines(), Lines{"Blade's End Membership"}, Lines()));
+            EXPECT_EQ(goldTape, tape(1000));
+            EXPECT_EQ(hirelingsTape, tape(Lines{"", ""}));
+            EXPECT_EQ(portraitsTape, tape(Lines(), Lines{"npc014"}, Lines(), Lines{"npc014"}, Lines()));
+        }
+    }
 }

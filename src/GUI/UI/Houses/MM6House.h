@@ -89,6 +89,28 @@ class GUIWindow_MM6House : public GUIWindow_House {
     void huntBounty();
 
     /**
+     * Shows the resident's join text with More Information and Hire in place of its topics.
+     *
+     * @offset 0x49671B (MM6)
+     */
+    void offerToJoin();
+
+    /**
+     * Shows the benefits of the resident's profession in place of the join text, or the join text again.
+     *
+     * @offset 0x496782 (MM6)
+     */
+    void toggleJoinDetails();
+
+    /**
+     * Hires the resident the way a street NPC is hired. A hired resident leaves the house, and the hire's Escape takes
+     * the party back to the people left. A party short of gold sees the join text again.
+     *
+     * @offset 0x4967E3 (MM6)
+     */
+    void hireResident();
+
+    /**
      * @return                          NPC the party is talking to, or `nullptr` if it isn't talking to an NPC.
      */
     NPCData *selectedNpc() const;
@@ -259,6 +281,7 @@ class GUIWindow_MM6House : public GUIWindow_House {
     std::optional<int> _membershipOffer; // Guild the selected NPC offers to join, see `offerGuildMembership`.
     std::optional<int> _teacherOffer; // Topic of the teacher whose offer is shown.
     bool _bountyShown = false; // The NPC tells the town hall's bounty, see `huntBounty`.
+    bool _joinOffer = false; // The resident offers to join, see `offerToJoin`.
     bool _trainingTimePassed = false;
     std::optional<mm6::HouseServiceOption> _bankTransfer; // Deposit or withdraw while the player types the amount.
     std::string _roomMovie;

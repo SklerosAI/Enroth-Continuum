@@ -157,7 +157,8 @@ and three slots for each of the 21 stables and boats. Stables are houses below 5
   has it, and not twice in a row.
 - The price never drops below a third of the full price. House 59 is free.
 - Trip days drop for a hired sailor, navigator, pirate, horseman or explorer, to at least 1.
-- Paying passes the trip's days with rest and heal, then the party arrives at the route's point.
+- Paying passes the trip's days with MM6's [travel rest](mm6-travel-and-maps.md#travel-rest), then the party arrives
+  at the route's point.
 - `gameplay.fix_travel_autosave` (default on) writes the autosave before the fare and the days. Vanilla wrote it after,
   so loading it lost the fare and the days without the trip.
 - `gameplay.fix_travel_speech_delay` (default on) leaves as soon as the horseman's or boatman's farewell (the room's

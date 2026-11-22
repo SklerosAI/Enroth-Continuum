@@ -138,9 +138,10 @@ Walking off an outdoor map's edge offers the neighbouring map (`MM6OutdoorBorder
 - Travel takes 5 days, less 1 for a Guide, 2 for a Tracker, 3 for a Pathfinder and 1 for an Explorer, at least 1.
 
 Confirming (`confirmBorderTravel`) parks the map, autosaves with the party still at the edge, then applies the trip on
-a copy of the party (`MM6OutdoorBorderConfirmation.h`). The trip rests the party fully, rests it once more if it has
-any food, eats one food per day, and leaves it Weak if the food ran short. Characters who just became Weak say so. The
-party arrives at the wrapped position, and its height is set from the target terrain once the map has loaded.
+a copy of the party (`MM6OutdoorBorderConfirmation.h`). The trip's days pass with the travel rest below, then the party
+rests once more if it has any food, eats one food per day, and is left Weak if the food ran short. Characters who just
+became Weak say so. The party arrives at the wrapped position, and its height is set from the target terrain once the
+map has loaded.
 
 Loading that autosave opens the travel dialog again at once, as it does in MM6.exe. MM6.exe's confirmation (the case at
 0x42C03B) calls its save routine 0x44F320 before the trip's days pass and before X and Y wrap. The save routine writes
@@ -148,6 +149,19 @@ the position the last drawn frame recorded (party offset 0x3C, copied every fram
 then puts the live one back. At least one frame is drawn between the crossing and the click on Yes, so the save holds
 the party past the edge. Nothing on load clamps it, and the border check 0x45C560 offers the trip again. The port
 saves the live position, which is the same one. GrayFace leaves this alone.
+
+## Travel rest
+
+MM6.exe passes the days of a border trip, a coach or boat trip (0x49D9B0) and a training stay (0x49A040) through one
+routine, 0x496180. It advances the clock and the calendar, clears both hirelings' daily ability, runs the party rest
+0x484D40, then clears every character's recovery and daily spell casts (0x4962D6). The party rest resets the party and
+character buffs and the temporary bonuses, and for each character who isn't dead, stoned or eradicated clears
+Unconscious, Drunk, Fear, Sleep and Weak and restores HP and SP. Poison and disease then cut both to a half, a third or
+a quarter by severity, and Insane leaves no SP. Recovery and the casts are cleared for dead characters too. Travel
+never keeps a character's recovery.
+
+The coach, the boat and training call the shared `restAndHeal(Duration)`, which does the same. The border trip does it
+on its party copy.
 
 ## Other ways between maps
 

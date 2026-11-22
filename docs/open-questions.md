@@ -31,10 +31,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 - **Encounter spawner.** MM6.exe rings extra monsters 128 (outdoor) or 64 (indoor) units around the spawn point,
   caps the level odds at difficulty 4 and keeps table hostility. The port stacks them, caps at 5 and spawns friendly
   aggressors. Not changed because it reaches every MM6 map. `SpawnEncounter` in `src/Engine/Objects/Actor.cpp`.
-- **MM6 jail.** MM6.exe sends a party with reputation -1000 or worse that enters a throne room (house type 20) to the
-  jail, house 167 (0x43C598). That adds a year, clears recovery and the daily casts, but runs no party rest (0x484D40),
-  so nobody heals. It also zeroes reputation, counts a prison term and gives award 83, Served Prison Terms. MM6 house
-  entry (`MM6House.cpp`) has no jail, and the shared jail in `UIHouses.cpp` is MM7's, on the fine, with a full heal.
 - **Event W2 follow-up.** With nobody active, the event run picks one member, but other active-member reads in the
   same run (a held item moved when a new one is given) still see nobody. `MM6GiveItemEvent.cpp`, `EvtInterpreter.cpp`.
 - **Map timer hour 88.** The Temple of the Sun (t4) dawn timer has an out-of-range hour byte. Its first firing now

@@ -3872,3 +3872,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via claude-code
 - On the owner's request, the historical and superseded sections of the MM7 status pages, boards, plans and topic pages were rewritten in place to the current state. Git keeps the old text. The schema's mark-superseded rule was suspended for this pass.
 - The full MM7 headless suite and unit tests passed, and the Light and Dark C0-C7 chains passed from new temporary profiles. [MM7 Playthrough Go/No-Go](MM7-Playthrough-Go-No-Go.md) is now GO at `617b94d23`. The installed helper `014514250` has the same source.
+
+## [2026-11-23] query | MM6 and MM7 hidden capture tour
+- by: T-Burton-ND via claude-code
+- Captured hidden offscreen frames of MM6 and MM7 maps, dungeons, monsters and the MM6 New Sorpigal shops. The MM7 findings and the capture tool's gaps are in [Open Questions](Open-Questions.md). No MM6 defect was visible.

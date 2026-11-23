@@ -517,3 +517,64 @@ GAME_TEST(MM6MapTravel, BorderAutosaveSkipsASteepSlope) {
         mm6::testing::setNativeProfileRootForTest({});
     });
 }
+
+GAME_TEST(MM6MapTravel, NoBorderTripForAPartyKnockedOutPastTheEdge) {
+    // A party knocked out by a fall as it landed past the map edge was offered the trip to the next map. The trip's rest
+    // woke it, and the trip's autosave held the knocked-out party, which died as soon as it was loaded.
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const MapId oute3 = pMapTable->GetMapInfo("oute3.odm");
+    const MapId outd3 = pMapTable->GetMapInfo("outd3.odm");
+    auto mapTape = tapes.map();
+    auto screenTape = tapes.screen();
+    auto positionTape = tapes.custom([] { return pParty->pos; });
+    auto hpTape = charTapes.hps();
+    auto deathsTape = tapes.custom([] { return pParty->uNumDeaths; });
+    test.startTaping();
+
+    game.teleportTo(oute3, Vec3f(-22500, -10000, 2800), 180); // In the air above the west edge, facing it.
+    game.tick(19); // The party falls to just above the ground.
+    game.pressKey(PlatformKey::KEY_UP);
+    game.tick(); // It lands past the edge with two characters knocked out, and the travel dialogue opens.
+    game.releaseKey(PlatformKey::KEY_UP);
+    confirmTransition(game);
+    game.teleportTo(oute3, Vec3f(-22500, -10000, 100), 180); // Back on the ground of New Sorpigal.
+    game.teleportTo(oute3, Vec3f(-22500, -10000, 3090), 180);
+    game.tick(20); // The party falls to just above the ground.
+    game.pressKey(PlatformKey::KEY_UP);
+    game.tick(); // It lands past the edge with everyone knocked out.
+    game.releaseKey(PlatformKey::KEY_UP);
+    game.tick(); // The party dies and wakes at New Sorpigal.
+
+    EXPECT_EQ(mapTape, tape(oute3, outd3, oute3));
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHANGE_LOCATION, SCREEN_GAME));
+    EXPECT_EQ(hpTape, tape({42, 22, 20, 20}, {1, 2, 0, 0}, {42, 22, 20, 20}, {-4, -1, -3, -3}, {1, 1, 1, 1}));
+    EXPECT_EQ(deathsTape, tape(0, 1));
+    EXPECT_EQ(positionTape.back(), Vec3f(-9728, -11319, 161));
+}
+
+GAME_TEST(MM6MapTravel, NoBorderTripForAPartyKnockedOutAtTheEdge) {
+    // A party knocked out by a fall just inside the map edge walked over it on the next frame as it died. The trip to the
+    // next map was offered, and its dialogue stayed open over the party waking at New Sorpigal.
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const MapId oute3 = pMapTable->GetMapInfo("oute3.odm");
+    auto mapTape = tapes.map();
+    auto screenTape = tapes.screen();
+    auto positionTape = tapes.custom([] { return pParty->pos; });
+    auto hpTape = charTapes.hps();
+    auto deathsTape = tapes.custom([] { return pParty->uNumDeaths; });
+    test.startTaping();
+
+    game.teleportTo(oute3, Vec3f(-22500, -10000, 3000), 180); // In the air above the west edge, facing it.
+    game.tick(20); // The party falls and lands with everyone knocked out.
+    game.pressKey(PlatformKey::KEY_UP);
+    game.tick(); // The party dies and wakes at New Sorpigal.
+    game.releaseKey(PlatformKey::KEY_UP);
+
+    EXPECT_EQ(mapTape, tape(oute3));
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME));
+    EXPECT_EQ(hpTape, tape({42, 22, 20, 20}, {-3, 0, -2, -2}, {1, 1, 1, 1}));
+    EXPECT_EQ(deathsTape, tape(0, 1));
+    EXPECT_EQ(positionTape.back(), Vec3f(-9728, -11319, 161));
+}

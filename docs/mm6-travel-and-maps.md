@@ -135,6 +135,14 @@ Walking off an outdoor map's edge offers the neighbouring map (`MM6OutdoorBorder
   (`borderOfferPartyFlagsPermit`). Its confirmation separately refuses a flying party.
 - In vanilla, flying low over an edge cleared those flags and offered a trip that then did nothing. With
   `gameplay.fix_flying_border_offer` (default on) the offer also checks flying, as GrayFace does.
+- MM6.exe also offers the trip to a party in which no character can act. Its frame runs the party death check (in
+  0x4880A0) before the party moves and the border check (0x45C560) after, and the dialog pauses the game timer that
+  gates the death check. A fall that knocks out the whole party as it lands past the edge gets the dialog. Accepting
+  it, the trip's rest wakes the party, and the autosave holds the knocked-out party, which dies as soon as it's loaded
+  and wakes at New Sorpigal. A party knocked out by a fall just inside the edge can walk over it on the next frame, the
+  frame it dies, and in the port the dialog then stayed open over the party at New Sorpigal. With
+  `gameplay.fix_knocked_out_border_offer` (default on, not a GrayFace fix) the offer also needs a character who can
+  act, so the party dies at the edge.
 - Travel takes 5 days, less 1 for a Guide, 2 for a Tracker, 3 for a Pathfinder and 1 for an Explorer, at least 1.
 
 Confirming (`confirmBorderTravel`) parks the map, autosaves, then applies the trip on a copy of the party

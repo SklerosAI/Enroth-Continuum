@@ -347,6 +347,12 @@ class GameConfig : public Config {
             "the middle of the nearest terrain tile it can stand on. In vanilla, the autosave held the party past the edge, "
             "so loading it offered the trip again at once."};
 
+        Bool FixKnockedOutBorderOffer = {this, "fix_knocked_out_border_offer", true,
+            "MM6 only. Don't offer the trip to the next map when no character can act, so a party knocked out as it walks "
+            "over the map edge dies there. In vanilla, a fall that knocked out the whole party as it landed past the edge "
+            "still offered the trip, the trip's rest woke the party, and the trip's autosave held the knocked-out party, "
+            "which died as soon as it was loaded."};
+
         Bool FixSpellsCost = {this, "fix_spells_cost", true,
             "MM6 only. Take every spell's cost from spells.txt, as the GrayFace patch does. In vanilla the costs came from a "
             "table in MM6.exe, where Expert Static Charge costs 2 spell points and its description says 1."};

@@ -978,8 +978,9 @@ void ODM_UpdateUserInputAndOther() {
         const bool mm6PartyStatePermits = engine->config->gameplay.FixFlyingBorderOffer.value()
             ? mm6::borderOfferPartyStatePermits(GameTitle::MM6, pParty->uFlags, pParty->bFlying)
             : mm6::borderOfferPartyFlagsPermit(GameTitle::MM6, pParty->uFlags);
+        const bool mm6PartyKnockedOut = engine->config->gameplay.FixKnockedOutBorderOffer.value() && pParty->canActCount() == 0; // The open dialog would hold off the party death check.
         const bool partyStateBlocks = engine->gameTitle() == GameTitle::MM6
-            ? !mm6PartyStatePermits
+            ? !mm6PartyStatePermits || mm6PartyKnockedOut
             : !engine->IsUnderwater() && (pParty->isAirborne() || (pParty->uFlags & (PARTY_FLAG_STANDING_ON_WATER | PARTY_FLAG_WATER_DAMAGE)) ||
                                           pParty->uFlags & PARTY_FLAG_BURNING || pParty->bFlying);
         if (partyStateBlocks || destination.map() == MAP_INVALID) {

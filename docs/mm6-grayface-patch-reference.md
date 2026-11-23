@@ -526,6 +526,12 @@ Rules for every fix in this backlog:
   GrayFace, owner decision 2026-11-22. Done behind `fix_expert_blaster`, Expert multiplies by 2. Test
   `MM6SkillBonus.ExpertBlasterDoublesAttack`.
 
+- **Knocked-out border offer**. Not a GrayFace item. MM6.exe offers the walk to the next map to a party in which no
+  character can act, and `TravelWalkTriggerFixHook` checks only the flags and flying. The trip's rest wakes the party
+  and its autosave holds the knocked-out party. Beyond GrayFace, from the border-respawn lane brief, 2026-11-22. Done
+  behind `fix_knocked_out_border_offer`, see [Travel and maps](mm6-travel-and-maps.md#outdoor-borders). Tests
+  `MM6MapTravel.NoBorderTripForAPartyKnockedOutPastTheEdge` and `NoBorderTripForAPartyKnockedOutAtTheEdge`.
+
 **Admission-time fixes.** C2 monster Paralyze applies the Paralyzed condition to one chosen member. C4 elemental weapon
 enchants go through the monster resistance roll. C9 Finger of Death awards experience. C11 Charm uses the corrected
 Master duration. C19 Starburst and Meteor Shower refuse targets beyond arrow range. W10 Lloyd's Beacon and Town Portal

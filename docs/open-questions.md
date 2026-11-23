@@ -40,10 +40,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   from the bolt's byte at 0x54, read statically as its distance, and uses 1 only at Expert and Master. At Master it also
   adds the skill to hit. The port's `SPELL_BLASTER_PROJECTILE` case in `Actor.cpp` uses 1 at every mastery, so a Novice
   bolt at long range may hit more often than in MM6. The 0x54 byte isn't confirmed at runtime.
-- **Border autosave after a bad fall.** In one throwaway run a character fell to -4 HP before the party crossed an
-  oute3 edge. Loading that border autosave put the party at the New Sorpigal start instead of the edge, with
-  `fix_border_autosave` on and off alike. Possibly the death and respawn path. Not reproduced or checked against
-  MM6.exe.
 - **Guild learn speech.** MM6.exe's shop click handler 0x4A4CA0 has a learn-skill branch (0x4A4D09, dialogue states
   36 to 66) that plays speech 78 on success, and status 403 with sound 27 for a skill already known. The port's
   `MM6Guild` learn plays nothing and `MM6SkillGuild` plays its house learn sound. Which guilds reach 0x4A4D09 isn't

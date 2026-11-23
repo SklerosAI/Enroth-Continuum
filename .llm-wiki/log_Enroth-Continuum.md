@@ -3854,3 +3854,10 @@ Chronological record of wiki activity.
 - Fresh MM7 coexistence checks passed 39 cases with one expected off-only skip, with Dragoon, All Artifacts, vendor refresh and Fortune’s Turn enabled while the legacy chest flag was off. The chest test clicks Reroll with X off. Swift launch/environment contracts, Atlas page tests, full AtlasApp typecheck, changed C++ lint and diff checks passed.
 - The unrelated 749-case default MM7 sweep was intentionally stopped before completion after the focused gates passed; no new full-suite result is claimed.
 - Source and launch-contract validation only: this change does not install a new app or claim graphical MM6 acceptance. The MM6 helper is built and tested from its own continuing title branch.
+
+## [2026-11-22] update | Release MM6/MM7 playtest app installed
+- by: T-Burton-ND via codex
+- Recorded the owner-authorized local installation in [Release Milestones](Release-Milestones.md#local-mm6mm7-playtest-app--2026-11-22), with exact source commits, trees and installed executable hashes. Both helpers are Release arm64 with Apple system runtime linkage; existing media notices remain bundled. No release tag changed.
+- MM6 passed 412 headless cases without skips, 44 fresh-process checks and the enabled-mod C0–C9 chain, plus native controls and a hidden HUD capture. The earlier MM7 focused, recorder and launcher checks remain the applicable validation; the stopped default sweep is not a complete suite result.
+- The installed candidate matched its stage and passed deep strict signature verification. Visible Atlas Campaigns and Mods showed MM6 ready with All Artifacts and Fortune’s Turn On. Installed-game interaction and normal Save/quit/relaunch/Load still require owner playtesting.
+- Removed the prior installed app and superseded staging artifacts without retaining an old-app backup. Current Release helper build products remain; profiles, saves and original game data were preserved. Updated runtime isolation, handoff and index; private evidence remains local.

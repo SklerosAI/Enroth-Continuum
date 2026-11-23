@@ -1052,7 +1052,8 @@ void loadAndPrepareBLV(MapId mapid, bool bLoading) {
 
         if (!v28) {
             actor.PrepareSprites(0);
-            actor.monsterInfo.hostilityType = HOSTILITY_FRIENDLY;
+            if (engine->gameTitle() != GameTitle::MM6) // MM6.exe keeps the hostility, 0x455703.
+                actor.monsterInfo.hostilityType = HOSTILITY_FRIENDLY;
             if (actor.monsterInfo.field_3E != 11 &&
                 actor.monsterInfo.field_3E != 19 &&
                 (!actor.hp || !actor.monsterInfo.hp)) {

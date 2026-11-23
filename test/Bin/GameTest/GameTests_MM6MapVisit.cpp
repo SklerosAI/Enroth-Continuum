@@ -208,7 +208,7 @@ GAME_TEST(MM6MapVisit, LaterDayReturnRollsTheSky) {
     toOutd3AndBack(game);
 
     EXPECT_EQ(mapTape, tape(oute3, outd3, oute3));
-    EXPECT_EQ(skyTape, tape("sky01", "", "sky01", "", "sky19")); // Both first visits are sky01, the loading screens have no sky.
+    EXPECT_EQ(skyTape, tape("sky01", "", "sky01", "", "sky16")); // Both first visits are sky01, the loading screens have no sky.
     EXPECT_TRUE(std::ranges::contains(mm6Skies, skyTape.back()));
     ASSERT_EQ(visitTape.size(), 2);
     EXPECT_EQ(visitTape[0], Time());

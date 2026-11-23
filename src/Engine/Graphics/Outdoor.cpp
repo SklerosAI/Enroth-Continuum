@@ -745,8 +745,8 @@ bool OutdoorLocation::InitalizeActors(MapId a1) {
                 actor.velocity.y = 0;
                 actor.velocity.z = 0;
                 actor.UpdateAnimation();
-                actor.monsterInfo.hostilityType =
-                    HOSTILITY_FRIENDLY;
+                if (engine->gameTitle() != GameTitle::MM6) // MM6.exe keeps the hostility, 0x46E880.
+                    actor.monsterInfo.hostilityType = HOSTILITY_FRIENDLY;
                 actor.PrepareSprites(0);
             } else {
                 actor.aiState = AIState::Disabled;
@@ -769,8 +769,8 @@ bool OutdoorLocation::InitalizeActors(MapId a1) {
             actor.velocity.y = 0;
             actor.velocity.z = 0;
             actor.UpdateAnimation();
-            actor.monsterInfo.hostilityType =
-                HOSTILITY_FRIENDLY;
+            if (engine->gameTitle() != GameTitle::MM6)
+                actor.monsterInfo.hostilityType = HOSTILITY_FRIENDLY;
             actor.PrepareSprites(0);
         } else {
             actor.aiState = AIState::Disabled;

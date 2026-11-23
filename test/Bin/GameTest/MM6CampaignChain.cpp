@@ -312,6 +312,9 @@ void lootMM6CampaignChainCorpse(EngineController &game, int actorId) {
             }
             if (target.type() == OBJECT_Actor && !pActors[target.id()].IsNotAlive())
                 blocker = target.id(); // A living monster stands between the party and the corpse.
+            const Pid caster = target.type() == OBJECT_Sprite ? pSpriteObjects[target.id()].spell_caster_pid : Pid();
+            if (caster.type() == OBJECT_Actor && !pActors[caster.id()].IsNotAlive())
+                blocker = caster.id(); // A monster's spell flies between the party and the corpse.
         }
         if (blocker < 0)
             break;

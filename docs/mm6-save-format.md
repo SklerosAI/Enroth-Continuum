@@ -60,7 +60,7 @@ version byte and deciding what happens to saves written before, see [Changing a 
 | 3 | v2 + `ACTR`, `GNPC`, `RNGS` (22) | Only nested inside v4 and v5. |
 | 4 | v3 + `EVRT` (23) | The first-map anchor kept in memory, see [First-map saves](#first-map-saves-v5). |
 | 5 | v4 + `SPRT`, `ARTR`, `DECR` (26) | Written: a save on the first map of a session that never left it. |
-| 6 | Outdoor: v5 + `VIST` (27). Indoor: v2 + `GNPC`, `RNGS`, `EVRT`, `IFOV`, `IACR`, `ISCR`, `IDCR`, `IDRT`, `ISRT`, `IART` | Test-only candidates. No production writer or loader. |
+| 6 | Outdoor: v5 + `VIST` (27). Indoor: v2 + `GNPC`, `RNGS`, `EVRT`, `IFOV`, `IACR`, `ISCR`, `IDCR`, `IDRT`, `ISRT`, `IART` | No codecs. An unused outdoor slot shell and writer remain. |
 | 7 | v2 + `PRKM`, then an optional `TIMR`, `ARTC` and `CHRL` (20 to 23) | Written: every other save. `SESSION_SAVE_VERSION`. |
 
 A slot file on disk is always v5 or v7. The slot shell (`decodeNumberedSlotShell`) picks v7 when the container version
@@ -119,10 +119,6 @@ Added by v3 to v7:
 | `SPRT` / `ISRT` | 1 | `MM6V5SpriteRuntimeFields.cpp` | v5+ / v6 indoor | Runtime fields of ground sprites that the native record narrows |
 | `ARTR` / `IART` | 1 | `MM6V5ActorRuntimeFields.cpp` | v5+ / v6 indoor | Runtime fields of actors that the native record narrows |
 | `DECR` | 1 | `MM6V5DecorationRuntimeFields.cpp` | v5+ | Outdoor decoration runtime state |
-| `VIST` | 2 | `MM6VisitedMapSection.cpp` | v6 outdoor | Previously visited outdoor maps |
-| `IFOV` | 1 | `MM6IndoorFaceOverrides.cpp` | v6 indoor, optional | Indoor face attribute and texture changes against the map's pre-event base |
-| `IACR`, `ISCR`, `IDCR` | 1 | `MM6V6IndoorSaveFields.cpp` | v6 indoor | Native actor, sprite and decoration slot anchors of the active `.blv` |
-| `IDRT` | 1 | `MM6V6IndoorSaveFields.cpp` | v6 indoor | Indoor decoration runtime state |
 | `PRKM` | 1 | `MM6ParkedMapSection.cpp` | v7, required | The live lists of the active map and every visited map, see below |
 | `TIMR` | 1 | `MM6MapTimerSection.cpp` | v7, optional | Per map, when each of its four periodic event timers last fired |
 | `ARTC` | 1 | `MM6ArtifactCollectionSection.cpp` | v7, optional | The All Artifacts mod's 30 collected flags of artifacts 400 to 429 |
@@ -133,8 +129,8 @@ variables, the actor list as full actor images, and the ground-item sprite list.
 sprite image, except the item record's pad byte, which only the image holds. MM6's own records set it, the seven
 Temple Gongs in `t6.blv` have `0x80` there.
 
-`BEAC` (Lloyd's Beacons and a thumbnail, `MM6BeaconSaveFields.cpp`) and `SPAW` (`MM6SpawnedActorSection.cpp`) have
-codecs and unit tests but are in no manifest. `ITEM` and v1 `HELD` belong to v1 only.
+`SPAW` (`MM6SpawnedActorSection.cpp`) has a codec and unit tests but is in no manifest. `BEAC`, `VIST`, `IFOV`, `IACR`,
+`ISCR`, `IDCR` and `IDRT` are only known tags, with no codec. `ITEM` and v1 `HELD` belong to v1 only.
 
 `PRKM` must round-trip exactly. The encoder re-decodes its own output and refuses a payload that doesn't come back
 byte for byte, and the decoder refuses a payload that doesn't re-encode to the same bytes. Map names in `PRKM` and

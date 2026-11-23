@@ -58,7 +58,8 @@ and load were left for owner playtesting.
 
 Later local installs carried post-tag MM7 commits into the installed Atlas: the themed reroll controls, the fuller
 loot preview and Fortune's Turn. It still reports `0.1.1` and the tag did not move, so the installed MM7 helper is
-ahead of the tag.
+ahead of the tag. The installed Atlas also carries a Release MM6 helper from `claude/mm6` at `626f5f431` for owner
+playtests, which reports `ECv0.1.1-255-g626f5f431`.
 
 ## How a release is built and checked
 
@@ -76,7 +77,7 @@ ahead of the tag.
 5. **Verify.** Deep strict code-sign verification of the bundle, then a recursive comparison of the staged and the
    installed bundle. Open The Atlas visibly and check every title card shows its data and helper state.
 6. **Install.** Replace `/Applications/Enroth Continuum.app` after verifying the replacement. Delete superseded installed
-   bundles and staged app artifacts completely. Keep no rollback app copy; Git is the source record. Profiles and
+   bundles and staged app artifacts completely. Keep no rollback app copy. Git is the source record. Profiles and
    saves require a separately scoped repair or cleanup.
 
 For `ECv0.1.0` the install check verified Atlas rendering and exact bytes. Neither game was launched in that final
@@ -88,7 +89,11 @@ check.
   release's install check should launch each playable title and do one save and reload.
 - **Screen Recording permission.** The Atlas is ad-hoc signed, so macOS may ask again for Screen Recording after each
   install before the playtest recorder's video works.
-- **MM6 helper version.** The `MM6` app target sets no bundle version strings yet. `ECv0.2.0` needs them.
+- **MM6 helper version.** The `MM6` target sets no version of its own. It inherits the directory's
+  `MACOSX_BUNDLE_*_VERSION_STRING`, which is `PROJECT_VERSION`, the output of `git describe`. So the helper reports a
+  string like `ECv0.1.1-255-g626f5f431`. `ECv0.2.0` needs explicit version strings like the `MM7` target's.
+- **MM6 Release build path.** `tools/build_mm7_macos.py` builds only the MM7 helper. `ECv0.2.0` needs a documented
+  Release build of the MM6 helper from a clean export of the tag.
 
 ## Source
 

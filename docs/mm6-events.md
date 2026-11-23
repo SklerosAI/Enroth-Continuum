@@ -65,7 +65,8 @@ every shipped record is in range.
 
 ## Opcode behaviour notes
 
-- **2 `SpeakInHouse`**: enters the house through the MM6 house UI. MM6 plays no house-enter sound here.
+- **2 `SpeakInHouse`**: enters the house through the MM6 house UI, which plays the room's greeting (0x43C71C) and
+  the residence speech. MM7's door sound is skipped.
 - **6 `MoveToMap`**: an all-zero position means "don't place the party". On the current map the party stays put
   (castle throne rooms open this way), on another map it arrives at Party Start. Shipped MM6 doors name only the map.
 - **15 `ChangeDoorState`**: shared door code. Action 3, GrayFace's "switch even while moving", runs through
@@ -152,8 +153,9 @@ Rules per family:
   has.
 - **Quest bit (16)**: a party quest bit. A bit with no quest text is still state, shipped scripts use those too.
 - **Item (17)**: ids 1 to 580. Compare passes when any selected character has the item in the backpack or it is on the
-  cursor. Add puts an identified plain item on the cursor, moving the held item to a backpack first. Subtract removes
-  the first match per selected character in row-major grid order, then the cursor. Set throws.
+  cursor. Add puts an identified plain item on the cursor, moving the held item to a backpack first. Add of 400 to
+  429, the generated-artifact band, throws. Subtract removes the first match per selected character in row-major grid
+  order, then the cursor. Set throws.
 - **Day of year (19)**: one-based day in a 336-day year. Compare only.
 - **Gold (21)**: party gold, applied once. A Subtract that can't be paid stops the event. Set throws.
 - **Resistance (46 to 55)**: five resistances (Fire, Electricity, Cold, Poison, Magic) then their five bonuses. Set
@@ -258,12 +260,13 @@ The port marks the rest in the same places and checks once per frame on the game
 
 ## Unsupported and partial
 
-- Spells outside the verified list throw, see above.
+- Spells outside the verified list throw, see above. A throw ends the game.
 - Variable ids 206 to 212 and 227 and up throw. Item Set, gold Set and day-of-year writes throw. A whole-party item
   Add throws.
 - `GiveItem` throws when no character has room for the held item. MM6 drops it on the ground, which the port doesn't do.
-- The generated-artifact item band is refused by item Add.
-- `ChangeDoorState` action 3 is not implemented. It only matters for GrayFace-patched scripts.
+- Item Add of 400 to 429 throws in `makeEventItem` (`MM6ItemEventWrite.cpp`). Shipped `oute1` event 226, the sword
+  in the stone, adds Excalibur (403) this way, so pulling it ends the game. See
+  [playthrough go/no-go](mm6-playthrough-go-no-go.md).
 - With nobody active, the stand-in member of `fix_inactive_party_events` steers only the character selector. Where an
   event moves a held item while giving a new one, that path still sees nobody active.
 

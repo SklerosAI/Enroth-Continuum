@@ -108,7 +108,7 @@ source with a comment naming the original address:
 | First Aid heal | 5, 7, 10 by mastery | `MM6FirstAidRules.cpp` | `0x427E25` |
 | Power Cure heal | 10 + 2 × skill, every mastery | `MM6PowerCureRules.cpp` | `0x428591` |
 | Condition cure window | Seconds per skill point, see below | `MM6TimedCureRules.cpp` | `0x426355`, `0x426B01`, `0x427534`, `0x427741`, `0x4279FC`, `0x427D8C` |
-| Bless, Heroism and Shield duration | 64 min + 5 min per skill point, 15 min at Master | `blessAndHeroismDuration` in `MM6PlayerSpell.h` | `0x42472A` (Shield), `0x426C21` (Heroism) |
+| Bless, Heroism and Shield duration | 64 min + 5 min per skill point, 15 min at Master | `MM6CombatBuffRules.cpp`, via `blessAndHeroismDuration` | `0x42472A` (Shield), `0x426C21` (Heroism) |
 | Heroism power | 5 + skill | `MM6CombatBuffRules.cpp` | `0x426C21` |
 | Skill bonuses to attack, damage, shooting, armor class, HP and SP | See [skill bonuses](mm6-characters-items-spells.md#skill-bonuses) | `MM6SkillBonus.h` | `0x483930` |
 

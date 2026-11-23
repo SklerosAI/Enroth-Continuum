@@ -15,6 +15,8 @@ Every page in `docs/` with a one-line summary, by category. Read this before sea
 - [MM6 campaign status](mm6-campaign-status.md): what an MM6 player can do today, how it is verified, chain and
   GrayFace progress, and the latest lane results.
 - [MM7 status](mm7-status.md): MM7 working gate, endings, promotions, quest durability, audit fixes and what remains.
+- [MM6 playthrough go/no-go](mm6-playthrough-go-no-go.md): whether MM6 is ready for an end-to-end playthrough, the
+  player-reachable crashes that block it and what flips the verdict.
 - [Open questions](open-questions.md): open questions and known bugs across MM6 and MM7.
 - [Releases](releases.md): release tags, their provenance, how a release is built and checked.
 

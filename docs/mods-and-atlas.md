@@ -70,7 +70,7 @@ Each title keeps its own profile so saves and configs never mix. An MM7 Atlas pr
     See [All Artifacts for MM6](#all-artifacts-for-mm6).
   - Fortune's Turn, including chest reroll. Atlas sets both `ENROTH_MM6_CHEST_REROLL` and
     `ENROTH_MM6_MONSTER_LOOT_REROLL` to the same `1` or `0`. Either old saved reroll preference initially enables
-    the combined option; its switch then writes both keys. See [Fortune's Turn](#fortunes-turn).
+    the combined option. Its switch then writes both keys. See [Fortune's Turn](#fortunes-turn).
 - Vendor refresh has one "MM6 + MM7" row in the Atelier that writes both titles' preferences. All Artifacts and
   Fortune's Turn each have a "· MM6" row below the MM7 rows, with "On for next MM6 launch" when enabled.
 - Play MM6 is a playtest entry. MM8 is a data-detection card only. There is no MM8 helper.
@@ -393,7 +393,10 @@ buttons and its exclusions, and rolls with MM6's own rules:
   Circus trade showed.
 
 The checkbox sits at the bottom left beside the first portrait, with a dice under it, and is saved in the engine
-config as `mm6_monster_loot_reroll_in_game`. Its button exists only while the launch flag is set. MM6 has no Enchant
+config as `mm6_monster_loot_reroll_in_game`. Its button exists only while the launch flag is set. In both titles the
+chest's Reroll button follows the launch flag, not this checkbox (`chestRerollEnabled` in `PrivateMods.cpp`). Turning
+the checkbox off restores the ordinary non-chest rewards and leaves the chest button until a chest item is taken. The
+older chest-only launch flags still enable the chest button on their own. MM6 has no Enchant
 Item player spell (`mm6::isVerifiedPlayerSpell`), so the enchantment reroll has no MM6 counterpart, and there is no
 new-game corpse setup.
 
@@ -489,10 +492,3 @@ it as `ENROTH_MM6_ALL_ARTIFACTS=1`, or `0` when off. The MM7 and upstream launch
   set their own flag. The MM6 ledger's fresh-process pair runs in `tools/run_mm6_firstmap_gate.py`.
 
 See also: [Build setup](build-and-dev-setup.md), [Testing](testing.md), [MM7 status](mm7-status.md), [Upstream](upstream.md), [Source and privacy](source-and-privacy.md)
-
-## Unified Fortune's Turn controls — 2026-11-22
-
-Fortune's Turn now includes chest reroll for MM6 and MM7. Its launch flag enables the chest's small **Reroll**
-button independently of the in-game X checkbox. Switching that X off restores normal non-chest rewards while the
-chest button remains available until a chest item is claimed. The legacy chest-only launch flags remain accepted.
-MM6 All Artifacts stays a separate option, using MM6's collected ledger and native item rules.

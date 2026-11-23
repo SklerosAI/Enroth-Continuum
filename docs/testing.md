@@ -119,13 +119,6 @@ clock isn't reset.
 `play` and `retrace` subcommands. MM6 game tests build their state in code from a new party. The campaign chain chapters
 name their fixtures, such as raised stats or teleports, in a comment at the top of the test.
 
-Two private inputs remain:
-
-- `ENROTH_MM6_MAP_RESEARCH_ROOT` points three `MM6Save` game tests at a private research folder read by
-  `mm6::PrivateMapSource`. Without it they skip.
-- `tools/mm6_map_name_manifest.py` builds a private map-name manifest under `local-game-data/` for the same tests.
-  Its own test is `tools/tests/test_mm6_map_name_manifest.py`.
-
 ## Hidden frame captures
 
 A capture test renders real frames into a hidden window and writes PNGs, without taking focus or the mouse.
@@ -186,7 +179,9 @@ afterwards:
 - the normal Save and Load menu children, including a production load and resave
 - a new game saved, loaded and saved again
 - save anywhere after travel, buffs across a fresh process, autosave and quick save, map visits
+- a chest's second page across a fresh process
 - the All Artifacts ledger across a fresh process
+- the native item records of carried artifacts across a fresh process
 - three MM7 control tests
 
 ```sh
@@ -287,7 +282,6 @@ The harness helpers (`driveMovementInput`, `fightActorWithAttackInput`) are in
 | `ENROTH_MM6_RESTART_PROFILE` | MM6 save game tests | The `mm6-restart-*` profile the gate created. |
 | `ENROTH_MM6_*_ENABLE` | Individual `DISABLED_` MM6 tests | Admits one gate child, with the exact value the runner sets. |
 | `ENROTH_MM6_MAP_SWEEP_*`, `ENROTH_MM6_COMBAT_SWEEP_*` | `MM6MapSweep` tests | Set by the sweep runners. |
-| `ENROTH_MM6_MAP_RESEARCH_ROOT` | `MM6Save` game tests | Private research folder, see above. |
 | `MM6_OFFSCREEN_*`, `MM7_OFFSCREEN_*` | Capture tests | See [Hidden frame captures](#hidden-frame-captures). |
 | `ENROTH_MM7_MOD_DIR`, `ENROTH_MM7_ALL_ARTIFACTS_STORAGE`, `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY` | Engine, MM7 mod tests | See [Mods and Atlas](mods-and-atlas.md). |
 | `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` | Engine, MM6 vendor refresh tests | See [Mods and Atlas](mods-and-atlas.md). The tests set it themselves. |

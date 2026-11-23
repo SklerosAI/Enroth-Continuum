@@ -194,6 +194,9 @@ The bar positions come from the HUD draw at `0x417C10`, which reads a per-charac
 at `0x4BD0FC`. The strip frame already contains the empty bar slots. The MM6 hit point bar is not linear. Its top half
 is `hitsfull`, the next quarter `hitshalf` and the last quarter `hitsqtr`, each cropped from the top.
 
+With the Fortune's Turn mod on, its checkbox and dice sit in the left margin beside the first portrait
+(`mm6HudFortunesTurn*Rect` in [MM6HudLayout.h](../src/GUI/MM6HudLayout.h)), see [Mods and Atlas](mods-and-atlas.md).
+
 ### Right panel extras
 
 - Hirelings sit in two 64x74 boxes at (491, 149) and (561, 149). The follower scroll arrows are `npc_lup` and `npc_rup`
@@ -266,7 +269,7 @@ plan carries none for an occupied cursor. `requirePostWorldEmptyCursorReady` che
 | Map book | [MapBook.cpp](../src/GUI/UI/Books/MapBook.cpp) | `zoom+`/`zoom-` tabs and four scroll tabs |
 | Spellbook | [MM6Spellbook.h](../src/GUI/UI/MM6Spellbook.h) | Eleven spells per school page, quick spell hot spots, right-click popup from `0x40C580` |
 | Character screen | [MM6CharacterScreen.h](../src/GUI/UI/MM6CharacterScreen.h) | MM6 tab art, five resistances, side borders over the paperdoll |
-| Chest | [UIChest.cpp](../src/GUI/UI/UIChest.cpp) | `buttesc1`/`buttesc2` exit at (392, 318), character-screen side borders |
+| Chest | [UIChest.cpp](../src/GUI/UI/UIChest.cpp) | `buttesc1`/`buttesc2` exit at (392, 318), side borders, page button (`con_arrr`) at (400, 284), reroll at (396, 254) |
 | Spell item pick | [UIInventory.cpp](../src/GUI/UI/UIInventory.cpp) | Backpack with `buttesc1`/`buttesc2` Cancel at (392, 318), no paperdoll, see [spells that pick an item](mm6-characters-items-spells.md#spells-that-pick-an-item) |
 | Quick reference | [UIQuickReference.cpp](../src/GUI/UI/UIQuickReference.cpp) | `leather` background, reputation colour from the MM6 effective reputation |
 | Rest | [UIRest.cpp](../src/GUI/UI/UIRest.cpp) | MM6 button sizes and positions |
@@ -310,7 +313,7 @@ rectangles, drawn quads and screen state. Visual layout is checked with hidden o
 - [MM6HudLayout.h](../src/GUI/MM6HudLayout.h), [HudFrameResources.h](../src/GUI/HudFrameResources.h),
   [MM6TopPanelResources.h](../src/GUI/MM6TopPanelResources.h), [GUIWindow.cpp](../src/GUI/GUIWindow.cpp),
   [UIGame.cpp](../src/GUI/UI/UIGame.cpp), [UIStatusBar.cpp](../src/GUI/UI/UIStatusBar.cpp)
-- [MM6Portraits.h](../src/Engine/MM6/MM6Portraits.h), [MM6VoiceSound.h](../src/Engine/MM6/MM6VoiceSound.h),
+- [MM6Portraits.h](../src/Engine/MM6/MM6Portraits.h), [MM6VoiceRules.h](../src/Engine/MM6/MM6VoiceRules.h),
   [MM6StreetNpcPortraits.h](../src/Engine/MM6/MM6StreetNpcPortraits.h)
 - [Mouse.cpp](../src/Io/Mouse.cpp), [MM6RawCursorImagePlan.cpp](../src/Engine/MM6/MM6RawCursorImagePlan.cpp)
 - Screens: [UIPartyCreation.cpp](../src/GUI/UI/UIPartyCreation.cpp), [GameMenu.cpp](../src/Application/GameMenu.cpp),

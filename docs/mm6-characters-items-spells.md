@@ -131,6 +131,7 @@ The MM6 item table holds ids 1 to 580 (`items.txt`, loaded by `ItemTable` with `
 |---|---|
 | 1 to 399 | Regular items the random generator can pick |
 | 64, 65 | Blaster and Blaster Rifle, value 0 |
+| 135 to 159 | Wands. They equip with no skill check, and every use throws, see below |
 | 160 to 162 | Herbs |
 | 163 | Empty bottle |
 | 164 to 188 | Potions, the `useitems.txt` axis covers 160 to 188 |
@@ -168,12 +169,13 @@ loot, its artifact branch gives MM7's ids 500 to 528, which are message scrolls 
   artifact with a 5% chance, when it wasn't generated before and fewer than 13 artifacts were. With the All Artifacts
   mod it only needs not to be collected, see [Mods and the Atlas](mods-and-atlas.md#all-artifacts-for-mm6).
 - Otherwise the base item is a weighted pick over items 1 to 399 by treasure level. A roll of exactly 0 picks item 1,
-  whatever its weight, as the original does.
+  whatever its weight, as the original does. The owner decided on 2026-11-22 to fix this off-by-one without a config
+  flag. It is not done yet (`pickChestBaseItemId` in `MM6ChestBaseItemPicker.h`).
 - A request for a kind (20 to 43) filters by the original's type or skill codes. Other kinds are an item type plus 1.
   MM6.exe rolls `rand() % total` over the kind's candidates and takes the first one whose cumulative weight reaches
   it, so the first candidate gets one chance more than its weight, even at weight 0, and the last one one less. With
   `fix_item_generation`, on by default, the roll is one higher, as the GrayFace patch has it, and every candidate gets
-  its weight. The any-item roll keeps MM6.exe's compare either way.
+  its weight. The any-item roll keeps MM6.exe's compare either way, until the fix above lands.
 - A looted corpse's random item (MM6.exe 0x4218E0) asks for the monster's `monsters.txt` treasure level and kind
   (`mm6::generateTitleItem`), so the Great Wyrm, the Red, Blue and Gold Dragons, the Efreet and the Supreme Titan can
   drop artifacts. The gold dice, the drop chance and the 10% chance that the corpse stays to be looted again still
@@ -196,8 +198,10 @@ and `mm6::snapshotChest` (`MM6ChestRuntimeProjection.h`), which swap 14 and Body
 
 Special bonuses are one-based ids into `spcitems.txt`. Only id 58, Antique, is modelled end to end. It multiplies the
 item's value by 10 and does nothing else. The other specials appear on generated items and save with them
-(`MM6SpecialItemProjection.h`), but their effects are open, except where a lane traced one (special 17, Recovery,
-above).
+(`MM6SpecialItemProjection.h`), but their hit effects are open. A wielded weapon, or an arrow from a bow, with any
+special other than Antique throws when it hits a monster (`mm6::requireVerifiedPartyAttack` in `MM6CombatRules.h`),
+which ends the game. The finalizer rolls weapon specials, so a player meets this with ordinary loot. See
+[playthrough go/no-go](mm6-playthrough-go-no-go.md). Special 17, Recovery, is the exception a lane traced, above.
 
 ### Artifacts and relics
 
@@ -245,7 +249,7 @@ The item texts mostly agree. Thor and Conan carry a Might bonus their texts don'
 Pellinore's "Hit Recovery" have no code behind them, MM6.exe compares against neither item number outside the
 bonus routine. Galahad's "Protection" is the resistance bonus. Swift
 artifacts shorten recovery through `mm6::isSwiftArtifact`, next to the Swift enchantment in
-`Character::GetAttackRecoveryTime`.
+`Character::GetAttackRecoveryTime`. A Swift weapon still throws when it hits, see the special bonuses above.
 
 What the other addresses do, and where the port has it:
 
@@ -260,6 +264,8 @@ What the other addresses do, and where the port has it:
 - **Slaying** (`mm6::weaponSlays`, `Character::CalculateMeleeDmgToEnemyWithWeapon`). The melee damage routine doubles a
   weapon's dice and modifier, before the dagger triple, when the weapon is Conan and the monster is 25 to 42, or when it
   has Demon Slaying and the monster is 25 to 30, or Dragon Slaying and 31 to 42. Conan skips its enchantment check.
+  Only Conan reaches this in play. A Demon or Dragon Slaying weapon throws in `mm6::requireVerifiedPartyAttack` before
+  the damage routine runs.
 - **Regeneration** (`RegeneratePartyHealthMana`). The routine at 0x4879F0 runs once five game minutes have passed since
   its last run. Pellinore (0x487BB5) adds a hit point up to the maximum. Hades (0x487BC4) takes one, knocks the wielder
   out below 0, not at 0, and kills once hit points plus Endurance drop below 1 (`mm6::drainHadesWielder`). Neither works
@@ -319,8 +325,11 @@ the shared name is wrong.
 Spell points and recovery by mastery come through `mm6::spellManaRecovery`. Recovery is the executable's spell table.
 The cost is `spells.txt`'s while `gameplay.fix_spells_cost` is on, as the GrayFace patch has it, and the executable's
 otherwise. They differ only for Static Charge at Expert, 1 against 2. The cast path and the quick-spell key use it.
-The spellbook popup always shows `spells.txt`'s cost, as `MM6.exe`'s does. A cast with an overridden skill (scroll, NPC, temple) or
-under the debug all-magic switch throws, its cost rule isn't verified.
+The spellbook popup always shows `spells.txt`'s cost, as `MM6.exe`'s does. A cast with an overridden skill throws in
+`mm6::requireVerifiedPlayerCastSkill`, because its cost and recovery rule isn't verified. A throw ends the game. In
+play that is a hired Acolyte's Bless or a Piper's Heroism (`NPC.cpp`), picked from the hireling's topics. A scroll
+throws earlier, in `Character::useItem`, and a temple donation casts nothing yet. The debug all-magic switch reaches
+the same throw.
 
 ### What can be cast
 
@@ -350,14 +359,17 @@ Fire Aura 4, Recharge Item 28, Enchant Item 30 and Vampiric Weapon 91, share the
 Bolt, Acid Burst and Mass Curse. The MM6 cast push clears MM7's item flag and sets it only for MM6's two.
 
 The item screen is MM6.exe's window 0x1F: `leather` at (8, 8), `fr_inven` and the backpack, `border5` and `border6`,
-and Cancel at (392, 318), 75 by 33, drawn with `buttesc1` and `buttesc2` when pressed. There is no paperdoll. The
+and Cancel at (392, 318), 74 by 32, drawn with `buttesc1` and `buttesc2` when pressed. There is no paperdoll. The
 cursor is `MICON2` and the status line says "Select Target". A click on the backpack (0x420370) picks the item. Cancel
 uses the shared cancel path, which is not traced against MM6.exe. Neither is MM6.exe's effect of either spell.
 
-Scrolls and spellbook items are not implemented. Using a scroll throws in `Character::useItem` before the item is
-consumed. Reading a spellbook refuses a character whose class can't learn the school or who lacks the school skill,
-and throws otherwise. Spell guilds stock spellbooks as items, so a spell can't yet be learned in play. Game tests
-teach spells in code.
+Scrolls, spellbook items and wands are not implemented, and each throws, which ends the game. Using a scroll throws
+in `Character::useItem` before the item is consumed. Reading a spellbook refuses a character whose class can't learn
+the school or who lacks the school skill, and throws for everyone else. Spell guilds sell spellbooks, so reading one
+with an eligible character crashes the game. A wand equips like a one-handed weapon and throws on an attack, and
+also on the stats screen's Attack popup, the Pass key, entering turn-based mode and stealing
+(`Character::GetAttackRecoveryTime`). Game tests teach spells in code. See
+[playthrough go/no-go](mm6-playthrough-go-no-go.md).
 
 ### Durations and cure windows
 
@@ -396,7 +408,7 @@ terms and arena wins) are not shown, their MM6 counters aren't mapped. Guild mem
 - [MM6ActualStatCondition.h](../src/Engine/MM6/MM6ActualStatCondition.h), [MM6NewDay.h](../src/Engine/MM6/MM6NewDay.h)
 - [MM6ItemGenerator.h](../src/Engine/MM6/MM6ItemGenerator.h), [MM6ChestBaseItemPicker.h](../src/Engine/MM6/MM6ChestBaseItemPicker.h),
   [MM6ItemRecord28.h](../src/Engine/MM6/MM6ItemRecord28.h), [MM6StandardBonusMap.h](../src/Engine/MM6/MM6StandardBonusMap.h),
-  [MM6AntiqueItemProjection.h](../src/Engine/MM6/MM6AntiqueItemProjection.h), [MM6BoundedItemProjection.h](../src/Engine/MM6/MM6BoundedItemProjection.h),
+  [MM6CombatRules.h](../src/Engine/MM6/MM6CombatRules.h), [MM6BoundedItemProjection.h](../src/Engine/MM6/MM6BoundedItemProjection.h),
   [MM6ArtifactBonus.h](../src/Engine/MM6/MM6ArtifactBonus.h), [MM6SkillBonus.h](../src/Engine/MM6/MM6SkillBonus.h)
 - [MM6Potion.h](../src/Engine/MM6/MM6Potion.h), [MM6ConsumableRules.h](../src/Engine/MM6/MM6ConsumableRules.h),
   [MM6PotionCombinations.h](../src/Engine/Tables/MM6PotionCombinations.h)

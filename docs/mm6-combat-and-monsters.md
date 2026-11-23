@@ -50,7 +50,8 @@ Monster ids come in families of three tiers (A, B, C), so `(id - 1) / 3` is the 
 
 ## Actor identity
 
-Map actors live in `.ddm` and `.dlv` deltas as native 548-byte records (`MM6OutdoorActorAppendCodec.h`). The monster id
+Map actors live in `.ddm` and `.dlv` deltas as native 548-byte records (`projectMM6ActorRecord` in
+`MM6OutdoorDeltaSnapshot.cpp`). The monster id
 is the one-byte field at offset 52, within 1 to 173. A separate 16-bit field at offset 118 is not the monster id.
 Bytes 80 to 85 are a per-actor copy of the six resistances (Fire, Electricity, Cold, Poison, Physical, Magic). An actor
 may override its table row there (`MM6NativeActorResistanceBytes.h`).
@@ -114,8 +115,9 @@ Damage that reaches a character goes through `mm6::characterIncomingDamage` (`MM
   20 for a hired Enchanter. Magic adds only its party buff. Energy has no resistance.
 
 Objects a monster launches hit through `damageCharacterFromMonsterObject`. Only arrows (object 500) and the robot laser
-(590) roll to hit, and only they are halved once each for the Shield buff, any Shielding item, artifact 408 worn as
-armour, and artifact 423 in either hand. A cursed monster misses half its arrows.
+(590) roll to hit, and only they are halved once each for the Shield buff, any Shielding item, artifact 408 (Valeria)
+in either hand, and artifact 423 in either hand. With `gameplay.fix_valeria_shield` off, Valeria counts only in the
+armour slot, where MM6.exe looks. A cursed monster misses half its arrows.
 
 ### Special attacks
 
@@ -160,7 +162,9 @@ spells except Paralyze and Toxic Cloud, plus Meteor Shower (9), Dispel Magic (80
 - Dispel Magic ends every party buff and the buffs of each character who fails a Magic save.
 - Mass Curse tries the curse special attack on each character who can act.
 
-Paralyze (86) and other unverified monster spells throw. GrayFace's Paralyze fix is due when the spell is admitted.
+Paralyze (86) and other unverified monster spells throw, which ends the game. Two `monsters.txt` rows cast one: the
+Medusa Enchantress (101, Paralyze, 30%) and the Corrosive Ooze (117, Toxic Cloud, 20%). See
+[playthrough go/no-go](mm6-playthrough-go-no-go.md). GrayFace's Paralyze fix is due when the spell is admitted.
 
 ## Spawning
 
@@ -195,8 +199,10 @@ item with the treasure chance from MM6's item generator, see
 
 Melee and bow to-hit and damage use the shared formulas. MM6-specific parts:
 
-- Weapon special enchantments other than Antique throw (`requireVerifiedPartyAttack`). Elemental enchantments are not
-  admitted yet.
+- A hit with a weapon or an arrow whose special enchantment isn't Antique throws (`requireVerifiedPartyAttack`), which
+  ends the game. So does a melee hit that can stun: one with an "of Force" item worn, or with a staff or mace at
+  Master. Stun checks the target's Earth immunity, and `requireVerifiedMonsterDamage` accepts only Physical, Fire and
+  Energy. Elemental enchantments are not admitted yet. See [playthrough go/no-go](mm6-playthrough-go-no-go.md).
 - Mordred heals, Hades, Ares and Artemis add elemental damage, and Conan doubles against devils and dragons, see
   [artifacts and relics](mm6-characters-items-spells.md#artifacts-and-relics). Other weapons roll no extra damage.
 - Blasters deal Energy, which no MM6 monster resists. MM7 treats blasters as physical.
@@ -206,7 +212,8 @@ Melee and bow to-hit and damage use the shared formulas. MM6-specific parts:
   resistance runs the same halving roll with no luck bonus.
 - An object an event launched has no caster. Its explosion and its hits on monsters are ignored, as in the original.
 - Clubs and empty or broken hands swing with the mace sound (MM6.exe jump table at 0x42A408).
-- Wands throw.
+- Wands (135 to 159) equip with no skill check and throw on an attack, and on anything that reads the attack
+  recovery: the stats screen's Attack popup, the Pass key, entering turn-based mode and stealing.
 
 ## Recovery and turn-based mode
 
@@ -292,7 +299,7 @@ units down. Spell-side fixes (condition cures, Water Walk drain, stronger shorte
   `MM6MonsterDamage_ut.cpp`, `MM6MapStatsEncounterColumns_ut.cpp`, `MM6PartyDeath_ut.cpp`
 - Game tests: `GameTests_MM6Combat.cpp`, `GameTests_MM6FirstCombat.cpp`, `GameTests_MM6Dungeons.cpp`,
   `GameTests_MM6PartyDeath.cpp`, `GameTests_MM6GrayFaceShared.cpp`, `GameTests_MM6MapSweep.cpp`,
-  `GameTests_MM6MonsterFamilies.cpp` in
+  `GameTests_MM6MonsterFamilies.cpp`, `GameTests_MM6Encounters.cpp`, `GameTests_MM6Artifacts.cpp` in
   [test/Bin/GameTest](../test/Bin/GameTest)
 - [run_mm6_combat_sweep.py](../tools/run_mm6_combat_sweep.py)
 

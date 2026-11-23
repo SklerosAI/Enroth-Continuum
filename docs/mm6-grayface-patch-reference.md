@@ -187,7 +187,8 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   `MMHooks.pas:3705`, one-off in the cumulative compare). State: **fixed**.
   The hook sits after MM6.exe's `rand() % total` at 0x448A33 and adds 1 (`inc edx`), on the requested-kind path that
   shops and `GiveItem` use. A total of 0 jumps past it and still takes the first candidate. MM6.exe's any-item roll at
-  0x448AFA has the same off-by-one, a roll of 0 takes item 1, and the patch leaves it, so chests stay vanilla. In the
+  0x448AFA has the same off-by-one, a roll of 0 takes item 1, and the patch leaves it. The owner decided on 2026-11-22
+  that we fix it too, without a config flag. That is still open, so chests stay vanilla for now. In the
   MM6 data the last kind 22 candidate at treasure levels 4 to 6 has weight 1, the Toxic Cloud, Day of Protection and
   Armageddon books, so vanilla magic shops 36 to 41 and the `global.evt` level 4 and 6 kind 22 rewards never give
   them, and a roll of 0 gives a Helm, which has weight 0 there. Fixed 2026-11-19 behind `fix_item_generation`. Tests
@@ -205,7 +206,7 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
 - **C28**. Quick Spell mana check used the wrong school (`FixQSpellPointsCheck`, `MMHooks.pas:3024`). State: **fixed**.
   `KeyboardInputHandler.cpp` gates on the spell's own school and the MM6 table.
 - **C29**. Progressive dagger triple damage, 1% per skill point (`ProgressiveDaggerTrippleDamage=1`). State: **fixed**.
-  `Character.cpp:1098` triples at `random(100) < level`. MM7 test `Issues.Issue1721`.
+  `Character.cpp:1068` triples at `random(100) < level`. MM7 test `Issues.Issue1721`.
 
 ### World, events, timers, travel, saves and UI
 
@@ -226,19 +227,20 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   Vanilla MM6.exe runs the event with nobody active. Its click handler 0x4206D0, which the click and the Space messages
   both call at 0x42D4E6 and 0x42D501, never reads CurrentMember (0x4D50E8) before its event calls 0x4209C1 to 0x420ADC.
   The processor at 0x43C87C then targets 4 (active) with a CurrentMember and 6 (random) without, and the random target
-  re-rolls `rand() & 3` on every command. Ours: `Interaction.cpp:81` `canRunInteractionEvent()` runs the event for MM6
-  with nobody active, `EvtInterpreter::iterateCharacters` (`EvtInterpreter.cpp:2152`) picks one member who can act
-  through `mm6InactivePartyEventTarget` the first time a command of the run targets the active character, and keeps it
+  re-rolls `rand() & 3` on every command. Ours: `Interaction.cpp:86` `canRunInteractionEvent()` runs the event for MM6
+  with nobody active, `EvtInterpreter::iterateCharacters` (`EvtInterpreter.cpp:2221`) picks one member who can act
+  through `mm6InactivePartyEventTarget` (`EvtInterpreter.cpp:847`) the first time a command of the run targets the active character, and keeps it
   for every later command, `ForPartyMember` and the explicit active targets included. An event that never targets a
   member draws no random number. Flag `gameplay.fix_inactive_party_events`, off gives the vanilla per-command re-roll.
-  Test `MM6EventMember.WellWithNobodyActive`. MM7 still refuses the click with nobody active. Not matched yet:
+  Test `MM6EventMember.ClickWellWithNobodyActive`. MM7 still refuses the click with nobody active. Not matched yet:
   GrayFace's CurrentMember also steers the other active-member reads of the run, like where an event moves a held item
-  when it gives a new one (`MM6GiveItemEvent.cpp:34`, `EvtInterpreter.cpp` `VAR_PlayerItemInHands`), and ours still sees
+  when it gives a new one (`holdEventItem` in `src/Engine/Evt/MM6GiveItemEvent.cpp`, `EvtInterpreter.cpp` `VAR_PlayerItemInHands`), and ours still sees
   nobody active there.
 - **W3**. Inactive members couldn't open chests (vanilla), could attack and could use scrolls
   (`FixInactivePlayersActing=1`, `FixInfiniteScrolls=1`). State: **fixed, scrolls absent**.
   Chest screen lets any member be selected and `Chest.cpp` needs an active member to open, attacking is refused for
-  incapacitated members (`Engine.cpp:1526`, `UIGame.cpp:582`, `Character.cpp:4588`). MM6 scrolls throw.
+  incapacitated members (`dropFocusFromIncapacitatedCharacter` in `Engine.cpp`, the portrait click in `UIGame.cpp:676`,
+  `Character::_42ECB5_CharacterAttacksActor`). MM6 scrolls throw.
 - **W4**. New Day effects skipped at month start after "Wait until Dawn" then Esc (`MMHooks.pas:4092`). State: **fixed,
   config**.
   Esc calls `Rest(remaining)`. MM6 doesn't use the shared 3 AM check, `mm6::isNewDay` (0x4881C4) kept the vanilla
@@ -252,7 +254,7 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   daytime update stayed for a minute. Now behind `gameplay.fix_sunrise_light` (default on, MM6 only), which stores the
   minute on entry as GrayFace does. MM7 keeps the vanilla code. Test `MM6GrayFaceShared.SunRisesAtFiveAm`.
 - **W6**. Waiting in the Rest dialog didn't tick character recovery (`FixWaitHook`, `Hooks.pas:1592`). State: **fixed**.
-  `Engine.cpp:1441` runs `Character::Recover` inside `Rest`. Test `MM6FirstCombat.WaitAnHourNeitherEatsNorHeals` pins HP
+  `Engine.cpp:1423` runs `Character::Recover` inside `Rest`. Test `MM6Rest.WaitAnHourNeitherEatsNorHeals` pins HP
   and food, `MM6GrayFaceShared.WaitTicksRecovery` pins recovery.
 - **W7**. Coach and boat fare was withdrawn before the autosave, so the arrival autosave already lacked the gold
   (`TravelGoldFixHook`, `Hooks.pas:1623`, subtracts after `DoSaveGame`). State: **fixed, better than GrayFace**.
@@ -275,7 +277,7 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
 - **W10**. Lloyd's Beacon autosaved after taking SP and recovery, Town Portal autosaved after recovery and even within
   the same map, Town Portal wasted the turn on cancel, Town Portal and Enchant Item didn't pause (`Hooks.pas:1705-1750`,
   `2461-2508`, `TPFixHook`). State: **absent, decide at admission**.
-  Spells 29, 31 and 33 are not admitted, refused in `MM6SpellEffectGuard.h` and `Game.cpp:140`. The shared books keep
+  Spells 29, 31 and 33 are not admitted, refused in `MM6SpellEffectGuard.h` and `refuseUnverifiedMM6Spell` in `Game.cpp`. The shared books keep
   the vanilla order and MM7 town data.
 - **W11**. Ground items from one map appeared on another after walking across a border (`FixItemDuplicates=1`). State:
   **fixed by design**.
@@ -342,7 +344,7 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   New saves take the first free `saveNNN.ec6`, the menu is a file list, Quick Save has no Hive check, only autosave is
   skipped during the Hive finale.
 - **W17**. Awards page not refreshed on Tab (MM6 and MM7 hook). State: **fixed**.
-  `UICharacter.cpp:971` refills awards when the active member changes. Arrow keys unbound, and Tab doesn't switch
+  `UICharacter.cpp:975` refills awards when the active member changes. Arrow keys unbound, and Tab doesn't switch
   members on the character screen, the digit keys do. Test `MM6GrayFaceShared.AwardsFollowActiveCharacter`.
 - **W18**. Buff duration shown wrong for "1 day 5 minutes" (`DoFixBuffTime`, `MMHooks.pas:3726`, shows the two largest
   units). State: **fixed, config**.
@@ -390,7 +392,7 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   `MM6Houses.WeaponShopRefusesBlaster`. The 0x485120 half is the merchant line over a blaster on the sell screen,
   which now says the blaster is beyond the shopkeeper. Test `MM6Houses.WeaponShopBlasterHover`.
 - **W27**. Buy dialog read out of bounds with no active member. State: **fixed**.
-  `MM6Shop.cpp:141` returns without an active member.
+  `GUIWindow_MM6Shop::houseScreenClick` (`MM6Shop.cpp:197`) returns without an active member.
 - **W28**. Unconscious members could identify and repair in shops (`FixDeadPlayerIdentifyItem=1`, `MMHooks.pas:3062`,
   hooked at MM6 0x41C58E). State: **fixed, config for the skill path**.
   The patch hook sits in the item info box (0x41C440), where the selected member's Identify Item and Repair skills act
@@ -406,7 +408,7 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   identify and repair, behind `gameplay.fix_incapacitated_skill_identify`. The map's inventory and chest boxes refuse
   such a character before the box opens. Test `MM6Houses.WeaponShopItemInfoBoxUnconscious`.
 - **W29**. Free Haven Smuggler's Guild added to the map. State: **vanilla by data**.
-  House 151 exists in `2devents.txt` and `MM6HouseServiceData.cpp:203` gives it skills, but the GOG `Outc2.odm` has no
+  House 151 exists in `2devents.txt` and `src/GUI/UI/MM6HouseServiceData.cpp:205` gives it skills, but the GOG `Outc2.odm` has no
   door to it. The patched `Outc2.odm` and `outc2.evt` add the entrance.
 
 ### Owner decision, 2026-11-15: fix them all
@@ -420,7 +422,8 @@ say which ones are done.
 Rules for every fix in this backlog:
 - A fix that changes game logic sits behind a `gameplay.fix_*` config flag that defaults on, like
   `fix_water_walk_mana_drain`. GrayFace makes most fixes switchable through `mm6.ini`, and the flag keeps a vanilla run
-  one switch away.
+  one switch away. There are two exceptions. A port bug where MM6.exe already behaves correctly gets no flag (C22, C26,
+  the W28 shop path, event opcode 69). The owner may also decide a fix goes without one, as for the any-item roll.
 - A fix that needs new saved state stores it in our own save fields, never in a layout the original MM6 can't read back.
   GrayFace keeps its timer state in a patch-only map extra for the same reason.
 - An admission-time item is fixed in the packet that admits the spell or feature. The spell isn't admitted with the
@@ -489,8 +492,8 @@ Rules for every fix in this backlog:
   Same as GrayFace. Flips `MM6TurnBased.PartyAndMonstersTakeTurns`. Done 2026-11-18 behind `fix_turn_based_turn_time`.
 - **C25**. Item roll favours the first candidate. Fix the off-by-one in the cumulative compare so every candidate gets
   its weight.
-  Same as GrayFace. Done 2026-11-19 behind `fix_item_generation`. The any-item roll has the same off-by-one and stays,
-  as in the patch.
+  Same as GrayFace. Done 2026-11-19 behind `fix_item_generation`. The any-item roll has the same off-by-one, which the
+  patch leaves. Owner decision 2026-11-22: fix it without a flag. Open.
 - **W9**. Border dialog offered while flying low. Don't offer the map-crossing dialog while flying.
   Same as GrayFace. Flips `ConfirmationChecksFlyingSeparately`. Done 2026-11-18 behind `fix_flying_border_offer`.
 - **C6**. Recovery enchant at the MM7 +50%. +10% recovery rate for MM6, the GrayFace default.
@@ -537,7 +540,9 @@ enchants go through the monster resistance roll. C9 Finger of Death awards exper
 Master duration. C19 Starburst and Meteor Shower refuse targets beyond arrow range. W10 Lloyd's Beacon and Town Portal
 autosave before taking spell points and recovery, Town Portal doesn't autosave within the same map and doesn't waste the
 turn on cancel, and Town Portal and Enchant Item pause the game. W20 an empty wand stays in the inventory. W21 scrolls
-don't repeat on the paper doll in turn-based mode, and a right-click scroll asks for its target.
+don't repeat on the paper doll in turn-based mode, and a right-click scroll asks for its target. The item-target spells,
+Enchant Item 29 and Golden Touch 79, are refused today, so no MM6 cast reaches the item screen. Their effects are
+traced when they are admitted.
 
 **Data fixes.** Better than GrayFace's override archives, in two parts:
 - The 34 script fixes become an engine-side patch table. Each entry names the original file's hash and the record-level
@@ -615,11 +620,11 @@ Computing door moving a wall.
 | `AlwaysRun=1`, `CapsLockToggleRun=0` | `settings.always_run` plus the toggle key | present |
 | Quick saves, `QuickSavesCount=3`, F11 | `gameplay.quick_saves_count` and the quick save key | present |
 | `NoIntro`, `PostponeIntro` | `debug.no_intro` | present |
-| `NoDeathMovie=0` | none | not needed, MM6 death movie playback is its own open item |
+| `NoDeathMovie=0` | none | not needed, MM6 plays `losegame` on party death (`MM6PartyDeath.cpp`) |
 | `TurboSpeed`-like `DoubleSpeedKey` F2 | `debug.turbo_speed` | present as a debug flag |
 | `ReputationNumber=1` | none | QoL, shows the numeric reputation next to the word, not vanilla |
 | Recovery time in attack and shoot hints, train-to level on experience hover | none | QoL, MM7 and MM8 show the level, MM6 vanilla doesn't |
-| `BlasterRecovery=4` | none | GrayFace sets a floor on blaster recovery, game default 0 |
+| `BlasterRecovery=4` | `gameplay.minimum_recovery_blasters` (default 5) | present, see C23 |
 | `KeepEmptyWands=1` | `gameplay.destroy_discharged_wands=false` | present, same default as the patch |
 | `FixChests*`, `PlaceItemsVertically=1` | own MM6 chest placement | see W13 |
 | `MouseLook`, `MouseWheelFly`, `AlwaysStrafe`, `AutorunKey`, `InventoryKey`, `ToggleCharacterScreenKey` | engine key bindings cover some, mouse look not present | QoL, not fidelity |

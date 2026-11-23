@@ -1,12 +1,16 @@
 # MM6 campaign status
 
-Where Might and Magic VI stands on `claude/mm6` (2026-11-22): what a player can do, how it is verified,
+Where Might and Magic VI stands on `claude/mm6` (2026-11-23): what a player can do, how it is verified,
 the campaign chain, GrayFace fix progress and the latest lane results.
 
 ## Summary
 
 MM6 is a playtest candidate, not a released or campaign-complete title. The `ECv0.1.0` release ships an MM6 helper
-behind the Atlas **Play MM6** button for owner playtests only. The planned MM6 release is `ECv0.2.0`, date undecided.
+behind the Atlas **Play MM6** button for owner playtests only. The installed Atlas carries a newer Release helper built
+from `claude/mm6`, see [Owner playtest build](#owner-playtest-build).
+
+An end-to-end playthrough is **NO-GO**: spellbooks, scrolls, wands, enchanted weapons and a few events end the game.
+The verdict, its blockers and what flips it are on [playthrough go/no-go](mm6-playthrough-go-no-go.md). The planned MM6 release is `ECv0.2.0`, date undecided.
 Since 2026-11-18 finished MM6 lanes merge into the long-lived `claude/mm6` branch, not `master`, until that tag.
 
 The owner's delivery order puts MM6 working second, after MM7 working (closed 2026-11-11). "Working" means a separate
@@ -19,7 +23,7 @@ Every item below has input-driven game tests against the owner's real MM6 data. 
 `DISABLED_` cases run in fresh processes through the gate runners.
 
 - **New Game.** Party creation by input (portraits, voices, names, classes, skills, attributes) and production New
-  Game into New Sorpigal. `MM6PartyCreation.*`, `MM6Creation.*`, `MM6NewGame.*`.
+  Game into New Sorpigal. `MM6PartyCreationHeadless.*`, `MM6ZCreationHeadless.*`, `MM6NewGameHeadless.*`.
 - **HUD and books.** MM6 HUD, character screen and paperdoll, spellbook, quest, autonotes, map and calendar books,
   awards. `MM6Hud.*`, `MM6BooksHeadless.*`, `MM6CharacterScreenHeadless.*`.
 - **Houses.** Every New Sorpigal house kind opens with its MM6 layout. House exits respect their quest bits.
@@ -28,12 +32,15 @@ Every item below has input-driven game tests against the owner's real MM6 data. 
   zero-value item. `MM6Houses.WeaponShop*`, `MM6Houses.GeneralStore*`.
 - **Services.** Temple heal and donate, training, spell and skill guilds with membership, expert and master teachers,
   bank deposit and withdraw, tavern rent, fill packs, drink and tip, the town hall Bounty Hunt. One `MM6Houses` test
-  per service.
+  per service. A throne room jails a party with reputation -1000 or worse, `MM6Jail.*`.
 - **NPCs.** Street NPC talk with weekday, news and Join topics, Beg, Threat and Bribe, hiring two followers, house
-  NPC topics. `MM6NpcDialogue.*`, `MM6StreetNpcs.*`, `MM6Hirelings.*`.
+  NPC topics, hiring house residents with Join. `MM6NpcDialogue.*`, `MM6StreetNpcs.*`, `MM6Hirelings.*`,
+  `MM6Nicolai.*`.
 - **Combat.** Melee, bows (Percival arrows explode), admitted player spells, monster missiles, spells and special
-  attacks, trap and event damage, turn-based mode, potions, rest and wait. `MM6Melee.*`, `MM6Bow.*`,
-  `MM6PlayerSpells.*`, `MM6TurnBased.*`, `MM6Potion.*`, `MM6Rest.*`, `MM6CombatHeadless.*`.
+  attacks, trap and event damage, turn-based mode, potions, rest and wait. Skill bonuses from MM6.exe's routine,
+  artifact and relic effects, MM6 monster families and the encounter spawner. `MM6Melee.*`, `MM6Bow.*`,
+  `MM6PlayerSpells.*`, `MM6TurnBased.*`, `MM6Potion.*`, `MM6Rest.*`, `MM6CombatHeadless.*`, `MM6SkillBonus.*`,
+  `MM6ArtifactEffects.*`, `MM6MonsterFamilies.*`, `MM6Encounters.*`.
 - **Death.** A party that dies in a dungeon or outdoors wakes in New Sorpigal by MM6 rules. `MM6PartyDeath.*`.
 - **Dungeons.** Goblinwatch (d01), the Abandoned Temple (d02) and Gharik's Forge (d18): doors, switches, chests, traps
   and wall plates. `MM6Dungeons.*`, `MM6WallPlate.*`, `MM6Chest*`.
@@ -44,8 +51,12 @@ Every item below has input-driven game tests against the owner's real MM6 data. 
   in a fresh process, with artifacts, relics and specially enchanted items carried or worn. `MM6InGameSave.*`,
   `MM6InGameLoad.*`, `MM6SaveAnywhereHeadless.*`, `MM6AutosaveHeadless.*`, `MM6ItemSaveHeadless.*`.
 - **Finale.** The hive is won with the ritual and lost on the scripted failure paths. `MM6Finale.*`.
+- **Mods.** Fortune's Turn, chest reroll and All Artifacts, each an Atlas option. `MM6FortunesTurn.*`,
+  `MM6ChestReroll.*`, `MM6AllArtifacts.*`.
 
-Spells MM6 has not admitted refuse with a status line instead of running inherited MM7 code. The admission list is
+A spellbook or quick cast of a spell MM6 has not admitted is refused with a status line instead of running inherited
+MM7 code. Reading a spellbook, using a scroll or a wand, and an unadmitted monster or event spell still throw, which
+ends the game, see [playthrough go/no-go](mm6-playthrough-go-no-go.md#blockers). The admission list is
 [MM6SpellEffectGuard.h](../src/Engine/MM6/MM6SpellEffectGuard.h). Town Portal, Lloyd's Beacon, Stun, Shield, scrolls
 and wands are not admitted. Rules come from the original `MM6.exe` in the data folder through `mm6::Executable`, see
 [MM6 executable rules](mm6-executable-rules.md).
@@ -61,7 +72,7 @@ and wands are not admitted. Rules come from the original `MM6.exe` in the data f
 | Sweeps | Every MM6 map loads and runs its on-load events with actors. Monster combat on main-quest maps. | `tools/run_mm6_map_sweep.py`, `tools/run_mm6_combat_sweep.py` |
 | Campaign chain | Each chapter loads the previous chapter's save in a fresh process | `tools/run_mm7_campaign_chain.py --title mm6` |
 | Hidden captures | Before and after frames of each gameplay lane, rendered offscreen and inspected whole | temporary `MM6OffscreenFrame.DISABLED_*` tests, PNGs in the ignored `local-game-data/mm6/` |
-| Owner playtests | Visible play of the installed helper | 2026-11-15 short playtest, 2026-11-17 playtest and tour |
+| Owner playtests | Visible play of the installed helper | 2026-11-15 short playtest, 2026-11-17 playtest and tour, 2026-11-23 session (spellbook crash) |
 
 The last map sweep on record loaded all 67 MM6 maps and ran every phase on all 26 main-quest maps without a crash.
 `check_tidy` needs clang-tidy 22, which the owner's Mac lacks, so MM6 lanes run `check_style` only.
@@ -74,10 +85,10 @@ The last map sweep on record loaded all 67 MM6 maps and ran every phase on all 2
 | M2 | Live travel, Save on any map, fresh-process Load restoring chests, dead monsters and doors on active and parked maps | Done headless |
 | M3 | Party death and respawn, in-game Load, autosave and quick save | Done headless |
 | M4 | Main-quest chain from New Game to the finale with fresh-process checkpoints | Fresh C0 to C9 passed with Fortune's Turn and All Artifacts enabled (2026-11-22) |
-| M5 | Owner sessions: the first hours, travel and a dungeon, chain checkpoints and the ending | Partial, New Sorpigal playtests only |
-| M6 | The Atlas installs a sibling MM6 helper with its own profile, MM7 untouched | Helper ships in `ECv0.1.0` on `Profiles/MM6-Atlas` |
+| M5 | Owner sessions: the first hours, travel and a dungeon, chain checkpoints and the ending | Partial, New Sorpigal playtests only. Waits for [go/no-go](mm6-playthrough-go-no-go.md). |
+| M6 | The Atlas installs a sibling MM6 helper with its own profile, MM7 untouched | Done. Helper ships in `ECv0.1.0` on `Profiles/MM6-Atlas`, a `claude/mm6` build is installed. |
 | M7 | MM7 stays working after every shared-core merge | Continuous |
-| M8 | Player-blocking defects from M1 to M7 fixed | Ongoing |
+| M8 | Player-blocking defects from M1 to M7 fixed | Open, see the [go/no-go blockers](mm6-playthrough-go-no-go.md#blockers) |
 
 ## Campaign chain
 
@@ -95,9 +106,9 @@ in front of doors, crystals and exits.
 | C4 | Council F and the traitor | Merged |
 | C5 | Oracle admission and the t6 crystal | Merged |
 | C6 | The three castle crystals (Alamos, Darkmoor, Kriegspire) and the Oracle hand-in | Merged |
-| C7 | The Tomb of VARN and the Control Cube | Merged-ready, passes on the real C6 save, see below |
-| C8 | The Control Center's blasters and the NPC 12 release, through the room chain between houses 168, 553 and 554 | Passes on the real C7 save, see below |
-| C9 | The hive: the sanctum key, the Demon Queen, the reactor, the exit obelisk and the winning ending | Passes on the real C8 save, see below |
+| C7 | The Tomb of VARN and the Control Cube | Merged, see below |
+| C8 | The Control Center's blasters and the NPC 12 release, through the room chain between houses 168, 553 and 554 | Merged, see below |
+| C9 | The hive: the sanctum key, the Demon Queen, the reactor, the exit obelisk and the winning ending | Merged, see below |
 
 The chapter helpers live in [MM6CampaignChain.h](../test/Bin/GameTest/MM6CampaignChain.h). Private event traces for
 each chapter stay in the ignored `local-game-data/private-wiki/mm6/`.
@@ -194,8 +205,7 @@ chain with the game won and the party in New Sorpigal.
   award 36 "Destroyed the Hive and Saved Enroth" and opens the win screen. Without it the game is lost. The win screen
   writes `MM6_Win.Pcx`, the farewell box follows, and the party goes on at New Sorpigal's start.
 
-Killing the queen also sets award 1, which MM6 calls "Returned the Prince", and a fine of 10,000, see
-[open questions](open-questions.md). C9 doesn't tape award 1 or the fine.
+Killing the queen sets no award and no fine, as in MM6.exe (`MM6MonsterFamilies.KillingFinesNobody`).
 
 ## GrayFace fix progress
 
@@ -221,12 +231,14 @@ Landed:
 | W15 | `fix_door_state_switch`. No shipped script uses door action 3, so it is unit tested only. |
 | C12 | `fix_spells_cost` |
 | C4 | `fix_bonus_damage_resistance` for the relics Hades, Ares and Artemis. The elemental enchantments wait for their admission. |
-| C25 | `fix_item_generation`. Shop stock and `GiveItem` kinds only, the any-item roll stays vanilla as in the patch. |
+| C25 | `fix_item_generation`. Shop stock and `GiveItem` kinds only. The patch leaves the any-item roll alone, the owner decided to fix it without a flag, see [open questions](open-questions.md). |
 | W28 | `fix_incapacitated_skill_identify` for the skill half, in the item info box. The paid shop half has no flag, MM6.exe already refused it. |
 | W12 | `fix_unopened_chest_artifacts` for the respawn refund. Event opcode 69 `RefundChestArtifacts` runs without a flag, no shipped script uses it. |
 | W13 | `fix_chest_overflow`. Reorder by value and compaction, only for a chest that overflows, and what still has no room on a second page. Beyond GrayFace, whose reopen step pages replace. |
 | None | `fix_valeria_shield`. Beyond GrayFace, the patch misses it: Valeria halves arrows from the hand, where MM6.exe looked in the armor slot. |
 | None | `fix_expert_blaster`. Beyond GrayFace, the patch misses it: Expert blaster adds its skill to attack twice, as `skilldes.txt` says, where MM6.exe added it once. |
+| None | `fix_border_autosave`. Owner decision, GrayFace leaves it vanilla: the border autosave stands the party inside the edge it crossed. |
+| None | `fix_knocked_out_border_offer`. Beyond GrayFace: a party in which nobody can act isn't offered the border trip. |
 
 Open:
 
@@ -238,29 +250,43 @@ Open:
 
 ## Latest lane results
 
-Ten lanes merged into `claude/mm6` on 2026-11-20:
+Lanes merged into `claude/mm6` on 2026-11-21 and 2026-11-22, with their merge commits:
 
-- **chain-c8.** C8 passes from the C7 save: Nicolai, the outd3 well's Third Eye, Tanir's Bell, the King's Library and
-  Archibald's release, plus the Control Center's blasters the hive reactor needs. Saving after the Control Center was
-  refused because `sci-fi.blv` has a hyphen, now fixed. The chain from C0 through C8 passed in fresh processes.
-- **gf-c22.** Armor and shield recovery penalties follow MM6.exe, which already carries Mok's fix: half at Expert, none
-  at Master. No flag.
-- **gf-w12, gf-w13, gf-w15.** Artifacts of unopened chests come back after a respawn, event opcode 69 runs, door action
-  3 switches a moving door, and an overflowing chest shows its most valuable items first.
-- **chest-pages.** The owner chose pages over GrayFace's reopen step. An overflowing chest gets later pages behind a
-  page button, kept in the record's spare grid cells.
-- **all-artifacts.** The All Artifacts mod reaches MM6: no cap of 13, uniqueness by collected, an Atlas toggle and an
-  `ARTC` save section. MM6 has no storage half.
-- **artifact-saves.** A party carrying an artifact, a relic or a special bonus item can save. Commit `82abbc12a` carries
-  the loot lane's message by mistake, its merge commit gives the right one.
-- **mm6-loot.** Monster loot and random ground treasure roll through MM6's generator, so dragons drop artifacts, not
-  message scrolls. Ground treasure now draws before chests, as in MM6.exe, which moved the chest rolls tests set.
-- **artifact-bonuses.** Artifacts and relics give their attribute bonuses, and Merlin and Percival shorten recovery.
-  The lane was stopped before its report when the owner ran short of budget, so only the integrator's final check
-  covers it.
-- **chest-fixes, not merged.** Chest gold piles, the chest right-click offset and Poison Resistance as Body. Its merge
-  was reverted after `MM6ChestScreen.RightClickShowsTheItemUnderTheCursor` failed and the suite aborted on an
-  inventory assert on top of chest pages. Its four commits are in `local-game-data/mm6/wip-patches-2026-11-20/`.
+- **Campaign.** chain-c9 `4fad41c2f`: the hive finale, so the chain runs from New Game to the win screen.
+  nicolai-travel `dee2554d4`: global event 20 sends Nicolai off after a rest.
+- **Items and chests.** chest-fixes `1e7bc29de`: chest gold piles pay out, right-click works on every chest page,
+  Poison Resistance reads as Body. ground-items `f369d71e9` and loot-saves `7c8aebbea`: every placed and generated item
+  keeps its native record, so a party carrying one can save. artifact-effects `2c12deef8`: the relics' hit effects
+  (GrayFace C4), Conan's slaying, regeneration and drain, the spell boosts and `fix_valeria_shield`.
+- **Combat and monsters.** skill-bonuses `47180a87c`: attack, damage and armor class from MM6.exe's skill bonus
+  routine. monster-types `c12ddf380`: no MM7 peasant fines, MM6 reputation and family aggro, sea monsters stay in the
+  water. expert-blaster `2906b8411`: `fix_expert_blaster`. encounter-spawner `f08fb034a`: MM6.exe's encounter ring
+  and level odds.
+- **Travel.** travel-recovery `9a4383b34`: a border trip clears recovery and daily casts. border-autosave `5a2064544`
+  (docs), border-autosave-gap `d3a7e022c` (`fix_border_autosave`) and border-respawn `957917d84`
+  (`fix_knocked_out_border_offer`). map-byte-overflow `2830126a2`: map variables saturate and wrap as MM6.exe does.
+- **Houses, NPCs and sound.** greeting-speech `2c8d363ad`, voice-variants `63c50d4e4` (MM6.exe's speech and take
+  tables), house-sounds `81420ea89`, resident-hiring `14deda02e`, jail `97b691e91`, shop-screen `12bf63835` (speech,
+  hover quotes, the right-click info box and GrayFace W28's skill half).
+- **Spells and UI.** spell-popup `e5d2d50f1`: MM6.exe's spellbook popup. spell-on-item `2601ffe1d`: Enchant Item and
+  Golden Touch are the item-target spells, both still refused. gf-w19 `c18004694`: `fix_stats_screen_condition`.
+- **Mods.** atlas-mods `0259f9beb`, fortunes-turn `bdf09ba82`, chest-reroll `ac5c51264`, mod-followups `6d60bd415`
+  (Circus prize trades, artifacts released under All Artifacts) and `27019e9fa`, which folds chest reroll into
+  Fortune's Turn with one Atlas choice.
+
+## Owner playtest build
+
+The installed Atlas carries a Release arm64 MM6 helper from `626f5f431` and a Release MM7 helper from Codex's
+`014514250`. Both link only Apple system libraries and frameworks, and MM6's PNG library is static. The helper
+reports `git describe` as its version, see [Releases](releases.md#packaging-follow-ups). The previous installed bundle
+was deleted without a backup, profiles and saves were left in place.
+
+Fortune's Turn and All Artifacts are on for the next MM6 launch. The HUD's Fortune's Turn checkbox and dice sit in
+the margin left of the first portrait. A fresh C0 to C9 chain passed with both mods on throughout, with the usual
+strength, positioning and no-damage fixtures.
+
+The first owner session on this build, 2026-11-23, crashed when a Cleric read the First Aid spellbook. See
+[playthrough go/no-go](mm6-playthrough-go-no-go.md#b1-crash-report).
 
 ## Source
 
@@ -275,34 +301,4 @@ Ten lanes merged into `claude/mm6` on 2026-11-20:
 - [run_mm6_firstmap_gate.py](../tools/run_mm6_firstmap_gate.py), [run_mm6_map_sweep.py](../tools/run_mm6_map_sweep.py),
   [run_mm6_combat_sweep.py](../tools/run_mm6_combat_sweep.py), [run_mm7_campaign_chain.py](../tools/run_mm7_campaign_chain.py)
 
-See also: [Open questions](open-questions.md), [MM6 GrayFace patch reference](mm6-grayface-patch-reference.md), [Testing](testing.md), [Releases](releases.md)
-
-## Owner playtest preparation — 2026-11-22
-
-The owner requested a new MM6 build assessment and the merged Fortune's Turn controls. Source `27019e9fa`
-includes chest reroll in Fortune's Turn, keeps the chest button independent of the HUD X, moves that X to the
-bottom left beside the first portrait, and retains MM6 All Artifacts as a separate launcher choice. Either old
-reroll preference migrates to the combined choice; disabling it clears both.
-
-Fresh verification against local MM6 data passed all 412 regular MM6 game tests with no skips, all 44
-fresh-process gate children including the MM7 controls, and 13 item-generator/ARTC/CHRL unit tests. The gate
-includes artifact-carrying Save/Load and collected-ledger persistence. Swift launcher contracts, Atlas page checks,
-Swift typechecking, changed C++ lint and diff whitespace checks passed. A read-only review found no actionable
-issue in the merged mod patch. After the native OpenGL relink, six focused mod checks and the hidden
-first-map capture also passed; the capture shows the X and dice in the clear margin left of the first portrait.
-
-The local arm64 MM6 helper builds and passes deep strict signing verification with Apple's native OpenGL
-framework. Its development cache originally selected XQuartz; the SDK OpenGL stub now supplies the native
-linkage, as described in [Testing](testing.md#native-macos-mm6-helper-linkage).
-
-The installed Atlas now includes the Release arm64 MM6 helper built from clean source `626f5f431` and the
-Release MM7 helper from `014514250`. Both link only Apple system libraries and frameworks; MM6's PNG library
-is static. Deep strict signing passed, and every installed file and symlink matched the verified assembled
-bundle. The installed Atlas rendered correctly, showed MM6 data and its playtest helper ready, and showed
-Fortune's Turn and All Artifacts on for the next MM6 launch. The former installed bundle and superseded staged
-helper bundles were deleted directly without a backup. Profiles and saves were left outside the replacement.
-The visible owner-session gate and the spell/item admission limits above remain open.
-
-A fresh C0 to C9 campaign chain also passed with Fortune's Turn and All Artifacts enabled throughout, keeping
-earlier checkpoint saves and pass markers intact. It still uses the documented strength, positioning and
-no-damage fixtures; the owner-session gate remains separate.
+See also: [Playthrough go/no-go](mm6-playthrough-go-no-go.md), [Open questions](open-questions.md), [MM6 GrayFace patch reference](mm6-grayface-patch-reference.md), [Releases](releases.md)

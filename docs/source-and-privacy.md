@@ -62,8 +62,7 @@ agents in a worktree point at the main checkout's folder through environment var
 
 Per-task MM6 captures go under `local-game-data/mm6/task-captures-<date>/<lane>/`. Tools that write research output,
 such as `tools/run_mm6_map_sweep.py` and `tools/run_mm6_combat_sweep.py`, default to a dated folder under
-`local-game-data/mm6/`. `tools/mm6_map_name_manifest.py` refuses a research root outside `local-game-data/`, and
-`tools/mm7_playtest_capture.sh` refuses a destination in a tracked part of the repository.
+`local-game-data/mm6/`. `tools/mm7_playtest_capture.sh` refuses a destination in a tracked part of the repository.
 
 ## How tests and tools find the data
 
@@ -117,7 +116,6 @@ private page by name and give the aggregate conclusion, but never copy its rows,
 - [test/Testing/Unit/MM6TestData.h](../test/Testing/Unit/MM6TestData.h)
 - [test/Bin/GameTest/GameTestOptions.cpp](../test/Bin/GameTest/GameTestOptions.cpp)
 - [tools/run_mm6_firstmap_gate.py](../tools/run_mm6_firstmap_gate.py)
-- [tools/mm6_map_name_manifest.py](../tools/mm6_map_name_manifest.py)
 - [tools/mm7_playtest_capture.sh](../tools/mm7_playtest_capture.sh)
 
 See also: [Upstream relationship](upstream.md), [Agent workflow](agent-workflow.md), [Testing](testing.md),

@@ -23,7 +23,8 @@ first rule is that current source and tests outrank anything written here.
 
 ## Pages
 
-- **Status:** [MM6 campaign status](mm6-campaign-status.md), [MM7 status](mm7-status.md),
+- **Status:** [MM6 campaign status](mm6-campaign-status.md), [MM6 playthrough go/no-go](mm6-playthrough-go-no-go.md),
+  [MM7 status](mm7-status.md),
   [open questions](open-questions.md), [releases](releases.md)
 - **Engine:** [engine architecture and runtime map](engine-architecture.md)
 - **MM6 port:** [port architecture](mm6-port-architecture.md), [rules from MM6.exe](mm6-executable-rules.md),

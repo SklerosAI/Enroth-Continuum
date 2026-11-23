@@ -1,19 +1,26 @@
 # Open questions
 
-Open questions and known bugs across MM6 and MM7 that were still open on 2026-11-19, grouped by title and area.
+Open questions and known bugs across MM6 and MM7 that were still open on 2026-11-23, grouped by title and area.
 
 Each item names a source file or test where one exists. Remove an item when its fix or answer lands, and say where.
 The open GrayFace MM6 backlog is tracked in [MM6 GrayFace patch reference](mm6-grayface-patch-reference.md) and
 summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeated here.
 
+## MM6: high priority
+
+- **Spellbook crash (B1).** Reading a spellbook with a character who may learn it ends the game, and quitting then
+  aborts in `GUIWindow::~GUIWindow`. Hit by the owner on 2026-11-23 with a Cleric reading First Aid. The crash report,
+  the log line and what a fix needs are in [playthrough go/no-go](mm6-playthrough-go-no-go.md#b1-crash-report).
+  `Character::useItem` in `src/Engine/Objects/Character.cpp`.
+- **Other reachable throws (B2 to B9).** Scrolls, wands, enchanted weapons, the stun channel, Acolyte and Piper
+  abilities, two monster spells, the Excalibur event and an item reward with nowhere to go. Each ends the game. The
+  table is in [playthrough go/no-go](mm6-playthrough-go-no-go.md#blockers).
+
 ## MM6: campaign and gates
 
 - **Owner sessions.** The working gate needs visible owner play beyond New Sorpigal: travel, a later dungeon, chain
   checkpoints and the ending.
-- **Research-folder tests.** `mm6::PrivateMapSource`, `saveNewGameMM6ScopedForTest` and the `GameTests_MM6Save` cases
-  gated on `ENROTH_MM6_MAP_RESEARCH_ROOT` still read the private research folder and `tools/mm6_map_name_manifest.py`.
-- **Test-only rule code.** `MM6FirstAidPreflight`, `MM6FirstAidTransaction` and `MM6PowerCureTransaction` are used
-  only by their unit tests.
+- **Class promotions.** No MM6 game test promotes a character. The event setter writes the class ID the script gives.
 - **Spellbook state between tests.** `MM6GrayFaceShared.BuffDurationShowsMinutesNextToDays` leaves the global
   `spellbookSelectedSpell` at Protection from Fire. Run with only those two tests,
   `MM6Spellbook.SpellPictureSelectsThenCasts` then fails. The full `MM6*` run passes.
@@ -22,6 +29,10 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 
 ## MM6: rules and combat
 
+- **Item-target spells.** Enchant Item and Golden Touch are refused, so no MM6 cast opens the item screen.
+  `mm6::isItemTargetSpell`.
+- **Gate Master hireling.** The Gate Master's ability opens MM7's Town Portal book. Not checked against MM6.exe.
+  `NPC.cpp`, `Game.cpp`.
 - **Encounter spawner edges.** MM6.exe 0x455910 spawns nothing when the group would bring the map to 500 actors,
   spawns indoors on a spawn point outside every sector, and has no alert-status check. The port fills slots one by one,
   drops such a spawn point as MM7 does, and keeps MM7's alert check. No shipped map was scanned for spawn points
@@ -34,8 +45,8 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   same run (a held item moved when a new one is given) still see nobody. `MM6GiveItemEvent.cpp`, `EvtInterpreter.cpp`.
 - **Map timer hour 88.** The Temple of the Sun (t4) dawn timer has an out-of-range hour byte. Its first firing now
   follows GrayFace, later firings step one day where GrayFace steps 88 hours. `GameTests_MM6MapVisit.cpp`.
-- **Break Weapon and Zombie.** If MM6 Break Weapon is admitted for an unarmed target, the shared empty-list path can
-  assert. Divine Intervention's Zombie exception is MM7-gated until MM6 evidence exists. `Character.cpp`.
+- **Divine Intervention and Zombie.** Divine Intervention's Zombie exception is MM7-gated until MM6 evidence exists.
+  `CastSpellInfo.cpp`.
 - **Question inside another window.** A Question reached while another branchless window is open throws, where MM6
   ends the event. No shipped script reaches it.
 - **Hireling share rounding.** MM6.exe's gold-find routine 0x41EDE0 takes `(salaries / 100) * gold / 100` from a find,
@@ -52,11 +63,12 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 - **Stuck on the edge line.** A party that lands from a fall exactly on oute3's west edge line while holding forward
   stays there, bobbing between z 155 and 158.75 with the airborne flag set, so the border trip is never offered. Seen
   for 300 frames with a healthy party. Not traced or checked against MM6.exe.
-- **Any-item roll.** Chests and `GiveItem` kind 0 keep MM6.exe's off-by-one, which favours item 1, because the GrayFace
-  patch leaves that roll alone. Fixing it changes chest contents on every map. Owner's call. `mm6::generateAnyItem`.
+- **Any-item roll.** Chests and `GiveItem` kind 0 keep MM6.exe's off-by-one, which favours item 1. The GrayFace patch
+  leaves that roll alone. Owner decision 2026-11-22: fix it, with no flag. Not done. It changes chest contents on every
+  map, so tests that pin chest rolls will move. `pickChestBaseItemId` in `MM6ChestBaseItemPicker.h`.
 - **MM7 monster types on MM6 paths.** `supertypeForMonsterId` makes MM6's Genies and Plate Knights undead and its
-  Ghosts, Liches and Skeletons not. It decides Turn Undead, Destroy Undead, Control Undead, Mass Fear, Enslave and the
-  slaying enchantments, which MM6 refuses or throws on today. Each needs MM6's own families before it is admitted.
+  Ghosts, Liches and Skeletons not. It decides Turn Undead, Destroy Undead, Control Undead, Mass Fear, Enslave and bow
+  slaying, which MM6 refuses or throws on today. Melee slaying uses `mm6::weaponSlays`. Each needs MM6's own families before it is admitted.
   `CastSpellInfo.cpp`, `SpriteObject.cpp`, `Vis.cpp`, `Character.cpp`.
 - **Monster popup.** The right-click popup offsets the monster picture by MM7 type (`monster_popup_y_offsets`) and
   never plays the attack animation for MM7's peasant types, MM6 IDs 115 onwards. MM6.exe's popup was not traced.
@@ -69,18 +81,16 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 ## MM6: houses, shops and NPCs
 
 - **Temple blessings.** Above reputation 200 a matching donation casts Guardian Angel through Day of Protection at
-  master rank. Not done, the spells aren't verified MM6 player spells. TODO in `GUIWindow_MM6House::donate`.
+  master rank. Owner decision 2026-11-22: they must work, without admitting the spells as player spells. Not done.
+  TODO in `GUIWindow_MM6House::donate`.
 - **House resident topic of the day and news.** MM6.exe 0x4998A0 lists a resident's profession topic of the day
   (`proftext.txt`) before Join, and its news (`npcnews.txt`, picked by 0x43BC20 as the house lists its people) after
   Join, when its `npcdata.txt` News column is set. The port shows neither, so most residents, teachers and guild
   recruiters included, lack their first topic. `GUIWindow_MM6House::refreshTopics`.
 - **Street NPC news carry-over.** A street NPC slot keeps its news topic across map loads within one game, as in
-  vanilla. GrayFace has no fix. Owner's call whether to clear it.
+  vanilla. GrayFace has no fix. Owner decision 2026-11-22: refresh it on map load. Not done.
 - **Potion mixing.** Item-on-item use of potions stays refused (`mm6::shouldBlockItemOnItemUse` in
   `src/Engine/MM6/MM6ConsumableRules.h`). The mixing outcomes are not traced.
-
-## MM6: saves
-
 
 ## MM6: media and UI
 
@@ -137,6 +147,8 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 - **Screen Recording permission.** Atlas is ad-hoc signed, so macOS may ask for Screen Recording again after each
   install before rolling video works.
 - **Lint.** `check_tidy` needs clang-tidy 22, which is not installed on the owner's Mac.
+- **Build page.** `build-and-dev-setup.md` is linked from the index, the README and most process pages, but the page
+  was never written.
 
 ## Source
 

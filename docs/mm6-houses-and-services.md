@@ -153,7 +153,8 @@ same line.
   ordinary next deadline. Later buy screens of that visit follow the deadline again. Without it the schedule above is
   the vanilla one.
 - Generation draws from the MM6 gameplay LCG through the MM6 item generator, and every generated slot is identified.
-  Slots past the visible count keep their bytes.
+  Slots past the visible count keep their bytes. With `gameplay.fix_item_generation` (default on) every candidate of
+  the random item roll gets its own chance, as GrayFace does.
 - A spell guild of one school offers its first books. A guild of several schools picks a school per slot first.
 - New Game starts with an empty stock image and zero deadlines, so every shop fills on its first visit.
 - Stock and clocks are saved in EC6 (`SHOP` and `SCLK`). See [MM6 save format](mm6-save-format.md).
@@ -195,7 +196,7 @@ moves time to 9 am a week after the next dawn and rests the party.
 - Tip the barkeep costs 1 gold after a drink at that tavern. The barkeep tells one piece of the region's news, picked
   once per tavern and kept. A region is a map's 1-based position among the base maps of the Games LOD directory, and a
   region without news tells region 1's.
-- The per-tavern drink bits and picked tips are in EC6 `PART` v5.
+- The per-tavern drink bits and picked tips are in EC6 `PART`.
 
 ## Banks and town halls
 
@@ -253,7 +254,8 @@ See [travel and maps](mm6-travel-and-maps.md) for the arrival side.
   compares and teachers (Bard +200, Pirate, Gypsy, Duper and Burglar -200 each), a hired Enchanter's +20 resistance,
   diplomacy bonuses for Counselor, Barrister and Negotiator, and weapon skill points (Arms Master 2, Weapons Master 3,
   Squire 2) in the attack, melee damage and shooting bonuses, with the Squire's 2 in every armor class term
-  (`MM6CombatRules.h`, MM6.exe 0x483930).
+  (`MM6CombatRules.h`, MM6.exe 0x483930). With `gameplay.fix_weapon_skill_hirelings` (default on) the weapon points
+  also shorten Expert sword, axe and bow recovery, as GrayFace does.
 - Event variables 214 and 223 hire, dismiss and test hirelings, see [MM6 events](mm6-events.md).
 
 ### House residents who join
@@ -295,7 +297,7 @@ NPC's state:
   Diplomacy D is `(Diplomacy level + 4 Counselor + 8 Barrister + 4 Negotiator) * (2, 3 or 4 by mastery)`.
 
 Begged, bribed and threatened states live in the street NPC table, which MM6 regenerates on every map load and never
-saves. The party's bribe count is saved in `PART` v5. A street NPC's news survives regeneration within one game, as in
+saves. The party's bribe count is saved in `PART`. A street NPC's news survives regeneration within one game, as in
 vanilla. An MM6 New Game clears the table.
 
 MM6 refuses to open a street NPC conversation with nobody active, and so does the port.

@@ -17,9 +17,6 @@ MM6 has 67 maps in `mapstats.txt`: 15 outdoor maps and 52 indoor ones.
 - The tavern news region and the transport routes number maps by their 1-based position among the base maps at the
   front of the Games LOD directory, not by `mapstats.txt` row.
 
-`tools/mm6_map_name_manifest.py` builds and verifies a private manifest of `.ddm` and `.dlv` names for the EC6 `MAPS`
-section from local research reports. It prints only aggregates and writes under the ignored `local-game-data/`.
-
 `tools/run_mm6_map_sweep.py` runs `MM6MapSweep.DISABLED_EnterTickAndFireEvents` on every map, one headless process per
 map, and reruns a map without actors, without the timer wait, or past a failing event to sweep the rest. Results go to
 an ignored folder under `local-game-data/`.
@@ -118,9 +115,6 @@ A save holds every parked map plus the active one (`captureSessionMaps`). The ru
 same-session return would. New Game and Load forget all parked maps and timer firings (`forgetParkedMaps`). See
 [MM6 save format](mm6-save-format.md).
 
-`MM6VisitedMapCache` and `MM6VisitedMapSection` are an earlier detached design that only unit tests use. The live path
-is the parked-map set above.
-
 Party death saves the death map before the week passes, so its last visit is the time of death. See
 [combat and monsters](mm6-combat-and-monsters.md).
 
@@ -197,8 +191,7 @@ The travel rest also marks the party as rested (0x4962CC), and so does closing t
 | Stables and boats | `MM6Transport`, see [houses and services](mm6-houses-and-services.md) |
 | Party death | Respawn on `oute3`, see [combat and monsters](mm6-combat-and-monsters.md) |
 
-Town Portal and Lloyd's Beacon are not admitted as MM6 player spells. Beacon save fields exist
-(`MM6BeaconSaveFields.h`) for when they are.
+Town Portal and Lloyd's Beacon are not admitted as MM6 player spells.
 
 ## Map timers
 
@@ -212,16 +205,15 @@ is, so an hour past 23 means that many hours after the next midnight.
 
 ## Doors and indoor faces
 
-- Doors use the shared door code. The 80-byte MM6 record has the MM7 width. Door action 3, a GrayFace addition that
-  switches a moving door, is ignored as in vanilla.
+- Doors use the shared door code. The 80-byte MM6 record has the MM7 width. With `gameplay.fix_door_state_switch`
+  (default on), door action 3 switches a door even while it moves, as GrayFace does (`mm6::switchDoorEvenIfMoving`).
 - Pressure plates: MM6.exe runs the event of a plate the party steps on, and also of a plate face the party collides
   with that isn't its floor, every frame it pushes against it. MM6 maps have wall and ceiling plates that rely on this
   (doors, teleports, traps, a password question). The port runs the wall plate event at the end of the frame
   (`Indoor.cpp`). MM7 still ignores wall plates.
 - Event face changes (texture and attribute bits) address faces by global index, see [MM6 events](mm6-events.md).
-- `MM6IndoorFaceOverrides.h` has a codec for an optional EC6 `IFOV` section that stores changed faces as overrides
-  against the base `.blv`, meant to replay after `OnMapReload`. Only the v6 save field writers and the unused
-  visited-map section produce it. No live load path applies it.
+- No save section stores indoor face changes. A face change survives only when the map's reload script reapplies it.
+  `MM6IndoorFaceOverrides.h` keeps only the override types.
 
 ## Decorations
 
@@ -329,8 +321,7 @@ The full list is on the [GrayFace patch reference](mm6-grayface-patch-reference.
 
 - [MM6MapTransition.h](../src/Engine/MM6/MM6MapTransition.h), [MM6MapVisit.h](../src/Engine/MM6/MM6MapVisit.h),
   [MM6ParkedMapSection.h](../src/Engine/MM6/MM6ParkedMapSection.h),
-  [MM6MapTimerSection.h](../src/Engine/MM6/MM6MapTimerSection.h),
-  [MM6VisitedMapCache.h](../src/Engine/MM6/MM6VisitedMapCache.h)
+  [MM6MapTimerSection.h](../src/Engine/MM6/MM6MapTimerSection.h)
 - [MM6OutdoorWire.h](../src/Engine/MM6/MM6OutdoorWire.h), [MM6OutdoorSky.h](../src/Engine/MM6/MM6OutdoorSky.h),
   [MM6OutdoorBorderTravel.h](../src/Engine/MM6/MM6OutdoorBorderTravel.h),
   [MM6OutdoorBorderEligibility.h](../src/Engine/MM6/MM6OutdoorBorderEligibility.h),
@@ -338,10 +329,8 @@ The full list is on the [GrayFace patch reference](mm6-grayface-patch-reference.
   [Outdoor.cpp](../src/Engine/Graphics/Outdoor.cpp)
 - [MM6IndoorSnapshot.h](../src/Engine/Snapshots/MM6IndoorSnapshot.h),
   [MM6IndoorWorldPlan.h](../src/Engine/MM6/MM6IndoorWorldPlan.h),
-  [MM6IndoorFaceOverrides.h](../src/Engine/MM6/MM6IndoorFaceOverrides.h),
-  [MM6IndoorFaceLiveOwner.h](../src/Engine/MM6/MM6IndoorFaceLiveOwner.h), [Indoor.cpp](../src/Engine/Graphics/Indoor.cpp)
-- [MM6Decorations.h](../src/Engine/MM6/MM6Decorations.h), [MM6Archive.h](../src/Engine/MM6/MM6Archive.h),
-  [MM6PrivateMapSource.h](../src/Engine/MM6/MM6PrivateMapSource.h)
+  [MM6IndoorFaceOverrides.h](../src/Engine/MM6/MM6IndoorFaceOverrides.h), [Indoor.cpp](../src/Engine/Graphics/Indoor.cpp)
+- [MM6Decorations.h](../src/Engine/MM6/MM6Decorations.h), [MM6Archive.h](../src/Engine/MM6/MM6Archive.h)
 - [MM6ChestPlacement.h](../src/Engine/MM6/MM6ChestPlacement.h), [MM6ChestGridWire.h](../src/Engine/MM6/MM6ChestGridWire.h),
   [MM6ChestTrap.h](../src/Engine/MM6/MM6ChestTrap.h), [MM6ChestTrapDecision.h](../src/Engine/MM6/MM6ChestTrapDecision.h),
   [MM6ChestDisarmScore.h](../src/Engine/MM6/MM6ChestDisarmScore.h),
@@ -352,6 +341,6 @@ The full list is on the [GrayFace patch reference](mm6-grayface-patch-reference.
 - Game tests: `GameTests_MM6MapTravel.cpp`, `GameTests_MM6MapVisit.cpp`, `GameTests_MM6Transition.cpp`,
   `GameTests_MM6Chest.cpp`, `GameTests_MM6Decorations.cpp`, `GameTests_MM6WallPlate.cpp`, `GameTests_MM6Dungeons.cpp`,
   `GameTests_MM6MapSweep.cpp` in [test/Bin/GameTest](../test/Bin/GameTest)
-- Tools: [run_mm6_map_sweep.py](../tools/run_mm6_map_sweep.py), [mm6_map_name_manifest.py](../tools/mm6_map_name_manifest.py)
+- Tools: [run_mm6_map_sweep.py](../tools/run_mm6_map_sweep.py)
 
 See also: [Events](mm6-events.md), [Houses](mm6-houses-and-services.md), [Save format](mm6-save-format.md), [Combat](mm6-combat-and-monsters.md), [GrayFace](mm6-grayface-patch-reference.md)

@@ -16,7 +16,7 @@ MM6 runs on the shared OpenEnroth engine. There is no separate MM6 engine. MM6 b
 
 | Folder | MM6 files | What they hold |
 |---|---|---|
-| [src/Engine/MM6](../src/Engine/MM6/CMakeLists.txt) | about 300 | The port's core: `MM6.exe` access, the EC6 save, world and map state, chests, shops, items, monsters, party rules. Tour below. |
+| [src/Engine/MM6](../src/Engine/MM6/CMakeLists.txt) | about 280 | The port's core: `MM6.exe` access, the EC6 save, world and map state, chests, shops, items, monsters, party rules. Tour below. |
 | [src/Engine/Evt](../src/Engine/Evt/CMakeLists.txt) | `MM6*.cpp/h` | Event variables and their dispatch, per-opcode helpers such as `MM6GiveItemEvent`, quest, autonote and map byte state. |
 | [src/Engine/Spells](../src/Engine/Spells/CMakeLists.txt) | `MM6*.cpp/h` | Spell rules decoded from `MM6.exe` (`MM6SpellRules`), cure and buff rules, first aid. |
 | [src/Engine/Tables](../src/Engine/Tables/CMakeLists.txt) | `MM6ItemTable.cpp`, `MM6PotionCombinations` | Item table parser and potion mixing. Other tables have `InitializeMm6` methods. |
@@ -88,7 +88,7 @@ A behaviour change that follows the GrayFace MM6 patch is a `gameplay.fix_*` ent
 | Key | `fix_<what>`, snake case, for example `fix_map_timers`. The member is `Fix<What>`, for example `FixMapTimers`. |
 | Default | `true`. The game plays with the GrayFace behaviour unless the player turns it off. |
 | Description | Says "MM6 only" when it is, what the fix does, "as the GrayFace patch does" when it follows the patch, and what vanilla did. |
-| Gate | Read at the one decision point. In shared code the title check sits next to it: `gameTitle() == GameTitle::MM6 && ...FixMapTimers.value()`. In an MM6-only file the flag alone does. |
+| Gate | Read at the decision point. In shared code the title check sits next to it: `gameTitle() == GameTitle::MM6 && ...FixMapTimers.value()`. In an MM6-only file the flag alone does. |
 | Two rules | When both are real rules, the flag picks an enum for the MM6 helper, e.g. `MONTH_START_GRAYFACE` or `MONTH_START_VANILLA`. |
 
 Current MM6 flags, by key:
@@ -112,6 +112,13 @@ Current MM6 flags, by key:
 | `fix_flying_border_offer`, `fix_knocked_out_border_offer` | [Outdoor.cpp](../src/Engine/Graphics/Outdoor.cpp) |
 | `fix_border_autosave` | [MM6MapTransition.cpp](../src/Engine/MM6/MM6MapTransition.cpp) |
 | `fix_chest_overflow` | [Chest.cpp](../src/Engine/Objects/Chest.cpp) |
+| `fix_bonus_damage_resistance` | [Actor.cpp](../src/Engine/Objects/Actor.cpp) |
+| `fix_valeria_shield` | [MM6MonsterAttack.h](../src/Engine/MM6/MM6MonsterAttack.h) |
+| `fix_expert_blaster` | [MM6SkillBonus.h](../src/Engine/MM6/MM6SkillBonus.h) |
+| `fix_weapon_skill_hirelings` | [Character.cpp](../src/Engine/Objects/Character.cpp) |
+| `fix_spells_cost` | [MM6SpellRules.cpp](../src/Engine/Spells/MM6SpellRules.cpp) |
+| `fix_item_generation` | `MM6RandomTreasure.cpp`, `MM6Shop.cpp`, `MM6GiveItemEvent.cpp`, `MM6FortunesTurn.cpp`, one per generator |
+| `fix_unopened_chest_artifacts` | [Indoor.cpp](../src/Engine/Graphics/Indoor.cpp), [Outdoor.cpp](../src/Engine/Graphics/Outdoor.cpp) |
 
 `fix_water_walk_mana_drain` is an upstream flag that applies to every title.
 
@@ -187,18 +194,19 @@ The folder is grouped by file name. Families, not files:
 | Family | Files | Role |
 |---|---|---|
 | Executable | `MM6Executable` | Reads `MM6.exe`, see above. |
-| Rules | `MM6CreationRules`, `MM6CombatRules`, `MM6ConsumableRules`, `MM6Potion`, `MM6Spell*`, `MM6PlayerSpell`, `MM6EventSpell` | Character, spell and item rules, and refusal guards. |
-| Monsters | `MM6Monster*`, `MM6EncounterMonster`, `MM6NativeActor*` | Monster attacks, damage, special attacks, spells, projectiles, preferences and resistances. |
-| Items | `MM6ItemGenerator`, `MM6*ItemProjection`, `MM6ItemRecord28`, `MM6StandardBonusMap`, `MM6SpellItems` | Item generation, and conversion between the 28-byte MM6 item record and `Item`. |
+| Rules | `MM6CreationRules`, `MM6CombatRules`, `MM6ConsumableRules`, `MM6Potion`, `MM6Spell*`, `MM6PlayerSpell`, `MM6EventSpell`, `MM6SkillBonus` | Game rules and refusal guards. |
+| Monsters | `MM6Monster*`, `MM6EncounterMonster`, `MM6EncounterPlacement`, `MM6NativeActor*` | Monster attacks, damage, special attacks, spells, projectiles, preferences and resistances. |
+| Items | `MM6ItemGenerator`, `MM6RandomTreasure`, `MM6*ItemProjection`, `MM6ItemRecord28`, `MM6StandardBonusMap`, `MM6SpellItems`, `MM6Artifact*` | Item generation and records. |
 | Chests | `MM6Chest*` | Chest types, grid layout, traps, disarm, first-open item generation and the map-load handoff. |
 | Shops | `MM6Shop*` | Shop stock identity, purchase, refresh boundary and title state. The house windows are in `GUI/UI/Houses`. |
 | Party and time | `MM6PartyRest`, `MM6PartyDeath`, `MM6PartyHostility`, `MM6NewDay`, `MM6Calendar`, `MM6Finale` | Rest, death, hostility, the MM6 calendar and the ending. |
-| Maps and travel | `MM6MapTransition`, `MM6Outdoor*`, `MM6Indoor*`, `MM6MapVisit`, `MM6Visited*`, `MM6HouseExit` | Border travel, sky, map visits, visited-map cache, house exits. |
-| Map sources | `MM6Archive`, `MM6LoadedMapSource`, `MM6PrivateMapSource` | `games.lod` entry encoding and map pairs. Production uses `LoadedMapSource`, tests alone reach `PrivateMapSource`. |
-| Presentation | `MM6Portraits`, `MM6StreetNpcPortraits`, `MM6VoiceSound`, `MM6RoomMovie`, `MM6RawCursor*` | Portrait, voice, room movie and cursor image plans. |
+| Maps and travel | `MM6MapTransition`, `MM6Outdoor*`, `MM6Indoor*`, `MM6MapVisit`, `MM6HouseExit` | Border travel, sky, map visits, house exits. |
+| Map sources | `MM6Archive`, `MM6LoadedMapSource` | `games.lod` entry encoding and map pairs. |
+| Presentation | `MM6Portraits`, `MM6StreetNpcPortraits`, `MM6VoiceRules`, `MM6RoomMovie`, `MM6RawCursor*` | Portrait, voice, room movie and cursor image plans. |
 | Save container and fields | `MM6SaveContainer`, `MM6*SaveFields`, `MM6*SaveRuntime`, `MM6AtomicSaveFile`, `MM6SaveMetadata*` | The `.ec6` container, per-section codecs and the atomic slot writer. |
-| Save sessions | `MM6SessionSave`, `MM6NewGameSession`, `MM6ScopedNewGameSave`, `MM6FirstMap*`, `MM6ParkedMapSection`, `MM6MapTimerSection` | Saving and loading a whole session. |
-| Staged save versions | `MM6Raw*`, `MM6V3*` to `MM6V6*`, `MM6Pre*`, `MM6Post*`, `MM6Persistent*` | Decode, validate and publish stages per save version, and checks around the world rebuild. |
+| Save sessions | `MM6SessionSave`, `MM6NewGameSession`, `MM6ScopedNewGameSave`, `MM6FirstMap*`, `MM6ParkedMapSection`, `MM6MapTimerSection` | Whole-session saves. |
+| Staged save versions | `MM6Raw*`, `MM6V3*` to `MM6V5*`, `MM6Pre*`, `MM6Post*`, `MM6Persistent*` | Decode, validate and publish stages per save version, and checks around the world rebuild. |
+| Mods | `MM6ArtifactCollection*`, `MM6ChestReroll*` | The All Artifacts and chest reroll mods and their save sections, see [Mods and Atlas](mods-and-atlas.md). |
 | Test seams | `*ForTest` | See above. |
 
 The save versions and sections are on [MM6 Save Format](mm6-save-format.md).

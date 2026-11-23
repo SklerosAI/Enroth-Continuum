@@ -30,3 +30,8 @@ Format: `- YYYY-MM-DD: what landed.` See [SCHEMA.md](SCHEMA.md) for what earns a
 - 2026-11-20: MM6 chain C8, GrayFace C22, W12, W13 and W15, chest pages, the All Artifacts mod for MM6, artifact
   saves, MM6 loot and artifact bonuses merged into `claude/mm6`.
   Chest fixes reverted, patches kept.
+
+- 2026-11-22, by Codex: merged chest reroll into Fortune's Turn for MM6, kept the chest button independent of the
+  bottom-left HUD X, and retained independent All Artifacts selection. Passed 412 regular MM6 tests without skips,
+  44 fresh-process gate children, 13 item/save-section units, all ten enabled-mod campaign chapters, six native-GL
+  mod controls and a hidden native-GL capture. Launcher checks and changed C++ lint passed. Source merge: `27019e9fa`.

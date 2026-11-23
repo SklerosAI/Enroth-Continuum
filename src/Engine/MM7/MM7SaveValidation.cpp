@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "Engine/Data/HouseEnums.h"
+#include "Engine/Mods/PrivateMods.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Objects/MonsterEnums.h"
 #include "Engine/Objects/NPCEnums.h"
@@ -307,7 +308,7 @@ bool detail::hasSafePartySemanticReferences(const Party_MM7 &party) {
                        [](const Character_MM7 &character) {
                            // The selected face and voice can temporarily be
                            // 23 or 24 for a zombie; MM7's tables have 25 slots.
-                           if (character.sex > 1 || character.classType > 35 ||
+                           if (character.sex > 1 || character.classType > std::to_underlying(CLASS_LAST) ||
                                character.currentFace >= 25 || character.voiceId >= 25 ||
                                character.prevFace < 0 || character.prevFace >= 25 ||
                                character.prevVoiceId < 0 || character.prevVoiceId >= 25 ||

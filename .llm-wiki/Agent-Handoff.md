@@ -8,6 +8,14 @@ tags: [handoff, agents, mm6]
 
 This page is the starting brief for future Codex agents working in parallel on Enroth Continuum; recheck its dated status against the authoritative files before acting.
 
+## App replacement policy — 2026-11-21
+
+Unless the owner explicitly says otherwise, every Enroth Continuum app rebuild
+must remove all superseded installed and staged app bundles completely after
+the replacement is verified. Never keep an old app version for rollback;
+repair or migrate saved games for the new build when needed. This rule does not
+by itself authorize deletion of profiles or saves.
+
 ## Title ownership — 2026-11-12
 
 The owner made the title boundary explicit: Codex is the sole arbiter and

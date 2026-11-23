@@ -15,7 +15,7 @@ class Character;
  */
 [[nodiscard]] bool isEvtVariableValueValid(EvtOpcode opcode, EvtVariable var, int value);
 
-void setEvtVariable(Character &character, EvtVariable var, signed int a3);
+void setEvtVariable(Character &character, EvtVariable var, signed int a3, bool knightPromotion = false);
 void addEvtVariable(Character &character, EvtVariable var, signed int val);
 
 /**
@@ -24,4 +24,4 @@ void addEvtVariable(Character &character, EvtVariable var, signed int val);
  */
 [[nodiscard]] bool subtractEvtVariable(Character &character, EvtVariable VarNum, signed int pValue);
 
-bool compareEvtVariable(Character &character, EvtVariable VarNum, signed int pValue);
+bool compareEvtVariable(Character &character, EvtVariable VarNum, signed int pValue, bool knightPromotion = false);

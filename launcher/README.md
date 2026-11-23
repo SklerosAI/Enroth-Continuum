@@ -60,7 +60,9 @@ data path and user path. It does not package original Might & Magic data.
 - The Atelier provides private portrait moods for four party positions,
   one MM7 armor template AC override, an optional fresh-vendor-stock-on-entry
   setting for MM6 and MM7, the MM7-only **All Artifacts + Storage** option,
-  and a Vanilla/Private mods switch.
+  and a Vanilla/Private mods switch. The MM7-only Dragoon switch is separate,
+  off by default, and stages its supplied class-selection icon into the private
+  local mod folder only when enabled.
   Portrait moods can replace normal, condition and reaction art in party creation
   and game play. Voices and body art remain original; death and eradication art
   remain original unless their own mood PNGs are supplied. An armor AC change
@@ -77,7 +79,8 @@ data path and user path. It does not package original Might & Magic data.
 Game data, saves, backups, and mod files stay in the user's home folder.
 The launcher never writes game archives. The mod folder is
 `~/Library/Application Support/Enroth Continuum/Mods/MM7` and may contain
-`portraits/<slot>/<mood>.png`, legacy `portrait-N.png`, and `armor.tsv`. Supported
+`portraits/<slot>/<mood>.png`, legacy `portrait-N.png`, `armor.tsv`, and the
+launcher-staged `dragoon-class-icon.png` when the Dragoon option is enabled. Supported
 moods are normal, talk, smile, sad, hurt, pain, afraid, cast, sleep, unconscious,
 weak, cursed, drunk, insane, sick, paralyzed, stone, zombie, dead and eradicated.
 Each slot needs a valid normal PNG; the legacy file supplies normal when the new
@@ -175,6 +178,12 @@ The assembler carries forward any existing sibling helper not replaced by an
 explicit input. It always writes a staged bundle, never directly to
 `/Applications`; install only after verifying the playable title's launch and
 save/load behavior.
+
+Unless the owner explicitly says otherwise, once a rebuilt app has passed that
+verification, remove all superseded installed and staged Enroth Continuum app
+bundles completely. Do not retain an old app version as rollback protection:
+repair or migrate saves for the new build if necessary. Profiles and saves are
+not deleted by this app-bundle policy unless separately scoped for cleanup.
 
 The source of OpenEnroth and its contributor history remain part of this
 fork. See [../CREDITS.md](../CREDITS.md) and [../project/UPSTREAM.md](../project/UPSTREAM.md).

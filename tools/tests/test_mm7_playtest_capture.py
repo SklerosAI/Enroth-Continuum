@@ -598,7 +598,8 @@ class StorageCapTest(CaptureCase):
         self.assertTrue(wait_for(lambda: len(self.snapshot_rows()) == 7, 10))
         self.cli("stop", "--game-exit", "normal")
         self.finish()
-        self.assertEqual(self.status()["caps"], {"save_snapshots_per_file": 2, "sessions": 20})
+        self.assertEqual(self.status()["caps"], {"save_snapshots_per_file": 2, "sessions": 2,
+                                                  "recordings_mib": 3072})
         self.assertEqual(self.save_copies(), [b"autosave 4", b"autosave 5", b"slot"])
         rows = [row for row in self.snapshot_rows() if row[2] == str(autosave)]
         self.assertEqual(len(rows), 6, "the index keeps every copy that was taken")
@@ -624,10 +625,12 @@ class StorageCapTest(CaptureCase):
         assert self.recorder
         self.assertEqual(self.recorder.returncode, 2)
         self.assertFalse(self.session.exists())
-        self.start("--max-save-snapshots", "4", "--max-sessions", "9", video=False)
+        self.start("--max-save-snapshots", "4", "--max-sessions", "9", "--max-recordings-mib", "2048",
+                   video=False)
         self.cli("stop", "--game-exit", "normal")
         self.finish()
-        self.assertEqual(self.status()["caps"], {"save_snapshots_per_file": 4, "sessions": 9})
+        self.assertEqual(self.status()["caps"], {"save_snapshots_per_file": 4, "sessions": 9,
+                                                  "recordings_mib": 2048})
 
     def test_unchanged_checkpoint_copies_nothing(self) -> None:
         # Scheduled checkpoints copied every save even when it had not changed.
@@ -642,8 +645,8 @@ class StorageCapTest(CaptureCase):
         self.finish()
         self.assertEqual(self.save_copies(), [b"slot one", b"slot two"])
 
-    def test_old_sessions_are_pruned_but_clips_kept(self) -> None:
-        # Recording sessions accumulated without limit.
+    def test_old_finished_sessions_are_pruned_including_clips(self) -> None:
+        # Finished sessions must not accumulate without limit because of clips.
         outside = self.temp / "outside"
         outside.mkdir()
         precious = outside / "precious.mm7"
@@ -669,19 +672,15 @@ class StorageCapTest(CaptureCase):
         self.cli("stop", "--game-exit", "normal")
         self.finish()
         survivors = sorted(path.name for path in self.recordings.iterdir())
-        self.assertEqual(survivors, sorted([self.session.name, newest.name, newer.name, crash.name, clip.name,
+        self.assertEqual(survivors, sorted([self.session.name, newest.name, newer.name,
                                             unmarked.name, fake.name, "linked-session"]))
-        self.assertFalse(middle.exists() or oldest.exists())
-        self.assertEqual((clip / "clips/clip-1/chunk-000001.mov").read_bytes(), b"clip")
+        self.assertFalse(middle.exists() or oldest.exists() or clip.exists() or crash.exists())
         self.assertEqual((unmarked / "notes.txt").read_text(), "keep me\n")
         self.assertEqual(precious.read_bytes(), b"not a recording")
         self.assertEqual((foreign / "saves/000001.mm7").read_bytes(), b"old save")
         self.assertTrue((self.recordings / "linked-session").is_symlink())
-        self.assertEqual(self.timeline().count("\tsession-pruned\t"), 2)
-        warnings = self.status()["storage_warnings"]
-        self.assertEqual(len(warnings), 1)
-        self.assertRegex(warnings[0], r"^Older sessions kept beyond the 3-session cap because they hold clips, "
-                                      r"crash reports or a running recorder: 2, \d+ MiB in all\.")
+        self.assertEqual(self.timeline().count("\tsession-pruned\t"), 4)
+        self.assertEqual(self.status()["storage_warnings"], [])
 
     def test_live_session_is_not_pruned(self) -> None:
         # A session whose recorder is still watching its game survives the cap.
@@ -697,21 +696,21 @@ class StorageCapTest(CaptureCase):
         self.assertTrue(live.exists())
         self.assertFalse(dead.exists())
 
-    def test_large_recordings_warn_without_deleting(self) -> None:
-        # Recordings over 2 GiB are reported, and nothing under the session cap is removed.
+    def test_size_cap_prunes_oldest_finished_session(self) -> None:
+        # A size cap deletes the oldest finished session after applying the session cap.
         older = self.make_session("mm7-playtest-1", 1_000)
-        (self.stub / "du-kib").write_text(str(1024 * 1024 + 1))
-        self.start(video=False)
+        (self.stub / "du-kib").write_text("1025")
+        self.start("--max-recordings-mib", "2", video=False)
         self.cli("stop", "--game-exit", "normal")
         self.finish()
-        self.assertTrue(older.exists())
-        self.assertEqual(self.status()["storage_warnings"],
-                         ["MM7 recordings use 2049 MiB, over 2 GiB. Review or move older clips."])
-        self.assertIn("\tstorage-warning\tMM7 recordings use 2049 MiB", self.timeline())
+        self.assertFalse(older.exists())
+        self.assertEqual(self.status()["storage_warnings"], [])
+        self.assertIn("\tsession-pruned\tRemoved older session mm7-playtest-1 to keep recordings within 2 MiB.",
+                      self.timeline())
         self.assertFalse((self.session / "warnings.txt").exists())
 
     def test_small_recordings_do_not_warn(self) -> None:
-        # Recordings under 2 GiB raise no storage warning.
+        # Recordings below the 3 GiB cap raise no storage warning.
         self.make_session("mm7-playtest-1", 1_000)
         (self.stub / "du-kib").write_text(str(1024 * 1024))
         self.start(video=False)

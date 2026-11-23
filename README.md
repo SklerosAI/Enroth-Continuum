@@ -23,6 +23,12 @@ binary or dependency archive. The staged candidate still needs visible
 save/reload acceptance before replacing the installed app. The ordinary shared
 CMake defaults and the historical upstream instructions below remain separate.
 
+Unless the owner explicitly says otherwise, an accepted Enroth Continuum app
+replacement removes every superseded installed or staged app bundle completely.
+Old app versions are not retained for rollback: repair or migrate saved games
+for the new build when needed. This does not delete profiles or saves unless a
+separate repair or cleanup task explicitly says so.
+
 Original game assets remain local to each owner. The tracked
 [local-game-data/README.md](local-game-data/README.md) describes the deliberately
 ignored workspace location for MM6, MM7, and MM8 installations.

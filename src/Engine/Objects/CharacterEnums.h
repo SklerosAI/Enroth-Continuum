@@ -294,9 +294,15 @@ enum class Class : uint8_t {
     CLASS_WIZARD = 33,
     CLASS_ARCHAMGE = 34,
     CLASS_LICH = 35,
+    // Private MM7 Dragoon expansion.  These IDs intentionally follow the
+    // vanilla range so that vanilla saves and event data retain their IDs.
+    CLASS_DRAGOON = 36,
+    CLASS_LANCER = 37,
+    CLASS_DRAGON_KNIGHT = 38,
+    CLASS_DREAD_LANCER = 39,
 
     CLASS_FIRST = CLASS_KNIGHT,
-    CLASS_LAST = CLASS_LICH
+    CLASS_LAST = CLASS_DREAD_LANCER
 };
 using enum Class;
 

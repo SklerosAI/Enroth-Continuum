@@ -1,9 +1,11 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdlib>
 #include <filesystem>
 #include <numbers>
 #include <span>
+#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -12,6 +14,9 @@
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
+#include "Engine/Mods/PrivateMods.h"
+#include "Engine/mm7_data.h"
+#include "Engine/Evt/EvtVariables.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Evt/Processor.h"
@@ -757,6 +762,124 @@ GAME_TEST(MM7Promotions, PaladinCrusaderAttackInputPromotionPacket) {
     EXPECT_EQ(pParty->GetGold(), gold);
     for (int i = 0; i < 4; ++i)
         EXPECT_EQ(pParty->pCharacters[i].experience, promotedExperience[i]);
+}
+
+GAME_TEST(MM7Promotions, DragoonCreationMasteryAndCavalierQuest) {
+    if (!mm7::mods::dragoonClassEnabled(engine->gameTitle()))
+        GTEST_SKIP() << "Requires ENROTH_MM7_DRAGOON_CLASS=1";
+    game.startNewGame();
+    auto &dragoon = pParty->pCharacters[0];
+    dragoon.ChangeClass(CLASS_DRAGOON);
+    EXPECT_TRUE(dragoon.pActiveSkills[SKILL_SPEAR]);
+    EXPECT_TRUE(dragoon.pActiveSkills[SKILL_AIR]);
+    EXPECT_EQ(skillMaxMasteryPerClass[CLASS_DRAGOON][SKILL_SPEAR], MASTERY_EXPERT);
+    EXPECT_EQ(skillMaxMasteryPerClass[CLASS_LANCER][SKILL_SPEAR], MASTERY_MASTER);
+    EXPECT_EQ(skillMaxMasteryPerClass[CLASS_DRAGOON][SKILL_BLASTER], skillMaxMasteryPerClass[CLASS_KNIGHT][SKILL_BLASTER]);
+    EXPECT_FALSE(dragoon.pActiveSkills[SKILL_BLASTER]);
+    for (Class finalClass : {CLASS_DRAGON_KNIGHT, CLASS_DREAD_LANCER}) {
+        for (Skill skill : {SKILL_SPEAR, SKILL_PLATE, SKILL_ARMSMASTER, SKILL_AIR})
+            EXPECT_EQ(skillMaxMasteryPerClass[finalClass][skill], MASTERY_GRANDMASTER);
+        EXPECT_EQ(skillMaxMasteryPerClass[finalClass][SKILL_WATER], MASTERY_MASTER);
+        EXPECT_EQ(skillMaxMasteryPerClass[finalClass][SKILL_STAFF], MASTERY_NOVICE);
+        EXPECT_EQ(skillMaxMasteryPerClass[finalClass][SKILL_MACE], MASTERY_NOVICE);
+        EXPECT_EQ(skillMaxMasteryPerClass[finalClass][SKILL_DODGE], MASTERY_NONE);
+        EXPECT_EQ(skillMaxMasteryPerClass[finalClass][SKILL_STEALING], MASTERY_NONE);
+    }
+    EXPECT_TRUE(compareEvtVariable(dragoon, VAR_Class, std::to_underlying(CLASS_DRAGOON)));
+    EXPECT_FALSE(compareEvtVariable(dragoon, VAR_Class, std::to_underlying(CLASS_KNIGHT)));
+    EXPECT_TRUE(compareEvtVariable(dragoon, VAR_Class, std::to_underlying(CLASS_KNIGHT), true));
+    pParty->pCharacters[1].classType = CLASS_ARCHER;
+    pParty->pCharacters[2].classType = CLASS_CLERIC;
+    pParty->pCharacters[3].classType = CLASS_SORCERER;
+    NPCData *org = &pNPCStats->pNPCData[43];
+    openOrgHouse(game, org);
+    ASSERT_TRUE(selectNpcEvent(game, org, 73));
+    ASSERT_TRUE(pParty->_questBits[QBIT_HAUNTED_HOUSE_UNDEAD_ACTIVE]);
+    ASSERT_TRUE(selectNpcEvent(game, org, 74));
+    EXPECT_EQ(dragoon.classType, CLASS_DRAGOON);
+    pParty->_questBits.set(QBIT_HAUNTED_HOUSE_CLEARED);
+    ASSERT_TRUE(selectNpcEvent(game, org, 74));
+    EXPECT_EQ(dragoon.classType, CLASS_LANCER);
+    EXPECT_EQ(pParty->pCharacters[1].classType, CLASS_ARCHER);
+    leaveHouse(game);
+    Blob saved = game.saveGame();
+    dragoon.classType = CLASS_KNIGHT;
+    game.loadGame(saved);
+    EXPECT_EQ(pParty->pCharacters[0].classType, CLASS_LANCER);
+    // Compatibility refusal must leave the primary and current party intact;
+    // structural validation must still admit those bytes for atomic writes.
+    ufs->write("saves/dragoon-test.mm7", saved);
+    pParty->pCharacters[0].classType = CLASS_KNIGHT;
+    const std::string incumbentSlot = engine->_lastLoadedSaveFileName;
+    const bool incumbentTurnMode = pParty->bTurnBasedModeOn;
+    ::setenv("ENROTH_MM7_DRAGOON_CLASS", "0", 1);
+    bool admitted = true;
+    game.runGameRoutine([&] { admitted = loadGame("dragoon-test.mm7"); });
+    ::setenv("ENROTH_MM7_DRAGOON_CLASS", "1", 1);
+    EXPECT_FALSE(admitted);
+    EXPECT_EQ(engine->_lastLoadedSaveFileName, incumbentSlot);
+    EXPECT_EQ(pParty->bTurnBasedModeOn, incumbentTurnMode);
+    EXPECT_EQ(pParty->pCharacters[0].classType, CLASS_KNIGHT);
+    EXPECT_EQ(ufs->read("saves/dragoon-test.mm7").str(), saved.str());
+    ufs->write("saves/!!!dragoon.mm7", saved);
+    game.goToMainMenu();
+    ::setenv("ENROTH_MM7_DRAGOON_CLASS", "0", 1);
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(4);
+    game.pressGuiButton("LoadMenu_Slot0");
+    game.tick(2);
+    game.pressGuiButton("LoadMenu_Load");
+    game.tick(10);
+    ::setenv("ENROTH_MM7_DRAGOON_CLASS", "1", 1);
+    EXPECT_EQ(GetCurrentMenuID(), MENU_MAIN);
+    EXPECT_EQ(engine->_lastLoadedSaveFileName, incumbentSlot);
+}
+
+GAME_TEST(MM7Promotions, DragoonCreationOffersNineTrainableChoicesAndStartingMana) {
+    if (!mm7::mods::dragoonClassEnabled(engine->gameTitle()))
+        GTEST_SKIP() << "Requires ENROTH_MM7_DRAGOON_CLASS=1";
+    game.goToMainMenu();
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    game.pressGuiButton("PartyCreation_Class36");
+    game.tick(2);
+    EXPECT_EQ(pParty->pCharacters[0].classType, CLASS_DRAGOON);
+    for (Class classType : {CLASS_DRAGOON, CLASS_LANCER, CLASS_DRAGON_KNIGHT, CLASS_DREAD_LANCER})
+        EXPECT_FALSE(localization->classDescription(classType).empty());
+    constexpr std::array choices = {SKILL_BOW, SKILL_LEATHER, SKILL_WATER, SKILL_REPAIR, SKILL_MEDITATION,
+                                    SKILL_PERCEPTION, SKILL_TRAP_DISARM, SKILL_ARMSMASTER, SKILL_LEARNING};
+    for (int i = 0; i < 9; ++i) {
+        const Skill skill = pParty->pCharacters[0].GetSkillIdxByOrder(i + 4);
+        EXPECT_EQ(skill, choices[i]);
+        ASSERT_NE(skill, SKILL_INVALID);
+        EXPECT_NE(skillMaxMasteryPerClass[CLASS_DRAGOON][skill], MASTERY_NONE);
+    }
+    EXPECT_EQ(pParty->pCharacters[0].GetSkillIdxByOrder(13), SKILL_INVALID);
+    game.pressGuiButton("PartyCreation_Skill8");
+    game.pressGuiButton("PartyCreation_Skill8", BUTTON_RIGHT);
+    game.tick(2);
+    EXPECT_EQ(pParty->pCharacters[0].GetSkillIdxByOrder(3), SKILL_INVALID);
+    game.moveMouse(0, 0);
+    game.tick(2);
+    for (int choice = 0; choice < 9 && pParty->pCharacters[0].GetSkillIdxByOrder(3) == SKILL_INVALID; ++choice) {
+        game.pressGuiButton(fmt::format("PartyCreation_Skill{}", choice));
+        game.tick(2);
+    }
+    ASSERT_NE(pParty->pCharacters[0].GetSkillIdxByOrder(3), SKILL_INVALID);
+    game.pressGuiButton("PartyCreation_OK");
+    game.skipLoadingScreen();
+    game.tick(2);
+    EXPECT_EQ(pParty->pCharacters[0].classType, CLASS_DRAGOON);
+    EXPECT_TRUE(pParty->pCharacters[0].pActiveSkills[SKILL_SPEAR]);
+    EXPECT_TRUE(pParty->pCharacters[0].pActiveSkills[SKILL_AIR]);
+    // Even the default low-Intelligence Goblin must be able to cast at start.
+    EXPECT_EQ(pParty->pCharacters[0].GetMaxMana(), 5);
+    EXPECT_EQ(pParty->pCharacters[0].mana, 5);
+    pParty->pCharacters[0]._stats[ATTRIBUTE_INTELLIGENCE] = 13;
+    EXPECT_EQ(pParty->pCharacters[0].GetMaxMana(), 7);
+    Blob saved = game.saveGame();
+    game.loadGame(saved);
+    EXPECT_EQ(pParty->pCharacters[0].classType, CLASS_DRAGOON);
 }
 
 GAME_TEST(MM7Promotions, KnightCavalierPhysicalPromotionPacket) {

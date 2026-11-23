@@ -12,6 +12,7 @@ Usage:
       [--video | --no-video] [--display N] [--video-chunk-seconds N]
       [--poll-seconds N] [--save-checkpoint-seconds N] [--min-free-mib N]
       [--expected-volume-id N] [--max-save-snapshots N] [--max-sessions N]
+      [--max-recordings-mib N]
   mm7_playtest_capture.sh note --session ABS_SESSION_DIR --text "owner note"
   mm7_playtest_capture.sh clip --session ABS_SESSION_DIR
   mm7_playtest_capture.sh stop --session ABS_SESSION_DIR [--game-exit normal|abnormal]
@@ -28,9 +29,11 @@ ends and is replaced chunk by chunk during a recording. A clip request, an
 abnormal game exit, or a game exit with no stop request also keeps the buffer
 as a permanent clip.
 A session keeps the newest --max-save-snapshots copies of each save file
-(default 3, or EC_MM7_MAX_SAVE_SNAPSHOTS). Start removes all but the newest
---max-sessions sessions in the destination (default 20, or EC_MM7_MAX_SESSIONS),
-except sessions holding clips or crash reports.
+(default 3, or EC_MM7_MAX_SAVE_SNAPSHOTS). The recorder retains at most the
+newest --max-sessions sessions in the destination (default 2, or
+EC_MM7_MAX_SESSIONS) and prunes finished sessions until recordings use no
+more than --max-recordings-mib MiB (default 3072, or
+EC_MM7_MAX_RECORDINGS_MIB). An active recorder is never pruned.
 EOF
 }
 
@@ -74,8 +77,8 @@ write_status() {
     local tmp="$session/.status.$$"
     printf '{"state":"%s","started_at":"%s","ended_at":%s,"video":"%s","clips":%s,"warnings":%s,' \
         "$state" "$started_at" "$ended_json" "$video_state" "$clips_saved" "$warning_count" > "$tmp"
-    printf '"caps":{"save_snapshots_per_file":%s,"sessions":%s},"storage_warnings":%s}\n' \
-        "$max_save_snapshots" "$max_sessions" "$storage_json" >> "$tmp"
+    printf '"caps":{"save_snapshots_per_file":%s,"sessions":%s,"recordings_mib":%s},"storage_warnings":%s}\n' \
+        "$max_save_snapshots" "$max_sessions" "$max_recordings_mib" "$storage_json" >> "$tmp"
     mv "$tmp" "$session/status.json"
 }
 
@@ -383,10 +386,10 @@ session_marked() {
     [[ "$(head -n 1 "$marker" 2>/dev/null)" == EnrothContinuum-MM7-playtest-v1 ]]
 }
 
-# Clips, crash reports and a recorder still watching its game are never pruned.
+# An active recorder is never pruned. Finished clips and crash reports follow
+# the same retention policy as every other finished session.
 session_held() {
     local dir="$1" pid
-    [[ -z "$(find -x "$dir/clips" "$dir/crash-reports" -mindepth 1 -maxdepth 1 -print 2>/dev/null | head -n 1)" ]] || return 0
     grep -q '"state":"running"' "$dir/status.json" 2>/dev/null || return 1
     pid=$(sed -n 's/^game_pid=//p' "$dir/identity.txt" 2>/dev/null | head -n 1)
     is_uint "${pid:-}" && ps -p "$pid" > /dev/null 2>&1
@@ -438,11 +441,26 @@ prune_sessions() {
         (( kib )) || kib=$(session_kib "$dir")
         total_kib=$((total_kib + kib))
     done < <(if (( ${#entries[@]} )); then printf '%s\n' "${entries[@]}" | sort -t $'\t' -k1,1nr -k2,2r; fi)
-    if (( held )); then
-        warnings+=("Older sessions kept beyond the $max_sessions-session cap because they hold clips, crash reports or a running recorder: $held, $(kib_to_mib "$held_kib") MiB in all. Review or move them.")
+    if (( total_kib > recordings_max_kib )); then
+        while IFS=$'\t' read -r _ dir; do
+            [[ -n "$dir" ]] || continue
+            session_marked "$dir" || continue
+            session_held "$dir" && continue
+            kib=$(session_kib "$dir")
+            if remove_session "$dir"; then
+                total_kib=$((total_kib - kib))
+                event session-pruned "Removed older session $(basename "$dir") to keep recordings within ${max_recordings_mib} MiB."
+            else
+                event warning "Could not fully remove older session $(basename "$dir")."
+            fi
+            (( total_kib <= recordings_max_kib )) && break
+        done < <(if (( ${#entries[@]} )); then printf '%s\n' "${entries[@]}" | sort -t $'\t' -k1,1n -k2,2; fi)
     fi
-    if (( total_kib > recordings_warn_kib )); then
-        warnings+=("MM7 recordings use $(kib_to_mib "$total_kib") MiB, over 2 GiB. Review or move older clips.")
+    if (( held )); then
+        warnings+=("Active recording sessions kept beyond the $max_sessions-session cap: $held, $(kib_to_mib "$held_kib") MiB in all.")
+    fi
+    if (( total_kib > recordings_max_kib )); then
+        warnings+=("MM7 recordings use $(kib_to_mib "$total_kib") MiB, over the ${max_recordings_mib} MiB cap because active or undeletable sessions remain.")
     fi
     storage_json="[]"
     if (( ${#warnings[@]} )); then
@@ -644,11 +662,12 @@ shift
 profile_arg=""; output_arg=""; session_arg=""; app_arg=""; game_pid=""; note_text=""; expected_volume_id=""; game_exit=""
 build=mm7; diagnostics_enabled=1; exit_detail=""
 display=1; video_chunk_seconds=60; poll_seconds=5; save_checkpoint_seconds=600; min_free_mib=2048
-max_save_snapshots="${EC_MM7_MAX_SAVE_SNAPSHOTS:-3}"; max_sessions="${EC_MM7_MAX_SESSIONS:-20}"
-recordings_warn_kib=$((2 * 1024 * 1024)); storage_json="[]"
+max_save_snapshots="${EC_MM7_MAX_SAVE_SNAPSHOTS:-3}"; max_sessions="${EC_MM7_MAX_SESSIONS:-2}"
+max_recordings_mib="${EC_MM7_MAX_RECORDINGS_MIB:-3072}"
+storage_json="[]"
 while (( $# > 0 )); do
     case "$1" in
-        --profile|--output|--session|--app|--game-pid|--display|--video-chunk-seconds|--poll-seconds|--save-checkpoint-seconds|--min-free-mib|--expected-volume-id|--text|--game-exit|--build|--exit-detail|--max-save-snapshots|--max-sessions)
+        --profile|--output|--session|--app|--game-pid|--display|--video-chunk-seconds|--poll-seconds|--save-checkpoint-seconds|--min-free-mib|--expected-volume-id|--text|--game-exit|--build|--exit-detail|--max-save-snapshots|--max-sessions|--max-recordings-mib)
             (( $# >= 2 )) || fail "missing value for $1"
             case "$1" in
                 --profile) profile_arg="$2" ;; --output) output_arg="$2" ;;
@@ -660,6 +679,7 @@ while (( $# > 0 )); do
                 --expected-volume-id) expected_volume_id="$2" ;; --game-exit) game_exit="$2" ;;
                 --build) build="$2" ;; --exit-detail) exit_detail="$2" ;;
                 --max-save-snapshots) max_save_snapshots="$2" ;; --max-sessions) max_sessions="$2" ;;
+                --max-recordings-mib) max_recordings_mib="$2" ;;
             esac
             shift 2 ;;
         --video) video_enabled=1; shift ;;
@@ -698,15 +718,17 @@ fi
 [[ -n "$output_arg" && -z "$session_arg" || -z "$output_arg" && -n "$session_arg" ]] ||
     fail "start requires exactly one of --output or --session"
 for number in "$game_pid" "$display" "$video_chunk_seconds" "$poll_seconds" "$save_checkpoint_seconds" "$min_free_mib" \
-              "$max_save_snapshots" "$max_sessions"; do
+              "$max_save_snapshots" "$max_sessions" "$max_recordings_mib"; do
     is_uint "$number" || fail "PID and numeric options must be nonnegative integers"
 done
 [[ -z "$expected_volume_id" ]] || is_uint "$expected_volume_id" || fail "--expected-volume-id must be an integer"
 (( game_pid > 1 && display > 0 && video_chunk_seconds >= 10 && video_chunk_seconds <= 3600 &&
    poll_seconds >= 1 && poll_seconds <= 60 && save_checkpoint_seconds >= 1 &&
    save_checkpoint_seconds <= 3600 && min_free_mib >= 128 &&
-   max_save_snapshots >= 1 && max_save_snapshots <= 1000 && max_sessions >= 1 && max_sessions <= 1000 )) ||
+   max_save_snapshots >= 1 && max_save_snapshots <= 1000 && max_sessions >= 1 && max_sessions <= 1000 &&
+   max_recordings_mib >= 1 && max_recordings_mib <= 1048576 )) ||
     fail "numeric option is out of range"
+recordings_max_kib=$((max_recordings_mib * 1024))
 video_keep=$(( (120 + video_chunk_seconds - 1) / video_chunk_seconds ))
 case "$build" in
     mm7) helper_name=MM7; log_pattern='enroth-continuum-mm7*.log' ;;
@@ -874,6 +896,7 @@ if volume_ok; then
     ended_json="\"$(utc)\""
     event stop "$state${game_exit:+ ($game_exit exit${exit_detail:+, $exit_detail})}"
     write_status
+    prune_sessions || true
 else
     stop_video
 fi

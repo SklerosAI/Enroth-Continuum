@@ -155,6 +155,10 @@ UNIT_TEST(MM7SaveValidation, RejectsInvalidPartyAndCharacterEnums) {
     EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
     character.sex = 1;
     character.classType = 36;
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+    character.classType = 39;
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+    character.classType = 40;
     EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
     character.classType = 35;
     character.lastOpenedSpellbookPage = 9;

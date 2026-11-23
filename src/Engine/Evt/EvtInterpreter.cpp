@@ -1449,7 +1449,8 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             if (!validateVariableValue(ir))
                 break;
             for (Character &character : iterateCharacters(_who, ir.data.variable_descr.type, grng))
-                if (compareEvtVariable(character, ir.data.variable_descr.type, ir.data.variable_descr.value))
+                if (compareEvtVariable(character, ir.data.variable_descr.type, ir.data.variable_descr.value,
+                                      _context.source == EVT_SOURCE_GLOBAL && _context.eventId >= 71 && _context.eventId <= 76))
                     return {EVT_FLOW_JUMP, ir.target_step};
             break;
         case EVENT_ChangeDoorState:
@@ -1663,7 +1664,8 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             if (!validateVariableValue(ir))
                 break;
             for (Character &character : iterateCharacters(_who, ir.data.variable_descr.type, grng))
-                setEvtVariable(character, ir.data.variable_descr.type, ir.data.variable_descr.value);
+                setEvtVariable(character, ir.data.variable_descr.type, ir.data.variable_descr.value,
+                               _context.source == EVT_SOURCE_GLOBAL && _context.eventId >= 71 && _context.eventId <= 76);
             break;
         case EVENT_SummonMonsters:
             if (engine->gameTitle() == GameTitle::MM6) {
@@ -2157,7 +2159,8 @@ int EvtInterpreter::checkTopicStep(int step) {
         if (!validateVariableValue(*ir))
             break;
         for (Character &player : pParty->pCharacters)
-            if (compareEvtVariable(player, ir->data.variable_descr.type, ir->data.variable_descr.value))
+            if (compareEvtVariable(player, ir->data.variable_descr.type, ir->data.variable_descr.value,
+                                   _context.source == EVT_SOURCE_GLOBAL && _context.eventId >= 71 && _context.eventId <= 76))
                 return ir->target_step;
         break;
     case EVENT_SetCanShowDialogItem:

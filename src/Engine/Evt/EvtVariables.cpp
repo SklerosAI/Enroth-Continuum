@@ -6,6 +6,8 @@
 #include "Engine/Engine.h"
 #include "Engine/Evt/EvtEnumFunctions.h"
 #include "Engine/Graphics/Indoor.h"
+#include "Engine/Mods/PrivateMods.h"
+#include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Objects/NPC.h"
 #include "Engine/Party.h"
 #include "Engine/Random/Random.h"
@@ -29,6 +31,27 @@ static bool isInRange(int value, auto first, auto last) {
     return value >= static_cast<int>(first) && value <= static_cast<int>(last);
 }
 
+static Class dragoonKnightQuestClass(Class classType) {
+    switch (classType) {
+    case CLASS_DRAGOON: return CLASS_KNIGHT;
+    case CLASS_LANCER: return CLASS_CAVALIER;
+    case CLASS_DRAGON_KNIGHT: return CLASS_CHAMPION;
+    case CLASS_DREAD_LANCER: return CLASS_BLACK_KNIGHT;
+    default: return classType;
+    }
+}
+
+static Class dragoonClassForKnightQuestClass(Class currentClass, Class questClass) {
+    if (getTier1Class(currentClass) != CLASS_DRAGOON)
+        return questClass;
+    switch (questClass) {
+    case CLASS_CAVALIER: return CLASS_LANCER;
+    case CLASS_CHAMPION: return CLASS_DRAGON_KNIGHT;
+    case CLASS_BLACK_KNIGHT: return CLASS_DREAD_LANCER;
+    default: return questClass;
+    }
+}
+
 bool isEvtVariableValueValid(EvtOpcode opcode, EvtVariable var, int value) {
     assert(opcode == EVENT_Compare || opcode == EVENT_OnCanShowDialogItemCmp || opcode == EVENT_Set ||
            opcode == EVENT_Add || opcode == EVENT_Subtract);
@@ -48,7 +71,8 @@ bool isEvtVariableValueValid(EvtOpcode opcode, EvtVariable var, int value) {
     case VAR_Sex:
         return isInRange(value, SEX_FIRST, SEX_LAST);
     case VAR_Class:
-        return isInRange(value, CLASS_FIRST, CLASS_LAST);
+        return isInRange(value, CLASS_FIRST, CLASS_LICH) ||
+               (mm7::mods::dragoonClassEnabled(GameTitle::MM7) && isInRange(value, CLASS_DRAGOON, CLASS_DREAD_LANCER));
     case VAR_Race:
         return isInRange(value, RACE_FIRST, RACE_LAST);
     case VAR_HiredNPCHasSpeciality:
@@ -88,7 +112,7 @@ static bool CmpSkillValue(int valToCompare, CombinedSkillValue skillValue) {
 }
 
 //----- (00449BB4) --------------------------------------------------------
-bool compareEvtVariable(Character &character, EvtVariable VarNum, int pValue) {
+bool compareEvtVariable(Character &character, EvtVariable VarNum, int pValue, bool knightPromotion) {
     signed int v4;                         // edi@1
     uint8_t test_bit_value;        // eax@25
     uint8_t byteWithRequestedBit;  // cl@25
@@ -111,6 +135,8 @@ bool compareEvtVariable(Character &character, EvtVariable VarNum, int pValue) {
         case VAR_Sex:
             return pValue == std::to_underlying(character.uSex);
         case VAR_Class:
+            if (knightPromotion && mm7::mods::dragoonClassEnabled(engine->gameTitle()))
+                return pValue == std::to_underlying(dragoonKnightQuestClass(character.classType));
             return pValue == std::to_underlying(character.classType);
         case VAR_Race:
             return pValue == std::to_underlying(character.GetRace());
@@ -482,7 +508,7 @@ bool compareEvtVariable(Character &character, EvtVariable VarNum, int pValue) {
 }
 
 //----- (0044A5CB) --------------------------------------------------------
-void setEvtVariable(Character &character, EvtVariable var_type, int var_value) {
+void setEvtVariable(Character &character, EvtVariable var_type, int var_value, bool knightPromotion) {
     int gold = 0, food = 0;
     LocationInfo *ddm;
     Item item;
@@ -521,7 +547,9 @@ void setEvtVariable(Character &character, EvtVariable var_type, int var_value) {
             character.PlayAwardSound_Anim();
             return;
         case VAR_Class:
-            character.classType = (Class)var_value;
+            character.classType = knightPromotion && mm7::mods::dragoonClassEnabled(engine->gameTitle())
+                ? dragoonClassForKnightQuestClass(character.classType, (Class)var_value)
+                : (Class)var_value;
             if ((Class)var_value == CLASS_LICH) {
                 for (InventoryEntry entry : character.inventory.entries()) {
                     if (entry->itemId == ITEM_QUEST_LICH_JAR_EMPTY) {

@@ -1608,7 +1608,10 @@ void Game::gameLoop() {
         uGameState = GAME_STATE_PLAYING;
         assert(!engine->_pendingLoadFileName.empty());
         try {
-            loadGame(std::exchange(engine->_pendingLoadFileName, {}));
+            if (!loadGame(std::exchange(engine->_pendingLoadFileName, {}))) {
+                uGameState = GAME_STATE_GAME_QUITTING_TO_MAIN_MENU;
+                return;
+            }
         } catch (...) {
             if (mm6::abandonMainMenuLoad())
                 return;

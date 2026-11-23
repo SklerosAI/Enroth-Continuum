@@ -135,7 +135,7 @@ def verify_mm7_dependency_notices(build_root: Path) -> Path:
 
 
 def assemble(output: Path, helpers: dict[str, Path], mm7_deps_build_root: Path | None = None,
-             build_infos: dict[str, Path] | None = None) -> None:
+             build_infos: dict[str, Path] | None = None, reuse_from: Path | None = None) -> None:
     sdk = Path(run("/usr/bin/xcrun", "--sdk", "macosx", "--show-sdk-path").stdout.strip())
     swiftc = Path(run("/usr/bin/xcrun", "--find", "swiftc").stdout.strip())
     if not sdk.is_dir() or not swiftc.is_file():
@@ -146,6 +146,10 @@ def assemble(output: Path, helpers: dict[str, Path], mm7_deps_build_root: Path |
         verify_helper(path, title)
     verify_atlas_icon()
     notice_source = verify_mm7_dependency_notices(mm7_deps_build_root) if mm7_deps_build_root else None
+    if notice_source is None and reuse_from is not None:
+        inherited_notices = reuse_from / "Contents/Resources/Notices/MM7-Media"
+        if inherited_notices.is_dir():
+            notice_source = inherited_notices
 
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".atlas-stage-", dir=output.parent) as temporary:
@@ -164,6 +168,7 @@ def assemble(output: Path, helpers: dict[str, Path], mm7_deps_build_root: Path |
             "-o", contents / "MacOS/EnrothContinuum")
         shutil.copy2(ROOT / "launcher/Info.plist", contents / "Info.plist")
         shutil.copy2(ROOT / "launcher/Atlas/index.html", contents / "Resources/Atlas/index.html")
+        shutil.copy2(ROOT / "launcher/Atlas/dragoon-class-icon.png", contents / "Resources/Atlas/dragoon-class-icon.png")
         shutil.copy2(ROOT / "tools/mm7_playtest_capture.sh", contents / "Resources/Atlas/mm7_playtest_capture.sh")
         for source in (ROOT / "LICENSE", ROOT / "CREDITS.md", ROOT / "project/UPSTREAM.md"):
             shutil.copy2(source, contents / "Resources/Notices" / source.name)
@@ -229,7 +234,7 @@ def main() -> None:
         raise ValueError("A title-locked MM7.app is required; pass --mm7-app or --reuse-from")
     assemble(options.output.resolve(), helpers,
              options.mm7_deps_build_root.expanduser().resolve() if options.mm7_deps_build_root else None,
-             build_infos)
+             build_infos, options.reuse_from)
 
 
 if __name__ == "__main__":

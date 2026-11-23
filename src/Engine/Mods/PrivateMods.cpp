@@ -35,7 +35,7 @@ class PortraitLoader final : public ImageLoader {
     Sizei imageSize;
 };
 
-std::unique_ptr<GraphicsImage> readPortrait(PathView path, int slot, PortraitMood mood) {
+std::unique_ptr<GraphicsImage> readPrivateImage(PathView path, std::string name) {
     if (!fs::exists(path))
         return nullptr;
     try {
@@ -46,11 +46,10 @@ std::unique_ptr<GraphicsImage> readPortrait(PathView path, int slot, PortraitMoo
         if (size.w < 32 || size.h < 32 || size.w > 512 || size.h > 512)
             throw std::runtime_error("portrait exceeds dimension limit");
         RgbaImage image = png::decode(data);
-        std::string name = "mm7-mod-portrait-" + std::to_string(slot) + "-" + std::string(portraitMoodName(mood));
         return GraphicsImage::Create(std::make_unique<PortraitLoader>(std::move(name), std::move(image)));
     } catch (const std::exception &) {
         // File paths and decoder errors may reveal private local data.
-        MM_WARNING("Ignoring invalid MM7 portrait for slot {} mood {}.", slot, portraitMoodName(mood));
+        MM_WARNING("Ignoring invalid private MM7 image.");
         return nullptr;
     }
 }
@@ -79,6 +78,18 @@ bool monsterLootRerollEnabled(GameTitle title, const char *flag) {
 
 bool monsterLootRerollEnabled(GameTitle title) {
     return monsterLootRerollEnabled(title, std::getenv("ENROTH_MM7_MONSTER_LOOT_REROLL"));
+}
+
+bool dragoonClassEnabled(GameTitle title, const char *flag) {
+    return title == GameTitle::MM7 && flag && std::string_view(flag) == "1";
+}
+
+bool dragoonClassEnabled(GameTitle title) {
+    return dragoonClassEnabled(title, std::getenv("ENROTH_MM7_DRAGOON_CLASS"));
+}
+
+std::unique_ptr<GraphicsImage> loadDragoonClassIcon(PathView directory) {
+    return readPrivateImage(directory / "dragoon-class-icon.png", "mm7-mod-dragoon-class-icon");
 }
 
 namespace {
@@ -164,16 +175,17 @@ void PrivatePortraits::load(PathView directory) {
         auto &images = portraits[slot - 1];
         Path slotRoot = root / std::to_string(slot);
         images[static_cast<size_t>(PortraitMood::Normal)] =
-            readPortrait(slotRoot / "normal.png", slot, PortraitMood::Normal);
+            readPrivateImage(slotRoot / "normal.png", "mm7-mod-portrait-" + std::to_string(slot) + "-normal");
         if (!images[static_cast<size_t>(PortraitMood::Normal)])
             images[static_cast<size_t>(PortraitMood::Normal)] =
-                readPortrait(directory / ("portrait-" + std::to_string(slot) + ".png"), slot, PortraitMood::Normal);
+                readPrivateImage(directory / ("portrait-" + std::to_string(slot) + ".png"),
+                                 "mm7-mod-portrait-" + std::to_string(slot) + "-normal");
         if (!images[static_cast<size_t>(PortraitMood::Normal)])
             continue;
         MM_INFO("Loaded private MM7 portrait override for party slot {}.", slot);
         for (size_t mood = 1; mood < moodNames.size(); ++mood) {
-            images[mood] = readPortrait(slotRoot / (std::string(moodNames[mood]) + ".png"),
-                                        slot, static_cast<PortraitMood>(mood));
+            images[mood] = readPrivateImage(slotRoot / (std::string(moodNames[mood]) + ".png"),
+                                             "mm7-mod-portrait-" + std::to_string(slot) + "-" + std::string(moodNames[mood]));
         }
     }
 }

@@ -279,6 +279,8 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         else if action == "chest-reroll-off" { preferences.set(false, forKey: "mods.mm7.chestReroll"); sendState(message: "MM7 chests will use their normal loot on the next launch.") }
         else if action == "monster-loot-reroll-on" { preferences.set(true, forKey: "mods.mm7.monsterLootReroll"); sendState(message: "Fortune's Turn will apply on the next private-mods MM7 launch.") }
         else if action == "monster-loot-reroll-off" { preferences.set(false, forKey: "mods.mm7.monsterLootReroll"); sendState(message: "Fortune's Turn is off for the next MM7 launch.") }
+        else if action == "dragoon-class-on" { preferences.set(true, forKey: "mods.mm7.dragoonClass"); sendState(message: "Dragoon will be available in MM7 party creation on the next private-mods launch.") }
+        else if action == "dragoon-class-off" { preferences.set(false, forKey: "mods.mm7.dragoonClass"); sendState(message: "Dragoon is off for the next MM7 launch.") }
         else if action.hasPrefix("choose-portrait-") {
             if let slot = Int(action.dropFirst("choose-portrait-".count)), (1...4).contains(slot) { choosePortrait(slot) }
         }
@@ -345,6 +347,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             "allArtifactsStorage": preferences.bool(forKey: "mods.mm7.allArtifactsStorage"),
             "chestReroll": preferences.bool(forKey: "mods.mm7.chestReroll"),
             "monsterLootReroll": preferences.bool(forKey: "mods.mm7.monsterLootReroll"),
+            "dragoonClass": preferences.bool(forKey: "mods.mm7.dragoonClass"),
             "portraits": (1...4).map { validPortraitURL($0, mood: "normal") != nil },
             "portraitNormalFiles": (1...4).map { portraitExists($0, mood: "normal") },
             "legacyPortraits": (1...4).map { FileManager.default.fileExists(atPath: portraitURL($0).path) },
@@ -735,13 +738,19 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             process.executableURL = engine
             process.arguments = build.arguments(dataPath: dataPath, profilePath: profilePath)
             let modsEnabled = build == .fork && preferences.bool(forKey: "mods.mm7.enabled")
-            if modsEnabled { try FileManager.default.createDirectory(at: modRoot, withIntermediateDirectories: true) }
+            if modsEnabled {
+                try FileManager.default.createDirectory(at: modRoot, withIntermediateDirectories: true)
+                if preferences.bool(forKey: "mods.mm7.dragoonClass") {
+                    try seedDragoonClassIconIfNeeded()
+                }
+            }
             process.environment = build.environment(base: ProcessInfo.processInfo.environment,
                                                     modRoot: modsEnabled ? modRoot : nil,
                                                     vendorRefresh: preferences.bool(forKey: "mods.vendorRefreshOnEntry"),
                                                     allArtifactsStorage: preferences.bool(forKey: "mods.mm7.allArtifactsStorage"),
                                                     chestReroll: preferences.bool(forKey: "mods.mm7.chestReroll"),
-                                                    monsterLootReroll: preferences.bool(forKey: "mods.mm7.monsterLootReroll"))
+                                                    monsterLootReroll: preferences.bool(forKey: "mods.mm7.monsterLootReroll"),
+                                                    dragoonClass: preferences.bool(forKey: "mods.mm7.dragoonClass"))
             let startedAt = Date()
             process.terminationHandler = { [weak self] finished in
                 DispatchQueue.main.async {
@@ -895,6 +904,13 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         } catch {
             sendState(message: "Could not open MM7 mods folder: \(error.localizedDescription)")
         }
+    }
+
+    private func seedDragoonClassIconIfNeeded() throws {
+        let destination = modRoot.appendingPathComponent("dragoon-class-icon.png")
+        guard !FileManager.default.fileExists(atPath: destination.path),
+              let source = Bundle.main.resourceURL?.appendingPathComponent("Atlas/dragoon-class-icon.png") else { return }
+        try FileManager.default.copyItem(at: source, to: destination)
     }
 
     private func createModGuideIfNeeded() throws {

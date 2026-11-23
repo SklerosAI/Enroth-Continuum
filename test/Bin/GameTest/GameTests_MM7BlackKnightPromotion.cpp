@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
+#include "Engine/Mods/PrivateMods.h"
 
 #include "Engine/Data/AwardEnums.h"
 #include "Engine/Data/HouseEnums.h"
@@ -261,6 +262,28 @@ void preparePromotionParty() {
 }
 
 }  // namespace
+
+GAME_TEST(MM7BlackKnightPromotion, DragoonNoKnightDarkPromotion) {
+    if (!mm7::mods::dragoonClassEnabled(engine->gameTitle()))
+        GTEST_SKIP() << "Requires ENROTH_MM7_DRAGOON_CLASS=1";
+    game.startNewGame();
+    preparePromotionParty();
+    pParty->pCharacters[0].classType = CLASS_LANCER;
+    for (int i = 1; i < 4; ++i)
+        pParty->pCharacters[i].classType = CLASS_CLERIC;
+    pParty->_questBits.set(QBIT_DARK_PATH);
+    NPCData &frederick = pNPCStats->pNPCData[frederickNpcId];
+    frederick.dialogue_1_evt_id = blackKnightOfferEventId;
+    openFrederickDialogue(game, &frederick);
+    ASSERT_TRUE(selectNpcEvent(game, &frederick, blackKnightOfferEventId));
+    ASSERT_TRUE(selectNpcEvent(game, &frederick, blackKnightReturnEventId));
+    EXPECT_EQ(pParty->pCharacters[0].classType, CLASS_LANCER);
+    pParty->_questBits.set(QBIT_ELVEN_TREASURY_ROBBED);
+    ASSERT_TRUE(selectNpcEvent(game, &frederick, blackKnightReturnEventId));
+    EXPECT_EQ(pParty->pCharacters[0].classType, CLASS_DREAD_LANCER);
+    for (int i = 1; i < 4; ++i)
+        EXPECT_EQ(pParty->pCharacters[i].classType, CLASS_CLERIC);
+}
 
 GAME_TEST(MM7BlackKnightPromotion, SourceContracts) {
     game.startNewGame();

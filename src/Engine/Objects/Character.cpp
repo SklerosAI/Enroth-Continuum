@@ -249,7 +249,11 @@ static constexpr IndexedArray<int, CLASS_FIRST, CLASS_LAST> pBaseHealthByClass =
     {CLASS_SORCERER,          20},
     {CLASS_WIZARD,            20},
     {CLASS_ARCHAMGE,          20},
-    {CLASS_LICH,              20}
+    {CLASS_LICH,              20},
+    {CLASS_DRAGOON,           40},
+    {CLASS_LANCER,            40},
+    {CLASS_DRAGON_KNIGHT,     40},
+    {CLASS_DREAD_LANCER,      40}
 };
 static constexpr IndexedArray<int, CLASS_FIRST, CLASS_LAST> pBaseManaByClass = {
     {CLASS_KNIGHT,            0},
@@ -287,7 +291,11 @@ static constexpr IndexedArray<int, CLASS_FIRST, CLASS_LAST> pBaseManaByClass = {
     {CLASS_SORCERER,          15},
     {CLASS_WIZARD,            15},
     {CLASS_ARCHAMGE,          15},
-    {CLASS_LICH,              15}
+    {CLASS_LICH,              15},
+    {CLASS_DRAGOON,            5},
+    {CLASS_LANCER,             5},
+    {CLASS_DRAGON_KNIGHT,      5},
+    {CLASS_DREAD_LANCER,       5}
 };
 
 static constexpr IndexedArray<int, CLASS_FIRST, CLASS_LAST> pBaseHealthPerLevelByClass = {
@@ -326,7 +334,11 @@ static constexpr IndexedArray<int, CLASS_FIRST, CLASS_LAST> pBaseHealthPerLevelB
     {CLASS_SORCERER,          2},
     {CLASS_WIZARD,            3},
     {CLASS_ARCHAMGE,          3},
-    {CLASS_LICH,              3}
+    {CLASS_LICH,              3},
+    {CLASS_DRAGOON,           4},
+    {CLASS_LANCER,            6},
+    {CLASS_DRAGON_KNIGHT,     8},
+    {CLASS_DREAD_LANCER,      8}
 };
 static constexpr IndexedArray<int, CLASS_FIRST, CLASS_LAST> pBaseManaPerLevelByClass = {
     {CLASS_KNIGHT,            0},
@@ -364,7 +376,11 @@ static constexpr IndexedArray<int, CLASS_FIRST, CLASS_LAST> pBaseManaPerLevelByC
     {CLASS_SORCERER,          3},
     {CLASS_WIZARD,            4},
     {CLASS_ARCHAMGE,          6},
-    {CLASS_LICH,              6}
+    {CLASS_LICH,              6},
+    {CLASS_DRAGOON,           2},
+    {CLASS_LANCER,            3},
+    {CLASS_DRAGON_KNIGHT,     5},
+    {CLASS_DREAD_LANCER,      5}
 };
 
 static constexpr IndexedArray<std::array<int, 19>, ATTRIBUTE_FIRST_STAT, ATTRIBUTE_LAST_STAT> pConditionAttributeModifier = {
@@ -2048,6 +2064,10 @@ int Character::GetMaxMana() const {
         case CLASS_WIZARD:
         case CLASS_ARCHAMGE:
         case CLASS_LICH:
+        case CLASS_DRAGOON:
+        case CLASS_LANCER:
+        case CLASS_DRAGON_KNIGHT:
+        case CLASS_DREAD_LANCER:
             // intelligence based mana
             mainmanastat = GetActualIntelligence();
             statbonus = GetParameterBonus(mainmanastat);
@@ -2094,8 +2114,9 @@ int Character::GetMaxMana() const {
     int maxmana = uFullManaBonus + pBaseManaByClass[classType] +
                   GetSkillBonus(ATTRIBUTE_MANA) + itembonus;
 
-    if (maxmana < 0)  // min of 0
-        maxmana = 0;
+    // Keep a usable base pool for the magic-using Dragoon family even when
+    // low Intelligence would otherwise erase its level-one spell points.
+    maxmana = std::max(maxmana, getTier1Class(classType) == CLASS_DRAGOON ? 5 : 0);
 
     return maxmana;
 }

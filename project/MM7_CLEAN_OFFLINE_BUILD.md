@@ -41,6 +41,13 @@ libraries, then stages `Atlas/Enroth Continuum.app` with source notices. It
 does not install the app, touch saves or include game data. It refuses an
 existing output root and writes separate build logs under `logs/` there.
 
+After a staged bundle is accepted and installed, the default owner policy is to
+delete every superseded installed and staged Enroth Continuum app bundle
+completely. Do not preserve an old app build for rollback unless the owner
+explicitly asks. If compatibility requires it, repair or migrate saves to the
+new build rather than retaining the old app. This does not remove profiles or
+saves outside a separately authorized repair or cleanup scope.
+
 1. `git archive HEAD` supplied a fresh source directory with no Git metadata,
    submodule checkout, build cache or dependency release ZIP. No private game
    data entered that directory.

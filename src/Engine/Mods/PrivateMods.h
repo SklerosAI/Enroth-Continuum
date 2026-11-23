@@ -24,6 +24,13 @@ bool chestRerollEnabled(GameTitle title);
 /** Exact, MM7-only opt-in for the separate monster loot reroll mod. */
 bool monsterLootRerollEnabled(GameTitle title, const char *flag);
 bool monsterLootRerollEnabled(GameTitle title);
+
+/** Exact, MM7-only opt-in for the private Dragoon class expansion. */
+bool dragoonClassEnabled(GameTitle title, const char *flag);
+bool dragoonClassEnabled(GameTitle title);
+
+/** Loads the optional Dragoon creation icon from the private MM7 mod directory. */
+std::unique_ptr<GraphicsImage> loadDragoonClassIcon(PathView directory);
 void armMonsterLootNewGameDragon(GameTitle title);
 void cancelMonsterLootNewGameDragon();
 bool consumeMonsterLootNewGameDragon();

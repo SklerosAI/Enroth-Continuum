@@ -132,6 +132,18 @@ GraphicsImage *AssetsManager::getCustomPortrait(int partySlot, PortraitId portra
     return customPortraits ? customPortraits->get(partySlot, portrait, condition) : nullptr;
 }
 
+GraphicsImage *AssetsManager::getDragoonClassIcon() {
+    if (!engine || !mm7::mods::dragoonClassEnabled(engine->gameTitle()))
+        return nullptr;
+    if (!dragoonClassIconLoaded) {
+        dragoonClassIconLoaded = true;
+        const char *directory = std::getenv("ENROTH_MM7_MOD_DIR");
+        if (directory && *directory)
+            dragoonClassIcon = mm7::mods::loadDragoonClassIcon(Path(directory));
+    }
+    return dragoonClassIcon.get();
+}
+
 GraphicsImage *AssetsManager::getImage_Buff(std::string_view name) {
     std::string filename = ascii::toLower(name);
 

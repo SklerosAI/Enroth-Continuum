@@ -26,4 +26,6 @@ Graphical play acceptance is delegated to the owner. Headless results do not est
 
 On 2026-11-21, the complete matrix finished with no failures: 729 passed / 20 opt-in skips with Dragoon off; 299 passed / 13 other-mod skips with Dragoon on; 21 passed / one off-only skip in mod coexistence. Swift launcher contracts, Atlas page checks and changed-source lint also passed. The installed normal Atlas bundle preserves the existing MM6/upstream helpers and media notices, and Dragoon is explicitly set off. A recoverable pre-update app copy is retained locally outside Git.
 
+The 2026-11-22 cleanup preserves the previously uncommitted implementation in source history and adds descriptions for all four custom classes in right-click help. The [app replacement policy](Agent-Handoff.md#app-replacement-policy--2026-11-21) supersedes the earlier retained-app-copy practice.
+
 See also: [Campaign Status](Campaign-Status.md), [Atomic Save File](MM7-Atomic-Save-File.md), [Private Portrait Mod](MM7-Private-Portrait-Mod.md).

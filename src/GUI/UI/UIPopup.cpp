@@ -1911,6 +1911,8 @@ void UI_OnMouseRightClick(Pointi mousePos) {
                                                                      // skill
                                                                      // button
                                                                      // info
+                            if (pParty->pCharacters[uPlayerCreationUI_SelectedCharacter].GetSkillIdxByOrder(pButton->msg_param + 4) == SKILL_INVALID)
+                                break;
                             pStr = localization->skillName(
                                 pParty->pCharacters
                                         [uPlayerCreationUI_SelectedCharacter]

@@ -33,6 +33,7 @@ class AssetsManager {
     GraphicsImage *getMM6SelectionFrame(Duration elapsed);
     /** MM7-only local portrait, with condition fallback. Null retains the original art. */
     GraphicsImage *getCustomPortrait(int partySlot, PortraitId portrait, Condition condition);
+    GraphicsImage *getDragoonClassIcon();
     GraphicsImage *getImage_Buff(std::string_view name);
 
     GraphicsImage *getBitmap(std::string_view name, bool generated = false);
@@ -61,8 +62,10 @@ class AssetsManager {
     std::unordered_map<std::string, std::unique_ptr<GraphicsImage>> sprites;
     std::unordered_map<std::string, std::unique_ptr<GraphicsImage>> images;
     std::unique_ptr<mm7::mods::PrivatePortraits> customPortraits;
+    std::unique_ptr<GraphicsImage> dragoonClassIcon;
     std::unordered_map<std::string, std::unique_ptr<GraphicsImage>> mm6SelectionFrames;
     bool customPortraitsLoaded = false;
+    bool dragoonClassIconLoaded = false;
 };
 
 extern AssetsManager *assets;

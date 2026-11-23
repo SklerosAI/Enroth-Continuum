@@ -3228,6 +3228,15 @@ int Actor::DamageMonsterFromParty(Pid a1, unsigned int uActorID_Monster, const V
             DAMAGE_BODY,
             character->pCharacterBuffs[CHARACTER_BUFF_HAMMERHANDS].power);
     }
+    // Final Dragoon promotions add two independent elemental packets only to
+    // successful, non-projectile physical attacks.  Let the actor calculate
+    // each packet so Air and Water resistances remain independent.
+    if (!projectileSprite && !pMonster->buffs[ACTOR_BUFF_STONED].Active() &&
+        mm7::mods::dragoonClassEnabled(engine->gameTitle()) &&
+        (character->classType == CLASS_DRAGON_KNIGHT || character->classType == CLASS_DREAD_LANCER)) {
+        v61 += pMonster->CalcMagicalDamageToActor(DAMAGE_AIR, 10);
+        v61 += pMonster->CalcMagicalDamageToActor(DAMAGE_WATER, 10);
+    }
     uDamageAmount = v61;
     if (IsAdditionalDamagePossible) {
         if (projectileSprite) {

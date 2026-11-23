@@ -1090,6 +1090,18 @@ void reconstruct(const Character_MM7 &src, Character *dst, ContextTag<int> chara
     case 35:
         dst->classType = CLASS_LICH;
         break;
+    case 36:
+        dst->classType = CLASS_DRAGOON;
+        break;
+    case 37:
+        dst->classType = CLASS_LANCER;
+        break;
+    case 38:
+        dst->classType = CLASS_DRAGON_KNIGHT;
+        break;
+    case 39:
+        dst->classType = CLASS_DREAD_LANCER;
+        break;
     default:
         assert(false);
     }

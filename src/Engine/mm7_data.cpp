@@ -389,7 +389,7 @@ IndexedArray<Duration, SKILL_FIRST, SKILL_LAST> base_recovery_times_per_weapon_t
 };
 
 // byte[] @ MM7.exe::004ED820, some of these are started at 4ED94C, but needs to be here
-std::array<IndexedArray<SkillAffinity, SKILL_FIRST, SKILL_LAST>, 9> pSkillAvailabilityPerClass = {{
+std::array<IndexedArray<SkillAffinity, SKILL_FIRST, SKILL_LAST>, 10> pSkillAvailabilityPerClass = {{
     {
         {SKILL_STAFF, SKILL_AFFINITY_DENIED},
         {SKILL_SWORD, SKILL_AFFINITY_PRIMARY},
@@ -756,6 +756,48 @@ std::array<IndexedArray<SkillAffinity, SKILL_FIRST, SKILL_LAST>, 9> pSkillAvaila
         {SKILL_STEALING, SKILL_AFFINITY_DENIED},
         {SKILL_ALCHEMY, SKILL_AFFINITY_AVAILABLE},
         {SKILL_LEARNING, SKILL_AFFINITY_DENIED},
+        {SKILL_CLUB, SKILL_AFFINITY_AVAILABLE},
+        {SKILL_MISC, SKILL_AFFINITY_AVAILABLE}
+    },
+    // Dragoon has two fixed skills and nine trainable optional choices.
+    {
+        {SKILL_STAFF, SKILL_AFFINITY_DENIED},
+        {SKILL_SWORD, SKILL_AFFINITY_DENIED},
+        {SKILL_DAGGER, SKILL_AFFINITY_DENIED},
+        {SKILL_AXE, SKILL_AFFINITY_DENIED},
+        {SKILL_SPEAR, SKILL_AFFINITY_PRIMARY},
+        {SKILL_BOW, SKILL_AFFINITY_AVAILABLE},
+        {SKILL_MACE, SKILL_AFFINITY_DENIED},
+        {SKILL_BLASTER, SKILL_AFFINITY_DENIED},
+        {SKILL_SHIELD, SKILL_AFFINITY_DENIED},
+        {SKILL_LEATHER, SKILL_AFFINITY_AVAILABLE},
+        {SKILL_CHAIN, SKILL_AFFINITY_DENIED},
+        {SKILL_PLATE, SKILL_AFFINITY_DENIED},
+        {SKILL_FIRE, SKILL_AFFINITY_DENIED},
+        {SKILL_AIR, SKILL_AFFINITY_PRIMARY},
+        {SKILL_WATER, SKILL_AFFINITY_AVAILABLE},
+        {SKILL_EARTH, SKILL_AFFINITY_DENIED},
+        {SKILL_SPIRIT, SKILL_AFFINITY_DENIED},
+        {SKILL_MIND, SKILL_AFFINITY_DENIED},
+        {SKILL_BODY, SKILL_AFFINITY_DENIED},
+        {SKILL_LIGHT, SKILL_AFFINITY_DENIED},
+        {SKILL_DARK, SKILL_AFFINITY_DENIED},
+        {SKILL_ITEM_ID, SKILL_AFFINITY_DENIED},
+        {SKILL_MERCHANT, SKILL_AFFINITY_DENIED},
+        {SKILL_REPAIR, SKILL_AFFINITY_AVAILABLE},
+        {SKILL_BODYBUILDING, SKILL_AFFINITY_DENIED},
+        {SKILL_MEDITATION, SKILL_AFFINITY_AVAILABLE},
+        {SKILL_PERCEPTION, SKILL_AFFINITY_AVAILABLE},
+        {SKILL_DIPLOMACY, SKILL_AFFINITY_DENIED},
+        {SKILL_THIEVERY, SKILL_AFFINITY_DENIED},
+        {SKILL_TRAP_DISARM, SKILL_AFFINITY_AVAILABLE},
+        {SKILL_DODGE, SKILL_AFFINITY_DENIED},
+        {SKILL_UNARMED, SKILL_AFFINITY_DENIED},
+        {SKILL_MONSTER_ID, SKILL_AFFINITY_DENIED},
+        {SKILL_ARMSMASTER, SKILL_AFFINITY_AVAILABLE},
+        {SKILL_STEALING, SKILL_AFFINITY_DENIED},
+        {SKILL_ALCHEMY, SKILL_AFFINITY_DENIED},
+        {SKILL_LEARNING, SKILL_AFFINITY_AVAILABLE},
         {SKILL_CLUB, SKILL_AFFINITY_AVAILABLE},
         {SKILL_MISC, SKILL_AFFINITY_AVAILABLE}
     }
@@ -2236,8 +2278,63 @@ IndexedArray<IndexedArray<Mastery, SKILL_FIRST, SKILL_LAST>, CLASS_FIRST, CLASS_
         {SKILL_LEARNING, MASTERY_MASTER},
         {SKILL_CLUB, MASTERY_NOVICE},
         {SKILL_MISC, MASTERY_NOVICE}
-    }}
+    }},
+    {CLASS_DRAGOON, {{SKILL_FIRST, MASTERY_NONE}}},
+    {CLASS_LANCER, {{SKILL_FIRST, MASTERY_NONE}}},
+    {CLASS_DRAGON_KNIGHT, {{SKILL_FIRST, MASTERY_NONE}}},
+    {CLASS_DREAD_LANCER, {{SKILL_FIRST, MASTERY_NONE}}}
 }};
+
+namespace {
+
+const bool dragoonMasteriesInitialized = [] {
+    auto set = [](Class classType, std::initializer_list<std::pair<Skill, Mastery>> masteries) {
+        for (const auto &[skill, mastery] : masteries)
+            skillMaxMasteryPerClass[classType][skill] = mastery;
+    };
+
+    constexpr std::array<Class, 4> dragoonClasses = {
+        CLASS_DRAGOON, CLASS_LANCER, CLASS_DRAGON_KNIGHT, CLASS_DREAD_LANCER};
+    for (Class classType : dragoonClasses) {
+        // Blaster access is granted by the vanilla endgame reward, not by
+        // creation. Once granted, preserve the Knight family's ceiling.
+        skillMaxMasteryPerClass[classType][SKILL_BLASTER] = skillMaxMasteryPerClass[CLASS_KNIGHT][SKILL_BLASTER];
+        set(classType, {
+            {SKILL_SWORD, MASTERY_EXPERT}, {SKILL_DAGGER, MASTERY_EXPERT},
+            {SKILL_AXE, MASTERY_MASTER}, {SKILL_SPEAR, MASTERY_GRANDMASTER},
+            {SKILL_BOW, MASTERY_EXPERT}, {SKILL_SHIELD, MASTERY_MASTER},
+            {SKILL_LEATHER, MASTERY_NOVICE}, {SKILL_CHAIN, MASTERY_EXPERT},
+            {SKILL_PLATE, MASTERY_GRANDMASTER}, {SKILL_AIR, MASTERY_GRANDMASTER},
+            {SKILL_WATER, MASTERY_MASTER}, {SKILL_ITEM_ID, MASTERY_NOVICE},
+            {SKILL_MERCHANT, MASTERY_NOVICE}, {SKILL_REPAIR, MASTERY_MASTER},
+            {SKILL_BODYBUILDING, MASTERY_MASTER}, {SKILL_MEDITATION, MASTERY_EXPERT},
+            {SKILL_PERCEPTION, MASTERY_EXPERT}, {SKILL_DIPLOMACY, MASTERY_NOVICE},
+            {SKILL_TRAP_DISARM, MASTERY_NOVICE}, {SKILL_STAFF, MASTERY_NOVICE},
+            {SKILL_MACE, MASTERY_NOVICE}, {SKILL_UNARMED, MASTERY_NOVICE},
+            {SKILL_MONSTER_ID, MASTERY_EXPERT}, {SKILL_ARMSMASTER, MASTERY_GRANDMASTER},
+            {SKILL_ALCHEMY, MASTERY_NOVICE},
+            {SKILL_LEARNING, MASTERY_EXPERT}, {SKILL_CLUB, MASTERY_NOVICE},
+            {SKILL_MISC, MASTERY_NOVICE}});
+        if (classType == CLASS_DRAGOON || classType == CLASS_LANCER) {
+            const bool lancer = classType == CLASS_LANCER;
+            for (Skill skill : {SKILL_SWORD, SKILL_DAGGER, SKILL_BOW, SKILL_CHAIN,
+                                SKILL_MONSTER_ID, SKILL_LEARNING, SKILL_MEDITATION, SKILL_PERCEPTION})
+                skillMaxMasteryPerClass[classType][skill] = lancer ? MASTERY_EXPERT : MASTERY_NOVICE;
+            for (Skill skill : {SKILL_AXE, SKILL_SHIELD, SKILL_BODYBUILDING, SKILL_REPAIR})
+                skillMaxMasteryPerClass[classType][skill] = lancer ? MASTERY_EXPERT : MASTERY_NOVICE;
+            set(classType, {{SKILL_SPEAR, lancer ? MASTERY_MASTER : MASTERY_EXPERT},
+                            {SKILL_PLATE, lancer ? MASTERY_EXPERT : MASTERY_NOVICE},
+                            {SKILL_ARMSMASTER, lancer ? MASTERY_MASTER : MASTERY_NOVICE},
+                            {SKILL_AIR, lancer ? MASTERY_EXPERT : MASTERY_NOVICE},
+                            {SKILL_WATER, lancer ? MASTERY_EXPERT : MASTERY_NOVICE}});
+        }
+    }
+    set(CLASS_DRAGON_KNIGHT, {{SKILL_LIGHT, MASTERY_EXPERT}});
+    set(CLASS_DREAD_LANCER, {{SKILL_DARK, MASTERY_EXPERT}});
+    return true;
+}();
+
+}  // namespace
 
 int ai_arrays_size;
 std::vector<Pid> ai_near_actors_targets_pid;

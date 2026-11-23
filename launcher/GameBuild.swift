@@ -79,12 +79,14 @@ enum GameBuild: String {
      * @return                          The environment to launch the helper with.
      */
     func environment(base: [String: String], modRoot: URL?, vendorRefresh: Bool,
-                     allArtifactsStorage: Bool, chestReroll: Bool, monsterLootReroll: Bool) -> [String: String] {
+                     allArtifactsStorage: Bool, chestReroll: Bool, monsterLootReroll: Bool,
+                     dragoonClass: Bool) -> [String: String] {
         var environment = base
         environment.removeValue(forKey: "ENROTH_MM7_MOD_DIR")
         environment.removeValue(forKey: "ENROTH_MM7_ALL_ARTIFACTS_STORAGE")
         environment.removeValue(forKey: "ENROTH_MM7_CHEST_REROLL")
         environment.removeValue(forKey: "ENROTH_MM7_MONSTER_LOOT_REROLL")
+        environment.removeValue(forKey: "ENROTH_MM7_DRAGOON_CLASS")
         switch self {
         case .mm6:
             environment.removeValue(forKey: "ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY")
@@ -94,12 +96,14 @@ enum GameBuild: String {
             environment["ENROTH_MM7_ALL_ARTIFACTS_STORAGE"] = "0"
             environment["ENROTH_MM7_CHEST_REROLL"] = "0"
             environment["ENROTH_MM7_MONSTER_LOOT_REROLL"] = "0"
+            environment["ENROTH_MM7_DRAGOON_CLASS"] = "0"
             if let modRoot {
                 environment["ENROTH_MM7_MOD_DIR"] = modRoot.path
                 if vendorRefresh { environment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] = "1" }
                 if allArtifactsStorage { environment["ENROTH_MM7_ALL_ARTIFACTS_STORAGE"] = "1" }
                 if chestReroll { environment["ENROTH_MM7_CHEST_REROLL"] = "1" }
                 if monsterLootReroll { environment["ENROTH_MM7_MONSTER_LOOT_REROLL"] = "1" }
+                if dragoonClass { environment["ENROTH_MM7_DRAGOON_CLASS"] = "1" }
             }
         case .upstream:
             environment.removeValue(forKey: "ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY")

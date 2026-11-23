@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <memory>
 #include <string>
 
 #include "Testing/Unit/UnitTest.h"
@@ -67,6 +68,25 @@ UNIT_TEST(MM7PrivateMods, MonsterLootRerollRequiresExactMM7OptIn) {
     EXPECT_FALSE(monsterLootRerollEnabled(GameTitle::MM7, "true"));
     EXPECT_TRUE(monsterLootRerollEnabled(GameTitle::MM7, "1"));
     EXPECT_FALSE(monsterLootRerollEnabled(GameTitle::MM6, "1"));
+}
+
+UNIT_TEST(MM7PrivateMods, DragoonClassRequiresExactMM7OptIn) {
+    using mm7::mods::dragoonClassEnabled;
+    EXPECT_FALSE(dragoonClassEnabled(GameTitle::MM7, nullptr));
+    EXPECT_FALSE(dragoonClassEnabled(GameTitle::MM7, "0"));
+    EXPECT_FALSE(dragoonClassEnabled(GameTitle::MM7, "true"));
+    EXPECT_TRUE(dragoonClassEnabled(GameTitle::MM7, "1"));
+    EXPECT_FALSE(dragoonClassEnabled(GameTitle::MM6, "1"));
+}
+
+UNIT_TEST(MM7PrivateMods, LoadsDragoonClassIconFromModDirectory) {
+    PortraitTestDirectory files;
+    ASSERT_FALSE(files.directory.empty());
+    files.write("dragoon-class-icon.png", Color(20, 30, 40));
+    std::unique_ptr<GraphicsImage> icon = mm7::mods::loadDragoonClassIcon(Path(files.directory.string()));
+    ASSERT_NE(icon, nullptr);
+    EXPECT_EQ(icon->name(), "mm7-mod-dragoon-class-icon");
+    EXPECT_EQ(icon->size(), Sizei(32, 32));
 }
 
 UNIT_TEST(MM7PrivatePortraits, MoodMapping) {

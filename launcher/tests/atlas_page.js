@@ -35,7 +35,7 @@ function state(overrides) {
     data: titles, paths: {}, saves: [], running: false, runningBuild: '', mm6Available: false, upstreamAvailable: false,
     recordingFinalizing: false, recordingEnabled: false, recordVideo: false, recordDiagnostics: false,
     recordingPath: '', recordingSession: '', modsEnabled: false, vendorRefreshOnEntry: false,
-    allArtifactsStorage: false, chestReroll: false, monsterLootReroll: false,
+    allArtifactsStorage: false, chestReroll: false, monsterLootReroll: false, dragoonClass: false,
     portraits: [false, false, false, false], portraitMoods: [{}, {}, {}, {}],
     armor: {saved: false}, ...overrides,
   };

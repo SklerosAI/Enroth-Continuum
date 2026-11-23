@@ -952,6 +952,10 @@ GAME_TEST(Issues, Issue2817) {
     });
     engine->config->debug.NoMargaret.setValue(true); // Her tour would stop the party at the door.
     game.startNewGame();
+    // Prior tests may leave a completed award animation's icon ID behind.
+    // This test observes the transition from an explicitly idle animation.
+    for (PlayerBuffAnim &anim : EngineIocContainer::ResolveSpellFxRenderer()->pCharacterBuffs)
+        anim = {};
     pParty->_questBits.set(QBIT_EMERALD_ISLAND_SCAVENGER_HUNT_WON); // Unlocks Lord Markham's Congratulations topic.
     pParty->pCharacters[3]._achievedAwardsBits[AWARD_EMERALD_ISLE_COMPLETED_MAIN_QUEST] = true;
     test.startTaping();

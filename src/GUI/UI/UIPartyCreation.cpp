@@ -14,6 +14,7 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Graphics/Image.h"
 #include "Engine/Localization.h"
+#include "Engine/Mods/PrivateMods.h"
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6CreationVitals.h"
 #include "Engine/MM6/MM6Portraits.h"
@@ -51,7 +52,7 @@ GraphicsImage *ui_partycreation_buttmake = nullptr;
 
 GraphicsImage *ui_partycreation_character_frame = nullptr;
 
-std::array<GraphicsImage *, 9> ui_partycreation_class_icons;
+std::array<GraphicsImage *, 10> ui_partycreation_class_icons;
 std::array<GraphicsImage *, 22> ui_partycreation_portraits;
 
 std::array<GraphicsImage *, 19> ui_partycreation_arrow_r;
@@ -206,14 +207,18 @@ void CreateParty_EventLoop() {
                 static_cast<Attribute>((pGUIWindow_CurrentMenu->pCurrentPosActiveItem - pGUIWindow_CurrentMenu->pStartingPosActiveItem) % 7));
             pAudioPlayer->playUISound(SOUND_ClickPlus);
             break;
-        case UIMSG_PlayerCreationSelectActiveSkill:
-            if (pPlayer[uPlayerCreationUI_SelectedCharacter].GetSkillIdxByOrder(3) == SKILL_INVALID)
-                pParty->pCharacters[uPlayerCreationUI_SelectedCharacter].pActiveSkills[pPlayer[uPlayerCreationUI_SelectedCharacter]
-                    .GetSkillIdxByOrder(param + 4)] = CombinedSkillValue::novice();
+        case UIMSG_PlayerCreationSelectActiveSkill: {
+            Skill skill = pPlayer[uPlayerCreationUI_SelectedCharacter].GetSkillIdxByOrder(param + 4);
+            if (skill != SKILL_INVALID && pPlayer[uPlayerCreationUI_SelectedCharacter].GetSkillIdxByOrder(3) == SKILL_INVALID)
+                pParty->pCharacters[uPlayerCreationUI_SelectedCharacter].pActiveSkills[skill] = CombinedSkillValue::novice();
             pAudioPlayer->playUISound(SOUND_ClickSkill);
             break;
+        }
         case UIMSG_PlayerCreationSelectClass:
             if (engine->gameTitle() == GameTitle::MM6 && !mm6::isStartingClass(param))
+                break;
+            if (engine->gameTitle() == GameTitle::MM7 && param == std::to_underlying(CLASS_DRAGOON) &&
+                !mm7::mods::dragoonClassEnabled(engine->gameTitle()))
                 break;
             pPlayer[uPlayerCreationUI_SelectedCharacter].ChangeClass((Class)param);
             pAudioPlayer->playUISound(SOUND_SelectingANewCharacter);
@@ -391,8 +396,12 @@ void GUIWindow_PartyCreation::Update() {
         const Pointi classNamePos = isMM6 ? mm6::party_creation::kClassName + Pointi(159 * i, 0) : Pointi(pIntervalX + 73, 100);
         DrawText(assets->pFontCreate.get(), classNamePos, colorTable.White,
             localization->expand(localization->className(pParty->pCharacters[i].classType)), pGUIWindow_CurrentMenu->frameRect);
-        render->DrawQuad2D(ui_partycreation_class_icons[std::to_underlying(pParty->pCharacters[i].classType) /
-            (engine->gameTitle() == GameTitle::MM6 ? mm6::kClassTiers : 4)], {pIntervalX + 77, 50});
+        GraphicsImage *classIcon = ui_partycreation_class_icons[std::to_underlying(pParty->pCharacters[i].classType) /
+            (engine->gameTitle() == GameTitle::MM6 ? mm6::kClassTiers : 4)];
+        if (!isMM6 && pParty->pCharacters[i].classType == CLASS_DRAGOON)
+            render->DrawQuad2D(classIcon, Recti(Pointi(), classIcon->size()), Recti(Pointi(pIntervalX + 77, 50), Sizei(48, 48)));
+        else
+            render->DrawQuad2D(classIcon, {pIntervalX + 77, 50});
 
         if (pGUIWindow_CurrentMenu->keyboard_input_status != WINDOW_INPUT_NONE && uPlayerCreationUI_NameEditCharacter == i) {
             switch (pGUIWindow_CurrentMenu->keyboard_input_status) {
@@ -510,6 +519,7 @@ void GUIWindow_PartyCreation::Update() {
             DrawText(assets->pFontCreate.get(), {pTextCenter + x, y}, pColorText, name, pGUIWindow_CurrentMenu->frameRect);
         }
     } else {
+        if (!mm7::mods::dragoonClassEnabled(engine->gameTitle())) {
         pColorText = colorTable.Aqua;
         if (uClassType != CLASS_KNIGHT)
             pColorText = colorTable.White;
@@ -570,6 +580,29 @@ void GUIWindow_PartyCreation::Update() {
             pColorText = colorTable.White;
         pTextCenter = assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_THIEF));
         DrawText(assets->pFontCreate.get(), {pTextCenter + 453, 2 * pIntervalY + 417}, pColorText, localization->className(CLASS_THIEF), pGUIWindow_CurrentMenu->frameRect);
+
+        } else {
+            // The vanilla layout is a 3x3 grid that consumes the whole class panel.
+            // Keep its column widths, but compact the lines to make a fourth row for
+            // Dragoon rather than drawing over the adjacent bonus controls.
+            constexpr std::array<Class, 10> classes = {
+                CLASS_KNIGHT, CLASS_PALADIN, CLASS_RANGER, CLASS_DRAGOON,
+                CLASS_CLERIC, CLASS_DRUID, CLASS_SORCERER,
+                CLASS_ARCHER, CLASS_MONK, CLASS_THIEF,
+            };
+            constexpr int classX = 323;
+            constexpr int classY = 413;
+            const int classLineHeight = pIntervalY;
+            for (std::size_t i = 0; i < classes.size(); ++i) {
+                const Class classId = classes[i];
+                const int x = classX + 65 * static_cast<int>(i / 4);
+                const int y = classY + classLineHeight * static_cast<int>(i % 4);
+                pColorText = uClassType == classId ? colorTable.Aqua : colorTable.White;
+                pTextCenter = assets->pFontCreate->AlignText_Center(65, localization->className(classId));
+                DrawText(assets->pFontCreate.get(), {pTextCenter + x, y}, pColorText,
+                         localization->className(classId), pGUIWindow_CurrentMenu->frameRect);
+            }
+        }
     }
 
     pTextCenter = assets->pFontCreate->AlignText_Center(
@@ -590,6 +623,8 @@ void GUIWindow_PartyCreation::Update() {
     }
     for (int i = 0; !isMM6 && i < 9; ++i) {
         pSkillId = pParty->pCharacters[uPlayerCreationUI_SelectedCharacter].GetSkillIdxByOrder(i + 4);
+        if (pSkillId == SKILL_INVALID)
+            continue;
         pText = localization->skillName(pSkillId);
         // trim skills that are too long
         if (pText.size() > 13)
@@ -664,6 +699,10 @@ GUIWindow_PartyCreation::GUIWindow_PartyCreation() :
         ui_partycreation_class_icons[6] = assets->getIcon("IC_CLER");
         ui_partycreation_class_icons[7] = assets->getIcon("IC_DRUID");
         ui_partycreation_class_icons[8] = assets->getIcon("IC_SORC");
+        // Retain a vanilla fallback when the private asset was not staged.
+        ui_partycreation_class_icons[9] = assets->getDragoonClassIcon();
+        if (!ui_partycreation_class_icons[9])
+            ui_partycreation_class_icons[9] = assets->getIcon("IC_KNIGHT");
     }
 
     ui_partycreation_top = assets->getIcon("MAKETOP");
@@ -770,6 +809,7 @@ GUIWindow_PartyCreation::GUIWindow_PartyCreation() :
                          BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, baseClasses[i]);
         }
     } else {
+        if (!mm7::mods::dragoonClassEnabled(engine->gameTitle())) {
         CreateButton({323, 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0);
         CreateButton({323, v0 + 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0xC);
         CreateButton({323, 2 * v0 + 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0x14);
@@ -779,6 +819,22 @@ GUIWindow_PartyCreation::GUIWindow_PartyCreation() :
         CreateButton({453, 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0x10);
         CreateButton({453, v0 + 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 8);
         CreateButton({453, 2 * v0 + 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 4);
+        } else {
+            constexpr std::array<Class, 10> classes = {
+                CLASS_KNIGHT, CLASS_PALADIN, CLASS_RANGER, CLASS_DRAGOON,
+                CLASS_CLERIC, CLASS_DRUID, CLASS_SORCERER,
+                CLASS_ARCHER, CLASS_MONK, CLASS_THIEF,
+            };
+            constexpr int classX = 323;
+            constexpr int classY = 413;
+            const int classLineHeight = v0;
+            for (std::size_t i = 0; i < classes.size(); ++i) {
+                CreateButton(fmt::format("PartyCreation_Class{}", std::to_underlying(classes[i])),
+                             {classX + 65 * static_cast<int>(i / 4), classY + classLineHeight * static_cast<int>(i % 4)},
+                             {65, classLineHeight}, BUTTON_TYPE_NORMAL, 0,
+                             UIMSG_PlayerCreationSelectClass, std::to_underlying(classes[i]));
+            }
+        }
     }
 
     if (isMM6) {

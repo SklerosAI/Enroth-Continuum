@@ -139,9 +139,22 @@ bool loadGame(std::string_view fileName) {
         return false;
     }
 
-    engine->_lastLoadedSaveFileName = fileName;
+    auto snapshot = std::make_unique<SaveGame_MM7>();
+    deserialize(saveBytes, snapshot.get());
 
-    // TODO(captainurist): remained from Party::Reset, doesn't really belong here (or in Party::Reset).
+    if (!mm7::mods::dragoonClassEnabled(GameTitle::MM7) &&
+        std::ranges::any_of(snapshot->party.characters, [](const Character_MM7 &character) {
+            return character.classType >= std::to_underlying(CLASS_DRAGOON) &&
+                   character.classType <= std::to_underlying(CLASS_DREAD_LANCER);
+        })) {
+        MM_WARNING("Enable the Dragoon class mod in Atlas to load this save.");
+        reportFailedMM7SaveAction();
+        if (engine->_statusBar)
+            engine->_statusBar->setEvent("Enable Dragoon in Atlas to load this save.");
+        return false;
+    }
+
+    engine->_lastLoadedSaveFileName = fileName;
     CastSpellInfoHelpers::cancelSpellCastInProgress();
     current_character_screen_window = WINDOW_CHARACTER_STATS;
     if (pParty->bTurnBasedModeOn) {
@@ -150,7 +163,7 @@ bool loadGame(std::string_view fileName) {
     }
 
     SaveGame state;
-    deserialize(saveBytes, &state, tags::via<SaveGame_MM7>);
+    reconstruct(*snapshot, &state);
 
     // Move loaded state to global variables.
     mm7::mods::cancelMonsterLootNewGameDragon();

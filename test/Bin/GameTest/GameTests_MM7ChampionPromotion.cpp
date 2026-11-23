@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
+#include "Engine/Mods/PrivateMods.h"
 
 #include "Engine/Data/AwardEnums.h"
 #include "Engine/Data/HouseEnums.h"
@@ -263,6 +264,25 @@ void runReturnRefusal(EngineController &game, int pageWins, int squireWins, int 
 }
 
 } // namespace
+
+GAME_TEST(MM7ChampionPromotion, DragoonNoKnightLightPromotion) {
+    if (!mm7::mods::dragoonClassEnabled(engine->gameTitle()))
+        GTEST_SKIP() << "Requires ENROTH_MM7_DRAGOON_CLASS=1";
+    game.startNewGame();
+    prepareChampionParty(AWARD_PROMOTION_CHEVALIER, true, false);
+    pParty->pCharacters[0].classType = CLASS_LANCER;
+    for (int i = 1; i < 4; ++i)
+        pParty->pCharacters[i].classType = CLASS_CLERIC;
+    pParty->uNumArenaWins[ARENA_LEVEL_KNIGHT] = 5;
+    NPCData &leda = pNPCStats->pNPCData[ledaNpcId];
+    openLedaDialogue(game, &leda);
+    ASSERT_TRUE(selectNpcEvent(game, &leda, offerEventId));
+    ASSERT_TRUE(selectNpcEvent(game, &leda, returnEventId));
+    EXPECT_EQ(pParty->pCharacters[0].classType, CLASS_DRAGON_KNIGHT);
+    for (int i = 1; i < 4; ++i)
+        EXPECT_EQ(pParty->pCharacters[i].classType, CLASS_CLERIC);
+    leaveDialogue(game);
+}
 
 GAME_TEST(MM7ChampionPromotion, SourceContracts) {
     game.startNewGame();

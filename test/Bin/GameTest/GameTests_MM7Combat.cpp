@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <set>
 #include <string_view>
 #include <utility>
@@ -6,6 +7,7 @@
 
 #include "Engine/AttackList.h"
 #include "Engine/Engine.h"
+#include "Engine/Mods/PrivateMods.h"
 #include "Engine/Localization.h"
 #include "Engine/Party.h"
 #include "Engine/Objects/Actor.h"
@@ -25,6 +27,51 @@
 
 MonsterProjectile ParseMissleAttackType(std::string_view missle_attack_str);
 std::pair<int, int> MonsterPopup_Draw(unsigned int uActorID, Recti* pWindow);
+
+GAME_TEST(MM7Combat, DragoonFinalMeleePacketsRespectIndependentImmunity) {
+    if (!mm7::mods::dragoonClassEnabled(engine->gameTitle()))
+        GTEST_SKIP() << "Requires ENROTH_MM7_DRAGOON_CLASS=1";
+    game.startNewGame();
+    ASSERT_GT(pActors.size(), 10u);
+    Actor &target = pActors[10];
+    target.monsterInfo.resPhysical = 200;
+    auto &character = pParty->pCharacters[0];
+    for (Class classType : {CLASS_DRAGOON, CLASS_LANCER, CLASS_DRAGON_KNIGHT, CLASS_DREAD_LANCER, CLASS_KNIGHT}) {
+        character.classType = classType;
+        const bool final = classType == CLASS_DRAGON_KNIGHT || classType == CLASS_DREAD_LANCER;
+        for (int immune : {0, 1, 2, 3}) {
+            target.monsterInfo.resAir = immune & 1 ? 200 : 0;
+            target.monsterInfo.resWater = immune & 2 ? 200 : 0;
+            const int expected = final ? ((immune & 1 ? 0 : 10) + (immune & 2 ? 0 : 10)) : 0;
+            int successfulDamage = 0;
+            for (int attempt = 0; attempt < 100; ++attempt) {
+                target.aiState = Standing;
+                target.hp = 10000;
+                (void) Actor::DamageMonsterFromParty(Pid(OBJECT_Character, 0), 10, Vec3f());
+                int damage = 10000 - target.hp;
+                EXPECT_TRUE(damage == 0 || damage == expected);
+                successfulDamage = std::max(successfulDamage, damage);
+            }
+            EXPECT_EQ(successfulDamage, expected);
+        }
+    }
+}
+
+GAME_TEST(MM7Combat, DragoonVitalsAdvanceAtEachPromotion) {
+    game.startNewGame();
+    auto &character = pParty->pCharacters[0];
+    int tier = 0;
+    for (Class classType : {CLASS_DRAGOON, CLASS_LANCER, CLASS_DRAGON_KNIGHT, CLASS_DREAD_LANCER}) {
+        character.classType = classType;
+        character.uLevel = 10;
+        const int health = character.GetMaxHealth();
+        const int mana = character.GetMaxMana();
+        character.uLevel = 11;
+        EXPECT_EQ(character.GetMaxHealth() - health, tier == 0 ? 4 : tier == 1 ? 6 : 8);
+        EXPECT_EQ(character.GetMaxMana() - mana, tier == 0 ? 2 : tier == 1 ? 3 : 5);
+        ++tier;
+    }
+}
 
 GAME_TEST(MM7Combat, SpiritLashOutOfRangeDoesNotSpendMana) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);

@@ -403,6 +403,10 @@ void Localization::initializeClassNames() {
     this->_classNames[CLASS_WIZARD] = this->_localizationStrings[LSTR_WIZARD];
     this->_classNames[CLASS_ARCHAMGE] = this->_localizationStrings[LSTR_ARCHMAGE];
     this->_classNames[CLASS_LICH] = this->_localizationStrings[LSTR_LICH];
+    this->_classNames[CLASS_DRAGOON] = "Dragoon";
+    this->_classNames[CLASS_LANCER] = "Lancer";
+    this->_classNames[CLASS_DRAGON_KNIGHT] = "Dragon Knight";
+    this->_classNames[CLASS_DREAD_LANCER] = "Dread Lancer";
 
     // class.txt table structure: name (localized) | description (localized) | base class name (not localized, not used).
     Blob classBlob = engine->resources()->eventsData("class.txt");
@@ -415,6 +419,12 @@ void Localization::initializeClassNames() {
         }
         std::array<std::string_view, 3> tokens = split(line).by('\t');
         _classDescriptions[i] = unquote(tokens[1]);
+    }
+    if (engine->gameTitle() == GameTitle::MM7) {
+        _classDescriptions[CLASS_DRAGOON] = "Dragoons combine spear combat with Air magic, wearing light armor and using Intelligence for spell points.";
+        _classDescriptions[CLASS_LANCER] = "Lancers advance the Dragoon's spear combat and Air magic through the Knight promotion quests.";
+        _classDescriptions[CLASS_DRAGON_KNIGHT] = "Dragon Knights master the Dragoon's Light-path promotion and add Air and Water damage to successful melee hits.";
+        _classDescriptions[CLASS_DREAD_LANCER] = "Dread Lancers master the Dragoon's Dark-path promotion and add Air and Water damage to successful melee hits.";
     }
 }
 

@@ -54,7 +54,7 @@ extern IndexedArray<std::array<PortraitId, 5>, SPEECH_FIRST, SPEECH_LAST> portra
 extern std::array<int16_t, 4> pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing;
 extern IndexedArray<int, SKILL_FIRST, SKILL_LAST> skills_max_level;
 extern IndexedArray<Duration, SKILL_FIRST, SKILL_LAST> base_recovery_times_per_weapon_type;
-extern std::array<IndexedArray<SkillAffinity, SKILL_FIRST, SKILL_LAST>, 9> pSkillAvailabilityPerClass;
+extern std::array<IndexedArray<SkillAffinity, SKILL_FIRST, SKILL_LAST>, 10> pSkillAvailabilityPerClass;
 extern IndexedArray<IndexedArray<Mastery, SKILL_FIRST, SKILL_LAST>, CLASS_FIRST, CLASS_LAST> skillMaxMasteryPerClass;
 
 extern std::vector<Pid> ai_near_actors_targets_pid;

@@ -169,6 +169,14 @@ name or a variant's display name. `mm6::resolveEncounterMonster` (`MM6EncounterM
 variant and returns invalid on a missing or ambiguous match, and the spawner throws then, rather than substitute an
 unrelated monster.
 
+The spawner follows MM6.exe 0x455910. A map's level odds cap at row 4 of the A, B and C table, 30%, 40% and 30%, where
+MM7 goes on to row 5. The first monster of a group stands on the spawn point and each next one on a random point of a
+ring around it, 128 outdoors and 64 indoors, in MM6.exe's 16.16 fixed point (`MM6EncounterPlacement.h`). Outdoors the
+ring point isn't checked. Indoors a point outside the spawn point's sector, or with no floor within 1024 of the spawn
+point, puts the monster on the spawn point instead. A spawned monster keeps its `monsters.txt` hostility and is not
+made an aggressor, rest encounters included. Map load keeps every monster's hostility as MM6.exe does (0x455703 indoors,
+0x46E880 outdoors), where MM7 resets it to friendly. The GrayFace patch doesn't touch the spawner.
+
 The event opcode `SummonMonsters` (19) gives encounter slot 1 to 3, tier 1 to 3, a count and a position, with no group
 or name. See [MM6 events](mm6-events.md).
 

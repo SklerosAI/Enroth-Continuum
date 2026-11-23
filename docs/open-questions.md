@@ -22,9 +22,10 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 
 ## MM6: rules and combat
 
-- **Encounter spawner.** MM6.exe rings extra monsters 128 (outdoor) or 64 (indoor) units around the spawn point,
-  caps the level odds at difficulty 4 and keeps table hostility. The port stacks them, caps at 5 and spawns friendly
-  aggressors. Not changed because it reaches every MM6 map. `SpawnEncounter` in `src/Engine/Objects/Actor.cpp`.
+- **Encounter spawner edges.** MM6.exe 0x455910 spawns nothing when the group would bring the map to 500 actors,
+  spawns indoors on a spawn point outside every sector, and has no alert-status check. The port fills slots one by one,
+  drops such a spawn point as MM7 does, and keeps MM7's alert check. No shipped map was scanned for spawn points
+  outside every sector. `SpawnEncounter` in `src/Engine/Objects/Actor.cpp`.
 - **Event W2 follow-up.** With nobody active, the event run picks one member, but other active-member reads in the
   same run (a held item moved when a new one is given) still see nobody. `MM6GiveItemEvent.cpp`, `EvtInterpreter.cpp`.
 - **Map timer hour 88.** The Temple of the Sun (t4) dawn timer has an out-of-range hour byte. Its first firing now

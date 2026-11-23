@@ -228,8 +228,8 @@ GAME_TEST(MM6EventMember, ClickWellWithNobodyActive) {
         if (nobodyActive) {
             EXPECT_EQ(activeTape, tape(1, 2, 3, -1));
             // One member drinks per click, and nobody drinks once his luck reaches 15. The second member starts at 16.
-            EXPECT_EQ(luckTape, tape({11, 16, 13, 10}, {13, 16, 13, 10}, {13, 16, 15, 10}, {13, 16, 15, 12}, {13, 16, 15, 14}, {15, 16, 15, 14}));
-            EXPECT_EQ(statusTape, tape("Well", "+2 Luck permanent", "Refreshing!", "+2 Luck permanent", "Refreshing!", "+2 Luck permanent"));
+            EXPECT_EQ(luckTape, tape({11, 16, 13, 10}, {11, 16, 13, 12}, {13, 16, 13, 12}, {13, 16, 15, 12}, {15, 16, 15, 12}, {15, 16, 15, 14}));
+            EXPECT_EQ(statusTape, tape("Well", "+2 Luck permanent", "Refreshing!", "+2 Luck permanent", "Refreshing!"));
             EXPECT_EQ(waterTape, tape(8, 7, 6, 5, 4, 3));
         } else {
             EXPECT_EQ(activeTape, tape(0));

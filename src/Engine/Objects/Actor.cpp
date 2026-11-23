@@ -14,6 +14,7 @@
 #include "Engine/MM6/MM6PartyHostility.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6EncounterMonster.h"
+#include "Engine/MM6/MM6EncounterPlacement.h"
 #include "Engine/MM6/MM6Finale.h"
 #include "Engine/MM6/MM6EventSpell.h"
 #include "Engine/MM6/MM6MonsterAttack.h"
@@ -4492,7 +4493,8 @@ void SpawnEncounter(MapData *mapData, SpawnPoint *spawn, int monsterCatMod, int 
     if (baseInternalName.empty() || baseInternalName[0] == '0') return;
 
     monsterCategoryOddsSet += monsterCatMod;
-    if (monsterCategoryOddsSet > 5) monsterCategoryOddsSet = 5;
+    const int maxCategoryOddsSet = engine->gameTitle() == GameTitle::MM6 ? mm6::MAX_ENCOUNTER_LEVEL_ODDS : 5;
+    if (monsterCategoryOddsSet > maxCategoryOddsSet) monsterCategoryOddsSet = maxCategoryOddsSet;
 
     if (countOverride) NumToSpawn = countOverride;
     if (NumToSpawn <= 0) return;
@@ -4525,6 +4527,7 @@ void SpawnEncounter(MapData *mapData, SpawnPoint *spawn, int monsterCatMod, int 
 
     // spawning loop
     std::string fullInternalName = baseInternalName;
+    Vec3f mm6Position = spawn->position;
     for (int i = 0; i < NumToSpawn; ++i) {
         Actor *pMonster = AllocateActor();
         if (!pMonster)
@@ -4572,17 +4575,23 @@ void SpawnEncounter(MapData *mapData, SpawnPoint *spawn, int monsterCatMod, int 
         pMonster->radius = monsterDesc->monsterRadius;
         pMonster->height = monsterDesc->monsterHeight;
         pMonster->moveSpeed = monsterDesc->movementSpeed;
-        pMonster->initialPosition = spawn->position;
-        pMonster->pos = spawn->position;
+        pMonster->initialPosition = engine->gameTitle() == GameTitle::MM6 ? mm6Position : spawn->position;
+        pMonster->pos = pMonster->initialPosition;
         pMonster->tetherDistance = 256;
         pMonster->sectorId = pSector;
         pMonster->hostilityGroup = monsterTypeForMonsterId(pMonster->monsterInfo.id);
         pMonster->group = spawn->group;
         pMonster->PrepareSprites(0);
-        pMonster->monsterInfo.hostilityType = HOSTILITY_FRIENDLY;
+        if (engine->gameTitle() != GameTitle::MM6)
+            pMonster->monsterInfo.hostilityType = HOSTILITY_FRIENDLY;
+
+        int randomAngle = grng->random(2048);
+        if (engine->gameTitle() == GameTitle::MM6) {
+            mm6Position = mm6::encounterRingPosition(spawn->position, randomAngle, uCurrentlyLoadedLevelType == LEVEL_OUTDOOR, pSector);
+            continue;
+        }
 
         // TODO(pskelton): We calculate a new position for the monster, but we never use it.
-        int randomAngle = grng->random(2048);
         int distance = (((uCurrentlyLoadedLevelType != LEVEL_OUTDOOR) - 1) & 0x40) + 64; // 64 indoor or 128 outdoor
 
         Vec3f newPos;

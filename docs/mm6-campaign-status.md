@@ -293,7 +293,14 @@ first-map capture also passed; the capture shows the X and dice in the clear mar
 
 The local arm64 MM6 helper builds and passes deep strict signing verification with Apple's native OpenGL
 framework. Its development cache originally selected XQuartz; the SDK OpenGL stub now supplies the native
-linkage, as described in [Testing](testing.md#native-macos-mm6-helper-linkage). No new Atlas was installed.
+linkage, as described in [Testing](testing.md#native-macos-mm6-helper-linkage).
+
+The installed Atlas now includes the Release arm64 MM6 helper built from clean source `626f5f431` and the
+Release MM7 helper from `014514250`. Both link only Apple system libraries and frameworks; MM6's PNG library
+is static. Deep strict signing passed, and every installed file and symlink matched the verified assembled
+bundle. The installed Atlas rendered correctly, showed MM6 data and its playtest helper ready, and showed
+Fortune's Turn and All Artifacts on for the next MM6 launch. The former installed bundle and superseded staged
+helper bundles were deleted directly without a backup. Profiles and saves were left outside the replacement.
 The visible owner-session gate and the spell/item admission limits above remain open.
 
 A fresh C0 to C9 campaign chain also passed with Fortune's Turn and All Artifacts enabled throughout, keeping

@@ -333,3 +333,7 @@ cache can instead select XQuartz. Configure `OPENGL_gl_LIBRARY` to the active ma
 `System/Library/Frameworks/OpenGL.framework/OpenGL.tbd`, rebuild the helper, then sign and verify the staged
 bundle. Use the SDK stub, since the runtime framework binary may live only in the macOS dyld cache. A successful
 headless test does not establish this graphical linkage.
+
+A Debug-to-Release cache change can also leave `PNG_LIBRARY_RELEASE` pointing at Homebrew even when the
+Debug PNG archive was static. Pin that Release entry to the existing local static `libpng16.a` and check the
+finished helper with `otool -L`; it must have no Homebrew or XQuartz runtime dependency before Atlas assembly.

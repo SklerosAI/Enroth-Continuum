@@ -122,8 +122,12 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 - **Graphical Mac play.** The audit's interface, media, mods and long-session rows need visible play on the Mac. See
   [MM7 status](mm7-status.md) for the rows. The chest reroll button and the Fortune's Turn popup, checkbox, bounty, ore
   smith and enchant flows were checked headlessly and in hidden captures, not by clicking in the installed app.
-- **Full audit.** The archive, map, spell, item and monster audit is planned for the week of 2026-11-23 and has not
-  started. See [MM7 status](mm7-status.md#full-audit-plan).
+- **Playthrough verification.** The full MM7 suite and both C0-C7 chains last passed before Fortune's Turn absorbed
+  chest reroll and the Dragoon class landed. `codex/mm7` rates an MM7 playthrough NO-GO on verification only, with no
+  known player-reachable crash.
+- **Full audit.** The archive, map, spell, item and monster audit has not started. Its plan names the week of
+  2026-11-23, the delivery order puts it after the MM6 working gate. Owner's call. See
+  [MM7 status](mm7-status.md#full-audit-plan).
 - **In-game mod panel.** A read-only panel of the Atlas launch options and the Fortune's Turn checkbox is on the
   owner's backlog, not implemented.
 - **Scroll targeting exits.** Cancel returns the scroll. Attacking, passing the turn, stealing, a full spell queue and
@@ -132,10 +136,11 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   MM7 owner's call. `src/Engine/Graphics/Outdoor.cpp`.
 - **Wall pressure plates.** Original MM7 fires a pressure plate the party runs into. Upstream's fix for #2244 dropped
   wall plates along with the lift retrigger. MM7 keeps upstream's behaviour. `BLV_ProcessPartyActions` in `Indoor.cpp`.
-- **2026-11-07 audit items with no fix recorded since.** A wand charge is spent before the outcome. Monster Haste and
+- **2026-11-07 audit items still open on 2026-11-23.** A wand charge is spent before the outcome. Monster Haste and
   Day of Protection are never read. The Hour of Power hit check reads the Shield buff's power. The `_SelectTarget`
-  index never advances. Two enchantment families add no elemental damage. Artifacts 530, 531 and 536 lack their
-  described effects. Two grandmaster teacher requirements and two Disarm Trap caps differ from their text.
+  index never advances. The Assassins' and Barbarians' enchantments add no elemental damage. Artifacts 530, 531 and
+  536 lack their Sleep, elf-slaying and drowning effects. Two grandmaster teacher requirements differ from their text,
+  and the Archer and Warrior Mage Disarm Trap caps are unresolved against MM7.exe.
 - **Upstream issues still present at the audit.** #2867, #2502, #1463, #2770, #2763, #2786, #2071, #920 and #2003,
   #1530, #682, #586, #1917, #1918, #843, #2268, #2232. Mac: #1201 (HiDPI), #2171 (window size after fullscreen) and
   #1591 (signing).

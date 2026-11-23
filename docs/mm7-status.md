@@ -9,7 +9,9 @@ Codex owns MM7. It is the fork's first playable title, released as `ECv0.1.0` on
 `ECv0.1.1` on 2026-11-20 (see [Releases](releases.md)). MM7 work continues on the single `codex/mm7` branch and
 reaches `master` from there. Its working gate closed on 2026-11-11: the current build launched through The Atlas, the
 owner played visibly with music, voices and combat sound, saved, relaunched and loaded, and a chained test run reached
-the Light ending through real saves. The full audit (stage 3 of the delivery order) continues alongside MM6 work.
+the Light ending through real saves. The full audit (stage 3 of the delivery order) has not started. MM7's own pages on
+`codex/mm7` (`.llm-wiki/Campaign-Status.md` and `.llm-wiki/MM7-Playthrough-Go-No-Go.md`) are newer than this page,
+which was consolidated on 2026-11-19.
 
 ## Working gate (closed 2026-11-11)
 
@@ -159,12 +161,14 @@ Older save folders hold different saves with colliding names. They are never mer
 
 The Atlas Atelier offers opt-in MM7 mods for a Private mods launch only: portrait moods, an armor AC override, vendor
 stock refreshed on entry, All Artifacts + Storage (every spawnable artifact obtainable once, Castle Harmondale's
-chests as storage), chest reroll and Fortune's Turn (reroll random monster and click loot, bounty targets, ore smith
-rewards and weapon enchantments). Details are in [Mods and Atlas](mods-and-atlas.md).
+chests as storage), Fortune's Turn (one choice since 2026-11-22 that covers the chest reroll button and rerolls of random
+monster and click loot, bounty targets, ore smith rewards and weapon enchantments) and the default-off Dragoon class.
+Details are in [Mods and Atlas](mods-and-atlas.md).
 
 ## Full audit plan
 
-The archive, map, spell, item and monster audit has not started. It is planned for the week of 2026-11-23, delta-first:
+The archive, map, spell, item and monster audit has not started. Its plan names the week of 2026-11-23, while the
+delivery order puts it after the MM6 working gate, so the start is the owner's call. The plan is delta-first:
 record the `codex/mm7` commit, the tag and the installed identities, then reuse the 2026-11-07 per-entry reports
 wherever an archive's hash and its consumers are unchanged. Raw output goes to an ignored
 `local-game-data/mm7/audit-2026-11-23/` folder and public summaries carry counts and code references only. The work

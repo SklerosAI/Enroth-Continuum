@@ -3861,3 +3861,9 @@ Chronological record of wiki activity.
 - MM6 passed 412 headless cases without skips, 44 fresh-process checks and the enabled-mod C0–C9 chain, plus native controls and a hidden HUD capture. The earlier MM7 focused, recorder and launcher checks remain the applicable validation; the stopped default sweep is not a complete suite result.
 - The installed candidate matched its stage and passed deep strict signature verification. Visible Atlas Campaigns and Mods showed MM6 ready with All Artifacts and Fortune’s Turn On. Installed-game interaction and normal Save/quit/relaunch/Load still require owner playtesting.
 - Removed the prior installed app and superseded staging artifacts without retaining an old-app backup. Current Release helper build products remain; profiles, saves and original game data were preserved. Updated runtime isolation, handoff and index; private evidence remains local.
+
+## [2026-11-23] lint | MM7 docs checked against code, playthrough go/no-go added
+- by: T-Burton-ND via claude-code
+- Checked the MM7 plans, checklists and wiki pages against `codex/mm7` at `53505e6bc` and corrected what the code and history contradict: the `ECv0.1.1` tag, native atomic SaveLoad, stale open items in Campaign Status and the 2026-11-07 audit results, three wrong test names in the quest catalog, rollback-app steps, and the 2026-11-12 coordination boards.
+- Added [MM7 Playthrough Go/No-Go](MM7-Playthrough-Go-No-Go.md). No player-reachable MM7 throw or assert was found. The verdict is NO-GO on verification only, because the full suite and both chains last ran before Fortune's Turn absorbed chest reroll and the Dragoon class landed.
+- Campaign Status and Open Questions gained 2026-11-23 sections. The full-audit start is left to the owner. MM6 status lives in `docs/` on `claude/mm6`.

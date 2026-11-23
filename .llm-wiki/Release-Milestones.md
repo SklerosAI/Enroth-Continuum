@@ -7,6 +7,57 @@ related: ["[[Campaign-Status]]", "[[Runtime-Isolation]]", "[[MM7-Playtest-Record
 
 # Release Milestones
 
+## Local MM6/MM7 playtest app — 2026-11-22
+
+The owner authorized a new local app build and installation. Atlas now bundles
+separately built Release arm64 MM6 and MM7 helpers from their continuing title
+branches. This is a local playtest update: no release tag was created or moved,
+and MM6 remains a playtest candidate.
+
+| Helper | Clean source commit | Source tree | Installed executable SHA256 |
+| --- | --- | --- | --- |
+| MM7 | `01451425068e5699deae318680f1673d24ad9005` | `df6aa1d2d4336ee78b9dcc5c0dbef2476457ef9e` | `bd89d30901b2b3f93d8d59ee357aace2a67e7c435d8bcb2a2e955b7b5b4eee54` |
+| MM6 | `626f5f431015096adaa4b89f9d54aae92d3d7c1a` | `0fcb761c9f4fa39bf7619270ed54c2e616a3ff9f` | `ab4deb72a5f385cbb877c249b9a0e37ea375ed75bb7739da9d3f41bd51c429e7` |
+
+The MM6 mod implementation is `27019e9fa`; the later source commit includes
+its verified documentation. Atlas carries helper build-info records and
+existing media notices. Both helpers link Apple system OpenGL and system
+runtime libraries only. The MM6 Release build additionally pins its existing
+local static PNG archive; neither helper requires XQuartz or a package-manager
+runtime library. These local builds reuse existing static dependency caches;
+they are not new clean-offline-source-build evidence.
+
+The merged [Fortune’s Turn](MM7-Monster-Loot-Reroll-Mod.md) choice enables
+chest reroll and the other reward rerolls for each title. Chest Reroll stays
+available with the in-game X off; X controls non-chest rewards. MM6 has a
+separate All Artifacts choice. The installed Atlas visibly showed both MM6
+choices On, campaign data ready and the MM6 Play action available.
+
+### Verification and remaining playtest
+
+- The full MM6 headless suite passed 412 cases with no skips, the fresh-process
+  save/load gate passed 44 checks, and the C0–C9 campaign chain passed with
+  Fortune’s Turn and All Artifacts enabled. Native controls and a hidden HUD
+  capture also passed. These checks do not close visible campaign acceptance.
+- Fresh MM7 focused checks passed eight Dragoon cases and 39 mod-coexistence
+  cases, with one expected off-only skip. Recorder checks passed 29/29;
+  launcher Swift contracts, Atlas page tests, full Swift typecheck and changed
+  C++ lint passed. The unrelated 749-case default sweep was intentionally
+  stopped; no new complete MM7 suite result is claimed.
+- The installed app matched the staged candidate’s 45 files and symlink
+  entries, and deep strict code-sign verification passed. The visible check
+  covered Atlas Campaigns and Mods, not interactive game play or an installed
+  helper’s normal Save/quit/relaunch/Load transaction.
+- The prior installed app was deleted directly without retaining a backup.
+  Superseded helper app artifacts and the final outer staging bundle were
+  removed after verification. Current Release helper outputs remain as build
+  products. Profiles, saves and original game data were not removed.
+
+Continue with owner MM6 playtesting: opening, travel, dungeon interaction,
+chest button with X off, non-chest rerolls with X on, and normal save/reload.
+[Runtime Isolation](Runtime-Isolation.md) defines the helper/profile boundary;
+the [Agent Handoff](Agent-Handoff.md) records the current source checkpoint.
+
 ## Local MM7 UI update after ECv0.1.1 — 2026-11-20
 
 The installed Atlas still reports 0.1.1, but its MM7 helper now contains the

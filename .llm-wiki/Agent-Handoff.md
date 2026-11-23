@@ -16,6 +16,31 @@ the replacement is verified. Never keep an old app version for rollback;
 repair or migrate saved games for the new build when needed. This rule does not
 by itself authorize deletion of profiles or saves.
 
+## Installed MM6/MM7 playtest checkpoint — 2026-11-22
+
+The owner’s requested rebuild is installed and visibly verified in Atlas.
+Release arm64 MM7 comes from `014514250` on `codex/mm7`; MM6 comes from
+`626f5f431` on `claude/mm6`, including implementation `27019e9fa`. Exact
+source trees, installed helper hashes and verification limits are in
+[Release Milestones](Release-Milestones.md#local-mm6mm7-playtest-app--2026-11-22).
+Both helpers use Apple system OpenGL and system runtime libraries. Atlas
+retains isolated profiles and title-local mod flags.
+
+MM6 All Artifacts and merged Fortune’s Turn are visibly On for the next MM6
+launch. The chest’s Reroll button works independently of the bottom-left X;
+X controls non-chest rewards. The full MM6 suite passed 412 cases without
+skips, the fresh-process gate passed 44 checks and the enabled-mod C0–C9
+campaign chain passed. This is playtest readiness, not completed visible
+campaign acceptance. The final visible check covered Atlas only; normal
+installed-game interaction and Save/quit/relaunch/Load await the owner.
+
+The installed candidate matched its stage and passed deep strict signing.
+The prior app, superseded helper artifacts and outer stage were removed
+without retaining an old-app backup. Current Release helper build products
+remain. Profiles, saves and game data were preserved. MM7 code cleanup and
+merged controls are committed; the source-cleanup-only checkpoint below is
+historical and superseded for installation status by this section.
+
 ## Source cleanup and merged rerolls — 2026-11-22
 
 The owner authorized preserving and committing the previously dirty MM7 work.

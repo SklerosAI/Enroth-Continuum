@@ -10,7 +10,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 ## Navigation and conventions
 
 - [Home](Home_Enroth-Continuum.md) — Curated entry point
-- [Agent Handoff](Agent-Handoff.md) — Title ownership, current one-branch MM7 continuity and durability checkpoint, visible gaps and historical MM6 handoff
+- [Agent Handoff](Agent-Handoff.md) — Installed November 22 MM6/MM7 playtest checkpoint, title ownership, source continuity and remaining visible acceptance
 - [Current Delivery Order](Current-Delivery-Order.md) — Owner's MM7 working → MM6 working → full MM7 audit → full MM6 audit sequence and coordination rules
 - [November 9 Progress](Progress-2026-11-09.md) — Dated integrated MM6/MM7 work and priority-ordered resume steps
 - [Agent communications](../agent_comms/README.md) — Cross-model claims, handoffs, reviews and model-card protocol
@@ -25,7 +25,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 ## Project and provenance
 
 - [Project Overview](Project-Overview.md) — Fork scope, upstream authorship, and project goals
-- [Release Milestones](Release-Milestones.md) — Published ECv0.1.0 and ECv0.1.1 tags, post-tag local MM7 UI update, installed-build provenance and remaining playtest checks
+- [Release Milestones](Release-Milestones.md) — Published tags and November 22 Release MM6/MM7 playtest installation, exact helper provenance and remaining owner checks
 - [Source and Privacy Boundary](Source-and-Privacy-Boundary.md) — Public source and private game-data rules
 
 ## Campaigns and runtime
@@ -36,7 +36,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
 - [MM7 All Artifacts + Storage](MM7-All-Artifacts-Storage-Mod.md) — Optional collection-based random-artifact eligibility with Castle Harmondale persistent storage
 - [MM7 Private Portrait Mod](MM7-Private-Portrait-Mod.md) — Local mood PNG layout, shared MM7 portrait resolver, Atlas controls, and verified hidden HUD capture
-- [Runtime Isolation](Runtime-Isolation.md) — Title-locked MM6/MM7 helpers, staged Atlas sibling assembler and isolated MM6 playtest entry; MM8 remains gated
+- [Runtime Isolation](Runtime-Isolation.md) — Installed Release MM6/MM7 helpers, Apple system runtime linkage, isolated profiles/mod flags and MM8’s reserved slot
 - [MM7 Self-Contained Source](MM7-Self-Contained-Source.md) — Tracked Mac source, verified integration candidate and remaining graphical, save and identity gates
 - [MM7 Mac Dependency Recipe](MM7-Mac-Dependency-Recipe.md) — Five tracked media-library sources build to nine static arm64 archives
 - [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md) — One-command clean tracked-source MM7 and Atlas build under network denial, with focused headless controls

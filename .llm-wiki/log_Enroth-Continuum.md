@@ -3847,3 +3847,9 @@ Chronological record of wiki activity.
 - Preserved the previously uncommitted Dragoon implementation, its supplied icon, headless runner, recorder retention changes, inherited media notices and owner app-replacement policy in `264d8d800`. No working changes were discarded.
 - Static review found empty right-click descriptions for the four custom classes; descriptions and an existing creation-test assertion now cover them. Fresh focused Dragoon tests passed 8/8, recorder tests 29/29, launcher Swift/page checks and changed C++ lint passed.
 - The current app-replacement policy supersedes the historical retained-app-copy practice recorded above. This source cleanup does not install an app or modify owner profiles or saves.
+
+## [2026-11-22] update | Merged Fortune’s Turn controls
+- by: T-Burton-ND via codex
+- Merged the chest and reward options into one Fortune’s Turn choice per title in Atlas. Existing chest or reward preferences migrate as their union; changing the choice writes both legacy keys. Chest Reroll remains available when the HUD X is off. Atlas also exposes the MM6 helper’s independent All Artifacts choice and preserves MM6 vendor preferences.
+- Fresh MM7 coexistence checks passed 39 cases with one expected off-only skip, with Dragoon, All Artifacts, vendor refresh and Fortune’s Turn enabled while the legacy chest flag was off. The chest test clicks Reroll with X off. Swift launch/environment contracts, Atlas page tests, full AtlasApp typecheck, changed C++ lint and diff checks passed.
+- Source and launch-contract validation only: this change does not install a new app or claim graphical MM6 acceptance. The MM6 helper is built and tested from its own continuing title branch.

@@ -69,7 +69,7 @@ bool chestRerollEnabled(GameTitle title, const char *flag) {
 }
 
 bool chestRerollEnabled(GameTitle title) {
-    return chestRerollEnabled(title, std::getenv("ENROTH_MM7_CHEST_REROLL"));
+    return chestRerollEnabled(title, std::getenv("ENROTH_MM7_CHEST_REROLL")) || monsterLootRerollEnabled(title);
 }
 
 bool monsterLootRerollEnabled(GameTitle title, const char *flag) {

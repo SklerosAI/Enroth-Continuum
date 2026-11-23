@@ -111,6 +111,8 @@ GAME_TEST(MM7ChestReroll, KeepsAuthoredChestAndStopsAfterClaim) {
     if (!mm7::mods::chestRerollEnabled(engine->gameTitle()))
         GTEST_SKIP() << "Set ENROTH_MM7_CHEST_REROLL=1";
     game.startNewGame();
+    // The HUD checkbox controls non-chest rewards; the chest button remains available with X off.
+    engine->config->gameplay.MonsterLootRerollInGame.setValue(false);
 
     constexpr int chestId = 0;
     Chest &chest = vChests[chestId];

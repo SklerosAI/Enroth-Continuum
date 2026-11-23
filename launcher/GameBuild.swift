@@ -80,15 +80,25 @@ enum GameBuild: String {
      */
     func environment(base: [String: String], modRoot: URL?, vendorRefresh: Bool,
                      allArtifactsStorage: Bool, chestReroll: Bool, monsterLootReroll: Bool,
-                     dragoonClass: Bool) -> [String: String] {
+                     dragoonClass: Bool, mm6AllArtifacts: Bool = false,
+                     mm6ChestReroll: Bool = false, mm6MonsterLootReroll: Bool = false) -> [String: String] {
         var environment = base
         environment.removeValue(forKey: "ENROTH_MM7_MOD_DIR")
         environment.removeValue(forKey: "ENROTH_MM7_ALL_ARTIFACTS_STORAGE")
         environment.removeValue(forKey: "ENROTH_MM7_CHEST_REROLL")
         environment.removeValue(forKey: "ENROTH_MM7_MONSTER_LOOT_REROLL")
         environment.removeValue(forKey: "ENROTH_MM7_DRAGOON_CLASS")
+        for key in ["ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY", "ENROTH_MM6_ALL_ARTIFACTS",
+                    "ENROTH_MM6_CHEST_REROLL", "ENROTH_MM6_MONSTER_LOOT_REROLL"] {
+            environment.removeValue(forKey: key)
+        }
         switch self {
         case .mm6:
+            environment["ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY"] = vendorRefresh ? "1" : "0"
+            environment["ENROTH_MM6_ALL_ARTIFACTS"] = mm6AllArtifacts ? "1" : "0"
+            let fortunesTurn = mm6ChestReroll || mm6MonsterLootReroll
+            environment["ENROTH_MM6_CHEST_REROLL"] = fortunesTurn ? "1" : "0"
+            environment["ENROTH_MM6_MONSTER_LOOT_REROLL"] = fortunesTurn ? "1" : "0"
             environment.removeValue(forKey: "ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY")
             environment.removeValue(forKey: "OPENENROTH_MM7_PATH")
         case .fork:
@@ -101,8 +111,8 @@ enum GameBuild: String {
                 environment["ENROTH_MM7_MOD_DIR"] = modRoot.path
                 if vendorRefresh { environment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] = "1" }
                 if allArtifactsStorage { environment["ENROTH_MM7_ALL_ARTIFACTS_STORAGE"] = "1" }
-                if chestReroll { environment["ENROTH_MM7_CHEST_REROLL"] = "1" }
-                if monsterLootReroll { environment["ENROTH_MM7_MONSTER_LOOT_REROLL"] = "1" }
+                if chestReroll || monsterLootReroll { environment["ENROTH_MM7_CHEST_REROLL"] = "1" }
+                if chestReroll || monsterLootReroll { environment["ENROTH_MM7_MONSTER_LOOT_REROLL"] = "1" }
                 if dragoonClass { environment["ENROTH_MM7_DRAGOON_CLASS"] = "1" }
             }
         case .upstream:

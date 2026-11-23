@@ -101,6 +101,30 @@ precondition(vanillaEnvironment["ENROTH_MM7_DRAGOON_CLASS"] == "0")
 precondition(GameBuild.fork.environment(base: base, modRoot: mods, vendorRefresh: false,
                                         allArtifactsStorage: false, chestReroll: false, monsterLootReroll: false, dragoonClass: false)["ENROTH_MM7_MONSTER_LOOT_REROLL"] == "0")
 precondition(GameBuild.mm6.environment(base: base, modRoot: mods, vendorRefresh: true,
-                                       allArtifactsStorage: true, chestReroll: true, monsterLootReroll: true, dragoonClass: true) == ["HOME": "/home"])
+                                       allArtifactsStorage: true, chestReroll: true, monsterLootReroll: true, dragoonClass: true) == ["HOME": "/home", "ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY": "1",
+                                                                         "ENROTH_MM6_ALL_ARTIFACTS": "0", "ENROTH_MM6_CHEST_REROLL": "0",
+                                                                         "ENROTH_MM6_MONSTER_LOOT_REROLL": "0"])
 
 print("MM7 profile path and game build checks passed")
+
+// Either legacy choice migrates to the merged mod; MM6 flags never leak into another helper.
+for (chests, loot) in [(true, false), (false, true), (false, false)] {
+    let mm7 = GameBuild.fork.environment(base: base, modRoot: mods, vendorRefresh: false,
+                                       allArtifactsStorage: false, chestReroll: chests, monsterLootReroll: loot, dragoonClass: false)
+    precondition(mm7["ENROTH_MM7_CHEST_REROLL"] == (chests || loot ? "1" : "0"))
+    precondition(mm7["ENROTH_MM7_MONSTER_LOOT_REROLL"] == mm7["ENROTH_MM7_CHEST_REROLL"])
+    let mm6 = GameBuild.mm6.environment(base: base, modRoot: nil, vendorRefresh: false,
+                                       allArtifactsStorage: true, chestReroll: true, monsterLootReroll: true, dragoonClass: true,
+                                       mm6AllArtifacts: true, mm6ChestReroll: chests, mm6MonsterLootReroll: loot)
+    precondition(mm6["ENROTH_MM6_ALL_ARTIFACTS"] == "1")
+    precondition(mm6["ENROTH_MM6_CHEST_REROLL"] == (chests || loot ? "1" : "0"))
+    precondition(mm6["ENROTH_MM6_MONSTER_LOOT_REROLL"] == mm6["ENROTH_MM6_CHEST_REROLL"])
+    precondition(mm6["ENROTH_MM7_DRAGOON_CLASS"] == nil)
+    for build in [GameBuild.fork, .upstream] {
+        let clean = build.environment(base: mm6, modRoot: mods, vendorRefresh: false, allArtifactsStorage: false,
+                                      chestReroll: false, monsterLootReroll: false, dragoonClass: false,
+                                      mm6AllArtifacts: true, mm6ChestReroll: true, mm6MonsterLootReroll: true)
+        precondition(clean.keys.allSatisfy { !$0.hasPrefix("ENROTH_MM6_") })
+    }
+}
+print("Merged Fortune's Turn and MM6 mod isolation checks passed")

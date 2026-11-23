@@ -1,10 +1,10 @@
 # Fortune's Turn: MM7 random reward rerolls
 
-This is a separate, opt-in MM7 private mod. Turn on **Use private mods** and
+This opt-in MM7 private mod includes chest reroll. Turn on **Use private mods** and
 **Fortune's Turn · MM7** in Atlas and relaunch MM7. The dice checkbox on
 the left edge of the game HUD, beside the first party portrait, switches the
 popup on or off immediately. The checkbox choice is saved in the MM7 game
-configuration; Atlas remains the master launch toggle.
+configuration; Atlas remains the master launch toggle. The chest’s small Reroll button stays available when the in-game X is off; the X controls only non-chest rewards.
 The HUD control and popup buttons use brass, dark wood and gold lettering to
 match the MM7 interface; the loot preview keeps the game world visible behind
 its stone frame.
@@ -51,8 +51,7 @@ broken items, armor, and deterministic weapon effects do not open this frame.
 
 Only corpses whose random reward has not yet been generated are eligible.
 Actors with carried items, stored items, stored gold or other pre-generated
-contents use normal MM7 looting. The chest mod is independent; MM6 and MM8 are
-unaffected. Direct pickup of an already generated ground item is unchanged.
+contents use normal MM7 looting. MM6 has its own isolated Fortune’s Turn launch choice and helper; MM8 is unaffected. Direct pickup of an already generated ground item is unchanged.
 
 For rapid manual testing, starting a new MM7 game with this Atlas mod active
 arms a one-time setup: on the first visit to Emerald Isle's Dragon's Lair in

@@ -16,6 +16,22 @@ the replacement is verified. Never keep an old app version for rollback;
 repair or migrate saved games for the new build when needed. This rule does not
 by itself authorize deletion of profiles or saves.
 
+## Source cleanup and merged rerolls — 2026-11-22
+
+The owner authorized preserving and committing the previously dirty MM7 work.
+`264d8d800` records Dragoon, recorder retention, notice inheritance and the app
+replacement policy; no user changes were discarded. Fresh Dragoon tests passed
+8/8 and recorder tests 29/29. Custom-class right-click descriptions are now
+filled. See [Dragoon](MM7-Dragoon-Mod.md).
+
+The separate chest reroll Atlas choice is superseded by
+[Fortune’s Turn](MM7-Monster-Loot-Reroll-Mod.md). Chest Reroll remains available
+with the in-game X off; X controls only non-chest rewards. Atlas reads either
+legacy preference as enabled and writes both together when changed. The new
+Atlas source exposes isolated MM6 Fortune’s Turn and All Artifacts choices;
+MM6 runtime delivery comes from Claude’s title branch, not this older MM6
+source tree. No app is installed by this source cleanup.
+
 ## Title ownership — 2026-11-12
 
 The owner made the title boundary explicit: Codex is the sole arbiter and

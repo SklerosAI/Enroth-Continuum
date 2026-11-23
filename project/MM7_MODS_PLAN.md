@@ -1,6 +1,6 @@
 # MM7 private mods: troubleshooting and next design
 
-Status: **Design A, the separate MM7 chest reroll and Fortune's Turn are
+Status: **Design A and Fortune's Turn, including chest reroll, are
 implemented in source; the owner confirmed the original click-loot popup works**. Its
 current details layout was also reviewed in a hidden OpenGL capture. The equipment
 design remains planned.
@@ -99,7 +99,7 @@ Recommended defaults first.
 
 ## Future trilogy mod request
 
-- MM7 chest reroll and Fortune's Turn are implemented in source; see [the chest contract](MM7_CHEST_REROLL_MOD.md) and [the Fortune's Turn contract](MM7_MONSTER_LOOT_REROLL_MOD.md). Random items awarded by clicked trash heaps, decorations and faces share the popup and checkbox with bounty, ore smith and weapon enchanting. The MM6/MM8 versions remain future work in [the cross-game roadmap](ROADMAP.md#optional-mod-backlog).
+- MM7 chest reroll is part of the Fortune's Turn launcher choice; see [the chest contract](MM7_CHEST_REROLL_MOD.md) and [the Fortune's Turn contract](MM7_MONSTER_LOOT_REROLL_MOD.md). Random items awarded by clicked trash heaps, decorations and faces share the popup and checkbox with bounty, ore smith and weapon enchanting. Atlas also exposes the isolated MM6 helper’s Fortune’s Turn and All Artifacts choices. MM8 remains future work in [the cross-game roadmap](ROADMAP.md#optional-mod-backlog).
 
 ## Next opt-in MM7 ideas
 

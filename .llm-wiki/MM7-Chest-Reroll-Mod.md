@@ -8,7 +8,9 @@ tags: [mm7, mods, chests, save]
 # MM7 Chest Reroll Mod
 
 The MM7-only private mod exposes a small Reroll button for unclaimed random
-chest loot while its Atlas toggle and Private mods are on.
+chest loot while Fortune’s Turn and Private mods are on. The 2026-11-22 merged
+launcher choice supersedes the separate chest toggle. The in-game X controls
+non-chest rewards and leaves this button available.
 The current post-0.1.1 local build places a brass and dark-wood button in the
 lower wooden chest border.
 

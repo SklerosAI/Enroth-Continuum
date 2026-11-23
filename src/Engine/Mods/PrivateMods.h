@@ -17,11 +17,11 @@ namespace mm7::mods {
 bool allArtifactsStorageEnabled(GameTitle title, const char *flag);
 bool allArtifactsStorageEnabled(GameTitle title);
 
-/** Exact, MM7-only opt-in for rerolling unclaimed random chest loot. */
+/** MM7 chest rerolls accept Fortune's Turn or the legacy chest-only launch flag. */
 bool chestRerollEnabled(GameTitle title, const char *flag);
 bool chestRerollEnabled(GameTitle title);
 
-/** Exact, MM7-only opt-in for the separate monster loot reroll mod. */
+/** Exact, MM7-only opt-in for Fortune's Turn; its HUD checkbox controls non-chest rewards. */
 bool monsterLootRerollEnabled(GameTitle title, const char *flag);
 bool monsterLootRerollEnabled(GameTitle title);
 

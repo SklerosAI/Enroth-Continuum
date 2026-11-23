@@ -113,14 +113,18 @@ MM6 engine setting is `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY=1` once MM6 launches.
 Atlas also passes `ENROTH_MM7_ALL_ARTIFACTS_STORAGE=1` only when its MM7 toggle
 and Private mods are both on; vanilla MM7, MM6 and upstream OpenEnroth receive
 no active MM7 artifact/storage flag.
-The chest reroll toggle similarly passes `ENROTH_MM7_CHEST_REROLL=1` only to a
-Private mods MM7 launch. Its Reroll button appears on unclaimed chests whose
-random loot was generated while the toggle was active; see
-[the chest reroll contract](../project/MM7_CHEST_REROLL_MOD.md).
-The separate click-loot toggle passes `ENROTH_MM7_MONSTER_LOOT_REROLL=1` only
-to a Private mods MM7 launch. Its in-game dice checkbox controls whether an
-eligible random-loot corpse or clicked random script item opens a paused
-Reroll/Take popup; see [the click-loot contract](../project/MM7_MONSTER_LOOT_REROLL_MOD.md).
+The merged **Fortune's Turn** choice supplies both the chest and non-chest
+launch flags for the selected title. MM7 applies it with Private mods; MM6
+applies its own saved choice on every MM6 launch. The chest’s small Reroll
+button works independently of the in-game X, which controls the other reward
+popups. Either earlier reroll preference preserves an enabled setting; changing
+the merged choice writes both earlier keys, so Off disables both on relaunch.
+MM6 **All Artifacts** is a separate saved choice and passes only
+`ENROTH_MM6_ALL_ARTIFACTS=1` to MM6. It removes the random artifact cap and
+keeps uncollected artifacts eligible; it does not add storage. All MM6 flags
+are removed from MM7 and upstream environments, and all MM7 mod flags are
+removed from MM6. See [the chest contract](../project/MM7_CHEST_REROLL_MOD.md)
+and [the Fortune's Turn contract](../project/MM7_MONSTER_LOOT_REROLL_MOD.md).
 
 The source defaults for a future MM7 Atlas build are
 `~/Library/Application Support/Enroth Continuum/Game Data/MM7` and the fresh

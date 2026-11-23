@@ -2,8 +2,9 @@
 
 This private, opt-in MM7 mod adds a small **Reroll** button to a chest that
 contains authored random-loot markers. Enable **Use private mods** and
-**Reroll chest loot · MM7** in The Atlas, then launch MM7 again. Vanilla MM7,
+**Fortune’s Turn · MM7** in The Atlas, then launch MM7 again. Vanilla MM7,
 MM6 and upstream OpenEnroth do not receive the launch flag.
+The in-game X controls non-chest rewards and does not disable this button.
 The brass and dark-wood button sits in the chest's lower wooden border.
 
 Each click draws a fresh seed from the gameplay RNG and rolls the chest's
@@ -23,7 +24,8 @@ generated chest loot from before this option was enabled has no source-marker
 provenance, so that chest cannot be rerolled until its normal map respawn.
 
 The button is absent when the toggle is off, no source marker remains, or the
-chest belongs to MM6. No monster loot or other title is changed. The mod
+chest belongs to MM6. MM6 has its own chest implementation. This chest route
+changes no monster loot; the rest of Fortune’s Turn follows its own reward paths. The mod
 changes only local source and preferences; it does not edit GOG archives.
 
 Focused validation: exact MM7-only flag parsing, Atlas environment isolation,

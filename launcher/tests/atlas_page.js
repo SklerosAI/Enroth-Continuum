@@ -99,15 +99,7 @@ assert.match(document.getElementById('all-artifacts-storage-status').textContent
 document.getElementById('all-artifacts-storage-toggle').click();
 assert.strictEqual(sent.at(-1), 'all-artifacts-storage-on');
 
-window.Atlas.receive(state({modsEnabled: false, chestReroll: true}));
-assert.strictEqual(document.getElementById('chest-reroll-toggle').textContent, 'Turn off');
-assert.match(document.getElementById('chest-reroll-status').textContent, /enable Private mods/);
-document.getElementById('chest-reroll-toggle').click();
-assert.strictEqual(sent.at(-1), 'chest-reroll-off');
-window.Atlas.receive(state({modsEnabled: true, chestReroll: false}));
-document.getElementById('chest-reroll-toggle').click();
-assert.strictEqual(sent.at(-1), 'chest-reroll-on');
-
+assert(!html.includes('id="chest-reroll-toggle"'), 'Chest reroll is part of Fortune\'s Turn');
 window.Atlas.receive(state({modsEnabled: false, monsterLootReroll: true}));
 assert.strictEqual(document.getElementById('monster-loot-reroll-toggle').textContent, 'Turn off');
 assert.match(document.getElementById('monster-loot-reroll-status').textContent, /enable Private mods/);
@@ -118,3 +110,41 @@ document.getElementById('monster-loot-reroll-toggle').click();
 assert.strictEqual(sent.at(-1), 'monster-loot-reroll-on');
 
 console.log('Atlas page checks passed');
+
+for (const [name, key, off] of [['mm6-all-artifacts', 'mm6AllArtifacts', 'Off · normal artifact cap'],
+                                ['mm6-monster-loot-reroll', 'mm6MonsterLootReroll', 'Off · normal rewards']]) {
+  const toggle = document.getElementById(`${name}-toggle`);
+  const status = document.getElementById(`${name}-status`);
+  window.Atlas.receive(state({[key]: true, modsEnabled: false}));
+  assert.strictEqual(toggle.textContent, 'Turn off');
+  assert.strictEqual(status.textContent, 'On for next MM6 launch');
+  assert.strictEqual(document.getElementById('monster-loot-reroll-toggle').textContent, 'Turn on');
+  toggle.click();
+  assert.strictEqual(sent.at(-1), `${name}-off`);
+  window.Atlas.receive(state({[key]: false, modsEnabled: true, monsterLootReroll: true}));
+  assert.strictEqual(toggle.textContent, 'Turn on');
+  assert.strictEqual(status.textContent, off);
+  toggle.click();
+  assert.strictEqual(sent.at(-1), `${name}-on`);
+}
+
+// The vendor toggle saves a choice for each title. MM6 applies its own without Private mods, MM7 only with them.
+const vendorToggle = document.getElementById('vendor-refresh-toggle');
+const vendorStatus = document.getElementById('vendor-refresh-status');
+window.Atlas.receive(state({modsEnabled: false, vendorRefreshOnEntry: true, mm6VendorRefreshOnEntry: true}));
+assert.strictEqual(vendorToggle.textContent, 'Turn off');
+assert.strictEqual(vendorStatus.textContent, 'On for next MM6 launch · enable Private mods for MM7');
+vendorToggle.click();
+assert.strictEqual(sent.at(-1), 'vendor-refresh-off');
+window.Atlas.receive(state({modsEnabled: true, vendorRefreshOnEntry: true, mm6VendorRefreshOnEntry: true}));
+assert.strictEqual(vendorStatus.textContent, 'On for next MM6 and MM7 launch');
+window.Atlas.receive(state({modsEnabled: true, vendorRefreshOnEntry: true}));
+assert.strictEqual(vendorStatus.textContent, 'On for next MM7 launch');
+window.Atlas.receive(state({mm6VendorRefreshOnEntry: true}));
+assert.strictEqual(vendorToggle.textContent, 'Turn off');
+assert.strictEqual(vendorStatus.textContent, 'On for next MM6 launch');
+window.Atlas.receive(state({modsEnabled: true}));
+assert.strictEqual(vendorToggle.textContent, 'Turn on');
+assert.strictEqual(vendorStatus.textContent, 'Off · normal refresh schedule');
+vendorToggle.click();
+assert.strictEqual(sent.at(-1), 'vendor-refresh-on');

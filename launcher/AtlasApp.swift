@@ -271,14 +271,16 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         else if action == "backup-saves" { backupSaves() }
         else if action == "mods-on" { preferences.set(true, forKey: "mods.mm7.enabled"); sendState(message: "MM7 private mods will apply at the next launch.") }
         else if action == "mods-off" { preferences.set(false, forKey: "mods.mm7.enabled"); sendState(message: "Vanilla MM7 will run at the next launch.") }
-        else if action == "vendor-refresh-on" { preferences.set(true, forKey: "mods.vendorRefreshOnEntry"); sendState(message: "Fresh vendor stock is saved for MM6 and MM7. MM7 applies on the next private-mods launch.") }
-        else if action == "vendor-refresh-off" { preferences.set(false, forKey: "mods.vendorRefreshOnEntry"); sendState(message: "Vendor stock will use its normal refresh schedule on the next launch.") }
+        else if action == "vendor-refresh-on" { preferences.set(true, forKey: "mods.vendorRefreshOnEntry"); preferences.set(true, forKey: "mods.mm6.vendorRefreshOnEntry"); sendState(message: "Fresh vendor stock is saved for MM6 and MM7. MM7 applies on the next private-mods launch.") }
+        else if action == "vendor-refresh-off" { preferences.set(false, forKey: "mods.vendorRefreshOnEntry"); preferences.set(false, forKey: "mods.mm6.vendorRefreshOnEntry"); sendState(message: "Vendor stock will use its normal refresh schedule on the next launch.") }
         else if action == "all-artifacts-storage-on" { preferences.set(true, forKey: "mods.mm7.allArtifactsStorage"); sendState(message: "All Artifacts + Storage will apply on the next private-mods MM7 launch.") }
         else if action == "all-artifacts-storage-off" { preferences.set(false, forKey: "mods.mm7.allArtifactsStorage"); sendState(message: "MM7 will use its normal artifact cap and chest behavior on the next launch.") }
-        else if action == "chest-reroll-on" { preferences.set(true, forKey: "mods.mm7.chestReroll"); sendState(message: "MM7 chest reroll will apply on the next private-mods launch.") }
-        else if action == "chest-reroll-off" { preferences.set(false, forKey: "mods.mm7.chestReroll"); sendState(message: "MM7 chests will use their normal loot on the next launch.") }
-        else if action == "monster-loot-reroll-on" { preferences.set(true, forKey: "mods.mm7.monsterLootReroll"); sendState(message: "Fortune's Turn will apply on the next private-mods MM7 launch.") }
-        else if action == "monster-loot-reroll-off" { preferences.set(false, forKey: "mods.mm7.monsterLootReroll"); sendState(message: "Fortune's Turn is off for the next MM7 launch.") }
+        else if action == "monster-loot-reroll-on" || action == "chest-reroll-on" { setFortunesTurn(true, title: "mm7") }
+        else if action == "monster-loot-reroll-off" || action == "chest-reroll-off" { setFortunesTurn(false, title: "mm7") }
+        else if action == "mm6-monster-loot-reroll-on" || action == "mm6-chest-reroll-on" { setFortunesTurn(true, title: "mm6") }
+        else if action == "mm6-monster-loot-reroll-off" || action == "mm6-chest-reroll-off" { setFortunesTurn(false, title: "mm6") }
+        else if action == "mm6-all-artifacts-on" { preferences.set(true, forKey: "mods.mm6.allArtifacts"); sendState(message: "All Artifacts will apply on the next MM6 launch.") }
+        else if action == "mm6-all-artifacts-off" { preferences.set(false, forKey: "mods.mm6.allArtifacts"); sendState(message: "MM6 will use its normal artifact cap on the next launch.") }
         else if action == "dragoon-class-on" { preferences.set(true, forKey: "mods.mm7.dragoonClass"); sendState(message: "Dragoon will be available in MM7 party creation on the next private-mods launch.") }
         else if action == "dragoon-class-off" { preferences.set(false, forKey: "mods.mm7.dragoonClass"); sendState(message: "Dragoon is off for the next MM7 launch.") }
         else if action.hasPrefix("choose-portrait-") {
@@ -344,9 +346,11 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             "modSupport": true,
             "modsEnabled": preferences.bool(forKey: "mods.mm7.enabled"),
             "vendorRefreshOnEntry": preferences.bool(forKey: "mods.vendorRefreshOnEntry"),
+            "mm6VendorRefreshOnEntry": preferences.bool(forKey: "mods.mm6.vendorRefreshOnEntry"),
             "allArtifactsStorage": preferences.bool(forKey: "mods.mm7.allArtifactsStorage"),
-            "chestReroll": preferences.bool(forKey: "mods.mm7.chestReroll"),
-            "monsterLootReroll": preferences.bool(forKey: "mods.mm7.monsterLootReroll"),
+            "monsterLootReroll": fortunesTurnEnabled("mm7"),
+            "mm6AllArtifacts": preferences.bool(forKey: "mods.mm6.allArtifacts"),
+            "mm6MonsterLootReroll": fortunesTurnEnabled("mm6"),
             "dragoonClass": preferences.bool(forKey: "mods.mm7.dragoonClass"),
             "portraits": (1...4).map { validPortraitURL($0, mood: "normal") != nil },
             "portraitNormalFiles": (1...4).map { portraitExists($0, mood: "normal") },
@@ -746,11 +750,13 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             }
             process.environment = build.environment(base: ProcessInfo.processInfo.environment,
                                                     modRoot: modsEnabled ? modRoot : nil,
-                                                    vendorRefresh: preferences.bool(forKey: "mods.vendorRefreshOnEntry"),
+                                                    vendorRefresh: preferences.bool(forKey: build == .mm6 ? "mods.mm6.vendorRefreshOnEntry" : "mods.vendorRefreshOnEntry"),
                                                     allArtifactsStorage: preferences.bool(forKey: "mods.mm7.allArtifactsStorage"),
-                                                    chestReroll: preferences.bool(forKey: "mods.mm7.chestReroll"),
-                                                    monsterLootReroll: preferences.bool(forKey: "mods.mm7.monsterLootReroll"),
-                                                    dragoonClass: preferences.bool(forKey: "mods.mm7.dragoonClass"))
+                                                    chestReroll: fortunesTurnEnabled("mm7"),
+                                                    monsterLootReroll: fortunesTurnEnabled("mm7"),
+                                                    dragoonClass: preferences.bool(forKey: "mods.mm7.dragoonClass"),
+                                                    mm6AllArtifacts: preferences.bool(forKey: "mods.mm6.allArtifacts"),
+                                                    mm6MonsterLootReroll: fortunesTurnEnabled("mm6"))
             let startedAt = Date()
             process.terminationHandler = { [weak self] finished in
                 DispatchQueue.main.async {
@@ -904,6 +910,16 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         } catch {
             sendState(message: "Could not open MM7 mods folder: \(error.localizedDescription)")
         }
+    }
+
+    private func fortunesTurnEnabled(_ title: String) -> Bool {
+        preferences.bool(forKey: "mods.\(title).chestReroll") || preferences.bool(forKey: "mods.\(title).monsterLootReroll")
+    }
+
+    private func setFortunesTurn(_ enabled: Bool, title: String) {
+        preferences.set(enabled, forKey: "mods.\(title).chestReroll")
+        preferences.set(enabled, forKey: "mods.\(title).monsterLootReroll")
+        sendState(message: "Fortune's Turn is \(enabled ? "on" : "off") for the next \(title.uppercased()) launch.")
     }
 
     private func seedDragoonClassIconIfNeeded() throws {

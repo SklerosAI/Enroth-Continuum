@@ -41,8 +41,8 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Mac Dependency Recipe](MM7-Mac-Dependency-Recipe.md) — Five tracked media-library sources build to nine static arm64 archives
 - [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md) — One-command clean tracked-source MM7 and Atlas build under network denial, with focused headless controls
 - [MM7 Disposable Save and Reload](MM7-Disposable-Save-Reload.md) — Isolated Save/Load evidence, 28 checkpoint pairs, a local pre-tag gate, copied owner-save primary/backup probes and installed-candidate limits
-- [MM7 Chest Reroll Mod](MM7-Chest-Reroll-Mod.md) — MM7-only Atlas toggle, inset chest button, source-marker persistence and playtest limit
-- [MM7 Fortune's Turn Mod](MM7-Monster-Loot-Reroll-Mod.md) — one Atlas toggle and checked-X HUD control for monster, click, bounty, ore smith and weapon-enchantment rerolls
+- [MM7 Chest Reroll Mod](MM7-Chest-Reroll-Mod.md) — Fortune’s Turn chest button, independent HUD X behavior, source-marker persistence and playtest limit
+- [MM7 Fortune's Turn Mod](MM7-Monster-Loot-Reroll-Mod.md) — merged chest/reward Atlas choice, checked-X control for non-chest rewards, and isolated MM6 launcher options
 - [ECv0.1.1 Release Candidate](../project/ECV011_RELEASE_CANDIDATE.md) — proposed MM7 patch scope, MM6 playtest boundary and release gates; no tag created
 - [MM7 Scroll Cancellation](MM7-Scroll-Cancel.md) — Item-, actor- and character-target scroll return on cancelled targeting, focused integrated controls and remaining exit paths
 - [MM7 Playtest Recording](MM7-Playtest-Recording.md) — Atlas rolling video now retains the newest two minutes after every exit, alongside bounded diagnostics, protected clips and the remaining macOS permission gate

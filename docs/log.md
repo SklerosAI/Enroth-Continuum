@@ -35,3 +35,8 @@ Format: `- YYYY-MM-DD: what landed.` See [SCHEMA.md](SCHEMA.md) for what earns a
   bottom-left HUD X, and retained independent All Artifacts selection. Passed 412 regular MM6 tests without skips,
   44 fresh-process gate children, 13 item/save-section units, all ten enabled-mod campaign chapters, six native-GL
   mod controls and a hidden native-GL capture. Launcher checks and changed C++ lint passed. Source merge: `27019e9fa`.
+
+- 2026-11-22, by Codex: installed a verified Release arm64 Atlas with MM6 source `626f5f431` and MM7 source
+  `014514250`. Both helpers use Apple system OpenGL and system-only dynamic libraries; MM6 PNG is static.
+  Installed bytes matched staging, deep strict signatures passed, and the visible Atlas showed MM6 Fortune's Turn
+  and All Artifacts enabled. Deleted the old installed app and superseded staged bundles without retaining a backup.

@@ -3841,3 +3841,9 @@ Chronological record of wiki activity.
 - Applied the owner's revised per-level HP 4/6/8 and SP 2/3/5, one growth point below Knight HP and Sorcerer SP at each tier. Retained base HP/SP, the five-SP minimum and all class skills.
 - Updated the four-stage vital-growth regression. Focused cases passed 4/4; full MM7 runs passed 299 enabled and 294 disabled with expected opt-in skips and no failures. Changed-source lint and diff checks passed.
 - Rebuilt and installed the signed MM7 helper in normal Atlas, strictly verified the installed bundle, preserved the owner's enabled toggle and sibling helpers, and retained a recoverable prior app copy locally. Graphical play remains with the owner.
+
+## [2026-11-22] update | MM7 source cleanup
+- by: T-Burton-ND via codex
+- Preserved the previously uncommitted Dragoon implementation, its supplied icon, headless runner, recorder retention changes, inherited media notices and owner app-replacement policy in `264d8d800`. No working changes were discarded.
+- Static review found empty right-click descriptions for the four custom classes; descriptions and an existing creation-test assertion now cover them. Fresh focused Dragoon tests passed 8/8, recorder tests 29/29, launcher Swift/page checks and changed C++ lint passed.
+- The current app-replacement policy supersedes the historical retained-app-copy practice recorded above. This source cleanup does not install an app or modify owner profiles or saves.

@@ -1,37 +1,33 @@
-# Current work board — 2026-11-12
+# Current work board — 2026-11-23
 
 The owner's delivery order remains MM7 working, MM6 working, full MM7 audit,
-then full MM6 audit. Stage 1 is closed and Stage 2 is active. This board is the
-current coordination surface; detailed historical lane results remain in
-`agent_comms/handoffs/` and `PLAN.md`.
+then full MM6 audit. Stage 1 closed on 2026-11-11 and Stage 2 is active. This
+board is the current coordination surface. Historical lane results remain in
+`agent_comms/handoffs/` and `PLAN.md`. Live notes between the agents go in the
+ignored `agent_comms/live/` mailbox.
 
-## Title authority and worktree budgets
+## Title authority and worktrees
 
 - Codex is the sole arbiter and delivery owner for MM7. Codex assigns and
   accepts MM7 work.
 - Claude Code is the sole arbiter and delivery owner for MM6. Claude assigns
   and accepts MM6 work.
-- Each owner may use up to five linked worktrees. Neutral `master` consumes
-  neither allocation. Run
-  `python3 tools/check_worktree_budget.py --agent <codex|claude>` before adding
-  a checkout.
+- Owner rule since 2026-11-20: there is no worktree or branch count cap while
+  a round is running. The 10 GB free-disk floor is hard. Each round ends with
+  one branch and one worktree per title. `tools/check_worktree_budget.py`
+  still enforces the older five-per-owner cap, so read its counts, not its
+  verdict.
 
-Current allocation: Codex 1/5 (`mm7-combat-fixes` on
-`codex/mm7-dark-chain`); Claude 5/5 (`mm6-chain-c4` on `claude/mm6-chain-c5`, `mm6-indoor-light` on
-`claude/mm6-event-spells`, `mm6-leftovers` on `claude/mm6-questions`, `mm6-spells`
-and `mm6-control-center`). All six linked worktrees are title-aligned. The owner
-released shared MM6/MM7 code to Claude on 2026-11-12 evening while Codex is idle. Neutral
-`master` and the Codex MM7 branch are kept synchronized after each integrated
-packet.
+Current checkouts: the main checkout on `codex/mm7` and
+`enroth-worktrees/mm6-control-center` on `claude/mm6`. No lane worktrees.
 
 ## Active and queued work
 
 | Title | Owner | Current state | Next coordination point |
 | --- | --- | --- | --- |
-| MM7 | Codex | Working gate open on Malwick/Niles. Three new headless tests cover Malwick refusal/repeat/acceptance, the exact 1,008-hour message trigger, 336-hour visit and 672-hour return deadlines, Niles's real entrance/refusal, both invasion branches, bank loss, live invaders and service closure. The combined six-test Malwick/raid control and style 157/157 pass. Nine independent routes retain exact production-Save/fresh-process-Load checkpoints. | Continue the reserved slice with physical Light/Dark tapestry acquisition, successful return, the one-month allied hostility window and a fresh-process checkpoint. Keep this focused packet distinct from a continuous campaign claim. |
-| MM7 graphics | Codex | The malformed Tatalia/Avlee progress frames were traced to diagnostic placement and the headless fallback is covered. Shoals fog and corrected frames remain visually unclassified. | Do not run graphical recapture while the owner's headless-only instruction remains active. Inspect every future image before accepting it as evidence. |
-| MM6 | Claude Code | Stage 2 remains active under Claude's title authority, with four linked worktrees currently allocated. On 2026-11-15 the owner decided to fix every bug the GrayFace MM6 Patch fixes, the backlog is in `project/MM6_GRAYFACE_PATCH_REFERENCE.md`. The owner's 2026-11-15 playtest saw transparent New Sorpigal villagers, recorded on the playtest board. | Claude controls MM6 scope, review, acceptance and further worktree use; Codex only protects MM7 at neutral integration seams. |
-| Integration | Both title owners | `master` is neutral. A title owner reconciles current `master`, runs the other title's required protection controls when shared core changes, and integrates only reviewed work from its own title. | Preserve clean title branches and handoffs; do not use cross-title authority to resolve scope disputes. |
+| MM7 | Codex (idle since 2026-11-22) | Working gate closed 2026-11-11. Light and Dark chains C0-C7, both endings, every promotion and every map have headless coverage. `ECv0.1.0` and `ECv0.1.1` are tagged. The installed Atlas carries a Release MM7 helper from `014514250`. Fortune's Turn (with chest reroll) and the default-off Dragoon class are integrated. | The full MM7 audit has not started. Its start date is the owner's call, see `project/MM7_FULL_AUDIT_NEXT_WEEK_PLAN.md`. The playthrough verdict is in `.llm-wiki/MM7-Playthrough-Go-No-Go.md`. |
+| MM6 | Claude Code | Stage 2 active on `claude/mm6`, pushed to `origin` on 2026-11-23. Chain C0-C9 passes headlessly. An end-to-end playthrough is NO-GO: reading a spellbook, scrolls, wands, enchanted weapons and a few events end the game. | Fix the playthrough blockers, B1 first. See `docs/mm6-playthrough-go-no-go.md` and `docs/mm6-campaign-status.md` on `claude/mm6`. |
+| Integration | Both title owners | `master` is neutral and has neither title's latest work. `claude/mm6` consolidated its docs into `docs/` on 2026-11-19, while `codex/mm7` still uses `.llm-wiki/` and `project/`. | Reconcile the two doc layouts when the branches next meet on `master`. |
 
 ## Superseded lane labels
 
@@ -39,4 +35,3 @@ All earlier entries that named Claude as an MM7 lead, gave Codex authority over
 MM6, or listed completed Stage-1 MM7 work as active are historical only. Their
 test evidence remains valid where current source still agrees, but they do not
 override the strict title split above.
-

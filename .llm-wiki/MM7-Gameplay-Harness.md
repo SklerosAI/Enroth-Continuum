@@ -15,7 +15,7 @@ An owner playtest crashed while accepting Emerald Island's Dragon's Cave transit
 
 World preparation removed prior-map actors from the turn queue but left `ai_arrays_size` and its actor IDs describing Emerald Island until the Dragon's Lair AI update. Turn-based startup could therefore index the new, smaller actor deque with an old outdoor actor ID. World preparation now invalidates the nearby-AI count before replacing actors, and both turn-based actor-admission paths reject any out-of-range ID as a defensive boundary.
 
-`MM7TransitionCombat.StalePreviousMapActorIsIgnoredAtTurnBasedStart` seeds the exact stale-ID shape and proves combat starts with only valid queue entries. The focused test, Debug GameTest build and engine/turn-engine/GameTest style targets pass. A signed Release `95442333e` MM7 helper carrying the guard is installed while the MM6 helper remains byte-identical. Broad known-green campaign tests were deliberately not repeated for this isolated admission fix.
+`MM7TransitionCombat.StalePreviousMapActorIsIgnoredAtTurnBasedStart` seeds the exact stale-ID shape and proves combat starts with only valid queue entries. The focused test, Debug GameTest build and engine/turn-engine/GameTest style targets pass. A signed Release `95442333e` MM7 helper carrying the guard was installed at the time. The 2026-11-22 installation replaced it with the Release MM7 helper from `014514250`, see [Release Milestones](Release-Milestones.md). Broad known-green campaign tests were deliberately not repeated for this isolated admission fix.
 
 ## Runner and contracts
 

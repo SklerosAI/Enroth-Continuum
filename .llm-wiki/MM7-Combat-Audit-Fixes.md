@@ -7,7 +7,7 @@ tags: [mm7, combat, spells, items, audit]
 
 # MM7 Combat Audit Fixes
 
-Five ranked MM7 gameplay defects have focused headless regressions and fixes integrated on `mm6-mac-implementation` at `f77d8de31`. The monster second-spell ability, Energy parser and event Day of the Gods fixes are also integrated; the latter landed at `fe8d5d50f`. Later MM7-only repairs at `59ead390d` add death-explosion special damage, out-of-range Spirit Lash failure handling, and consistent novice-row wand recovery.
+Five ranked MM7 gameplay defects have focused headless regressions and fixes integrated on `mm6-mac-implementation` at `f77d8de31`. The monster second-spell ability, Energy parser and event Day of the Gods fixes are also integrated; the latter landed at `fe8d5d50f`. Later MM7-only repairs add death-explosion special damage (`b1760b19e`), out-of-range Spirit Lash failure handling (`be9a160bc`) and consistent novice-row wand recovery (`59ead390d`). The Fate hit modifiers (`6a9ea5261`) and the Squire and Sage skill bonuses (`dbd5dfba5`) landed separately.
 
 | Defect | Verified change |
 | --- | --- |
@@ -48,7 +48,18 @@ No graphical acceptance or installed helper update follows from these tests.
 Title checks retain MM6's existing Break Weapon and Divine Intervention behavior. The Zombie exception is explicitly MM7-gated pending separate MM6 rule evidence. The MM6 direct-use guard blocks the
 Divine Restoration potion before the shared case. If MM6 Break Weapon is admitted for an unarmed target, its old
 empty-list path can still assert. Claude owns that MM6 rule. MM7 liches intentionally resist Mind and Body, not Spirit.
-The enemy Meteor Shower party-centred target matches the AI's sole target; neither is an actionable defect. Other ranked combat defects in the
-[audit results](../project/MM7_AUDIT_RESULTS_2026-11-07.md) remain open.
+The enemy Meteor Shower party-centred target matches the AI's sole target; neither is an actionable defect.
+
+Still open from the [audit results](../project/MM7_AUDIT_RESULTS_2026-11-07.md), checked against source on 2026-11-23:
+
+- A wand spends its charge right after the attack is queued, before the spell resolves (`Character.cpp`).
+- Monster Haste and Day of Protection are applied but only read by the may-I-recast checks (`Actor.cpp`).
+- The Hour of Power hit check reads the Shield buff's power (`Character.cpp`).
+- The `_SelectTarget` index never advances (`Actor.cpp`).
+- The indoor summon floor check is unchanged (`Actor.cpp`).
+- Assassins' and Barbarians' enchantments add no Body or Cold damage, only their Disarm and armor bonuses (`Item.cpp`).
+- Artifacts 530 Cloak of the Sheep, 531 Elfbane and 536 Lady's Escort lack their Sleep, elf-slaying and drowning effects.
+- Two grandmaster teacher requirements differ from their text (`NPCTopics.cpp`).
+- The Archer and Warrior Mage Disarm Trap caps are unresolved against MM7.exe (`mm7_data.cpp`).
 
 See also: [Campaign Status](Campaign-Status.md), [MM7 Level-Seven Artifacts](MM7-Level-Seven-Artifacts.md), [Agent Handoff](Agent-Handoff.md).

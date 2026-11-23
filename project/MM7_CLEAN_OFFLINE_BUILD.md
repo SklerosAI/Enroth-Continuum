@@ -79,7 +79,7 @@ The Apple SDK/toolchain, Python 3, CMake and Ninja are local tools. The owner's
 lawfully obtained MM7 files remain outside Git and outside the bundle. The
 clean archive had no Git metadata, so its build banner reported an unknown
 revision without Git error output; an ordinary clone has Git metadata. The
-source build now gives the MM7 bundle a stable `0.1.0` version independent of
+source build now gives the MM7 bundle a stable version (`0.1.0` then, `0.1.1` since the `ECv0.1.1` patch) independent of
 the Git revision. The staged helper plist reported that version and Atlas
 passed strict code-signature verification. A later fresh shallow clone of the
 published MM7-only branch at code commit `d76afb519` repeated the

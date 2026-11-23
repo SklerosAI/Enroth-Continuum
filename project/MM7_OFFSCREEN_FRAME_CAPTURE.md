@@ -2,11 +2,14 @@
 
 Status: **first Emerald Island world frame rendered in a monitored hidden window** (2026-11-07). This is an opt-in GameTest diagnostic, not an installed-app or save/reload acceptance. The private PNG remains outside Git.
 
-`--game mm7 --offscreen-gl` requires an explicit `--data-path`, macOS, `--gtest_also_run_disabled_tests`, and the exact filter `MM7OffscreenFrame.DISABLED_FirstOutdoorCapture`. A wrong filter is rejected before SDL starts. The existing MM6-only filter remains exact and title-specific. `GameStarter` installs the existing `OffscreenCaptureGuard` before the window is configured; it forces a hidden 640×480 OpenGL window, windowed mode, no mouse grab and null audio. The guard blocks reveal/raise, cursor changes, mouse grab/relative mode/warp and modal boxes. The test starts an MM7 game through the normal test controller, verifies Emerald Island and game screen, draws the world and HUD, flushes queued 2D work, reads pixels before swap and writes only to a normalized temporary PNG path.
+`--game mm7 --offscreen-gl` requires an explicit `--data-path`, macOS, `--gtest_also_run_disabled_tests`, and one of the exact filters `MM7OffscreenFrame.DISABLED_FirstOutdoorCapture` or `MM7OffscreenFrame.DISABLED_MapCapture`. A wrong filter is rejected before SDL starts. The MM6 capture filters are a separate exact list (`GameTestMain.cpp`). `GameStarter` installs the existing `OffscreenCaptureGuard` before the window is configured; it forces a hidden 640×480 OpenGL window, windowed mode, no mouse grab and null audio. The guard blocks reveal/raise, cursor changes, mouse grab/relative mode/warp and modal boxes. The test starts an MM7 game through the normal test controller, verifies Emerald Island and game screen, draws the world and HUD, flushes queued 2D work, reads pixels before swap and writes only to a normalized temporary PNG path.
 
-Set `MM7_OFFSCREEN_CAPTURE_SCENE=breeding-zone` to teleport to the Breeding
-Zone before drawing. This keeps the default first-outdoor capture but enables
-non-starting-screen diagnostic frames under the same hidden-window guard. The
+Set `MM7_OFFSCREEN_CAPTURE_SCENE` to `breeding-zone`, `wine-cellar-combat`,
+`stone-city-troglodyte`, `chest-reroll` or `click-loot-popup` to draw that scene
+instead of the first outdoor frame, under the same hidden-window guard.
+`MM7_OFFSCREEN_CAPTURE_PATH` sets the output file, and the map capture reads
+`MM7_OFFSCREEN_CAPTURE_MAP` (a map file name or a wrapping map-table index).
+See `GameTests_MM7OffscreenFrame.cpp`. The
 owner-local capture helper retains at most 100 private PNGs in
 `local-game-data/progress-captures/`, atomically replacing the oldest at
 capacity.

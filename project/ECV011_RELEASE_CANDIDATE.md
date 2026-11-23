@@ -4,7 +4,7 @@ Released on 2026-11-20. This file preserves the pre-tag plan and candidate
 checks; [Release Milestones](../.llm-wiki/Release-Milestones.md) records the
 final gates, tag and local installation.
 
-`ECv0.1.1` is a proposed MM7 patch release. No tag has been created or moved.
+`ECv0.1.1` was tagged on 2026-11-20 at `e7ed06097`. The text below is the pre-tag plan.
 It includes the existing separate MM6 playtest helper, but does not declare
 MM6 released or its campaign accepted. MM6 release work continues on
 `claude/mm6`; `ECv0.2.0` remains its planned release line. The active MM6
@@ -13,7 +13,8 @@ worktree and its private saves and fixtures are outside this candidate.
 ## Source scope
 
 - MM7 retains its published `ECv0.1.0` save and profile path. The opt-in chest
-  mod remains separate from the new click-loot mod.
+  mod remains separate from the new click-loot mod (at the tag, the two merged into
+  Fortune's Turn on 2026-11-22 in `b35afa610`).
 - The MM7 click-loot mod previews and rerolls random corpse rewards and random
   script items awarded by directly clicked trash heaps, decorations or faces.
   The same in-game checkbox controls both. Fixed rewards and gold use the

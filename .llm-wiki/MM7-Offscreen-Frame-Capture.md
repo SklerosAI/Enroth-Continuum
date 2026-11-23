@@ -11,6 +11,8 @@ An explicit GameTest rendered one MM7 first-map frame through hidden macOS OpenG
 
 The [public capture packet](../project/MM7_OFFSCREEN_FRAME_CAPTURE.md) is the source for the test contract. `--game mm7 --offscreen-gl` requires an explicit data path, the exact disabled test filter and a normalized temporary PNG destination. The existing `OffscreenCaptureGuard` blocks reveal/raise, cursor and mouse changes, and native message boxes; audio uses a null driver. The test starts a game, checks the first outdoor map and game screen, draws the world and HUD, flushes queued 2D work, then reads the hidden frame before display swap. Its MM6 counterpart remains title-locked.
 
+As of 2026-11-23 two MM7 filters are admitted: `MM7OffscreenFrame.DISABLED_FirstOutdoorCapture` and `MM7OffscreenFrame.DISABLED_MapCapture` (`GameTestMain.cpp`). Both write the PNG named by `MM7_OFFSCREEN_CAPTURE_PATH`. `DISABLED_MapCapture` takes `MM7_OFFSCREEN_CAPTURE_MAP`, a map file name or a wrapping index into the map table, and `MapCaptureUsesTargetMapStart` covers its start placement. `MM7_OFFSCREEN_CAPTURE_SCENE` selects `breeding-zone`, `wine-cellar-combat`, `stone-city-troglodyte`, `chest-reroll` or `click-loot-popup` (`GameTests_MM7OffscreenFrame.cpp`).
+
 The local-only Mac GameTest build passed **1/1** with private MM7 data. The private 640×480 frame was inspected locally: world, minimap, HUD and four portraits rendered. A host monitor took **98** samples at 10 ms intervals, finding **zero on-screen test windows** and **zero frontmost-app changes**. A wrong-filter invocation rejected before SDL startup. No capture, proprietary asset or private log is tracked.
 
 The later progress-capture sweep exposed a diagnostic placement defect rather

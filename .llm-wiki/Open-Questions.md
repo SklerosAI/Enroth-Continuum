@@ -7,6 +7,8 @@ tags: [mm6, gaps, handoff]
 
 # Open Questions
 
+MM7 questions open on 2026-11-23 are in [MM7 open questions](#mm7-open-questions--2026-11-23). The MM6 rows below are a historical register from the F2 to F4 work. Current MM6 open questions live in `docs/open-questions.md` on `claude/mm6`.
+
 This is a dated, public gap register for MM6 F4/F5, not a substitute for the full implementation checklist or private per-ID reports. The F2 questions below remain as implementation prompts; the F3 evidence update supersedes their older preflight wording.
 
 ## Question
@@ -52,7 +54,7 @@ The [F4 seam page](MM6-F4-Offline-Seams.md) records a separate title-locked MM6 
 | Integrator | Does every active MM6 ID, map, event, media cue and save field have an F4 consumer and offline check, with a later F5 outcome? The F3 source gate alone does not close gameplay. | Use the [F3 gate review](../project/MM6_F3_GATE_REVIEW.md), [F4 build graph](../project/MM6_F4_BUILD_GRAPH.md) and [MM6 checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md); keep exact rows and proprietary evidence private. |
 | Future agent control | After a title passes gameplay/save gates, what evidence can a controller use to act, observe and recover without changing hidden state or another title's profile? Current screenshot/input/trace source hooks are not an external interface. | [Knowledge and control contract](Agent-Play-Knowledge-and-Control-Contract.md) and [roadmap](Agent-Play-and-Observation-Roadmap.md); implement title/session binding, visible frame checks, bounded input, acknowledgments and save/relaunch verification only after the relevant runtime gate. |
 
-MM7's full resource/rules/campaign audit, MM8's engine adapter, and the title-aware Atlas assembler remain separate later work. None is evidenced complete by the MM6 F2 probes. The Atlas currently has only MM7 Play; adding another action requires that game's own play/save gate.
+MM7's full resource/rules/campaign audit and MM8's engine adapter remain separate later work. None is evidenced complete by the MM6 F2 probes. Superseded on 2026-11-23: the title-aware assembler is `launcher/assemble.py`, and the Atlas offers MM6 and MM7 Play, MM6 as an owner playtest helper. MM8 stays disabled.
 
 ## Conclusion
 
@@ -62,6 +64,18 @@ F2 is frozen as a coverage and question specification, and F3 is accepted as an 
 
 - Recheck this page against new checklist and status commits before assigning lanes; remove a question only when its closure evidence is linked.
 - Keep F3 report details and any later discrepancy, checksum or raw finding in ignored local storage; update this public page with conclusions and remaining uncertainty.
-- Keep the protected MM7 baseline available while planning its separate M7-A0–A5 audit.
+- Keep the protected MM7 baseline available while planning its separate M7-A0–A6 audit.
+
+## MM7 open questions — 2026-11-23
+
+- **Playthrough verification.** The full MM7 suite and both C0-C7 chains last passed before `b35afa610` and `264d8d800`. See [MM7 Playthrough Go/No-Go](MM7-Playthrough-Go-No-Go.md).
+- **Full audit start.** The audit plan names the week of 2026-11-23, the delivery order puts the audit after the MM6 working gate. It has not started. Owner's call.
+- **Strange Temple exit.** Event 501 carries an out-of-bounds Harmondale X, so the engine loads the map but skips the placement. A private native trace of the settled position decides between clamping, travel handling or no change. `MM7StrangeTemple` pins today's bounded landing.
+- **5:00 AM sunlight.** MM7 keeps the `UpdateSunlightVectors` minute check that MM6 fixed behind `fix_sunrise_light` on `claude/mm6`. `src/Engine/Graphics/Outdoor.cpp`.
+- **Wall pressure plates.** Original MM7 fires a pressure plate the party runs into. Upstream's fix for #2244 dropped wall plates along with the lift retrigger, and MM7 keeps upstream's behaviour.
+- **Scroll targeting exits.** Cancel returns the scroll. Attacking, passing the turn, stealing, a full spell queue and turn-based wait still use it up.
+- **2026-11-07 audit defects still open.** Wand charge ordering, Monster Haste and Day of Protection never read, Hour of Power reading Shield's power, `_SelectTarget`, the indoor summon floor, the Assassins' and Barbarians' enchantments, artifacts 530, 531 and 536, two grandmaster teacher requirements and the Disarm Trap caps. See [MM7 Combat Audit Fixes](MM7-Combat-Audit-Fixes.md).
+- **Upstream issues without a fork fix.** #2068, #1560 and #2276, among others listed in the audit results.
+- **In-game mod panel.** A read-only panel of the Atlas launch options is on the owner's backlog.
 
 See also: [Agent Handoff](Agent-Handoff.md), [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), [MM6 F2 Workstreams](MM6-F2-Workstreams.md), [Campaign Status](Campaign-Status.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

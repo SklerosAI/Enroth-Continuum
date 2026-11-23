@@ -1,6 +1,8 @@
 # MM7 Mac runtime path cutover
 
-Status: **source defaults staged; private game data copied and verified; installed app and saves unchanged** (2026-11-07). This packet covers a collision-safe move from inherited OpenEnroth local paths to Enroth Continuum's own MM7 data and profile paths. The opt-in clean tracked-source Mac build now passes; graphical play, save/reload, installed-app cutover and character transfer remain open.
+Status: **installed Atlas uses the new data and profile paths** (cut over 2026-11-07, reinstalled 2026-11-22). Superseded installed apps are deleted under the owner's app replacement policy in `AGENTS.md`, so no old app is kept for rollback. The record below is the original 2026-11-07 staging packet.
+
+Original status (2026-11-07): **source defaults staged; private game data copied and verified; installed app and saves unchanged**. This packet covers a collision-safe move from inherited OpenEnroth local paths to Enroth Continuum's own MM7 data and profile paths. The opt-in clean tracked-source Mac build now passes; graphical play, save/reload, installed-app cutover and character transfer remain open.
 
 ## Source state
 
@@ -17,7 +19,7 @@ The older local MM7 save locations contain distinct saves with colliding names. 
 2. Copy extracted game data into a new staging sibling of `Game Data/MM7`, verify relative files and hashes, then atomically rename it. Keep game data and saves out of Git.
 3. Stage saves into a **fresh** `Profiles/MM7-Atlas` only after an explicit per-collision choice or a separate import mechanism. Verify the staged profile and keep both originals. Do not automatically reverse-merge on rollback.
 4. Build and stage a candidate Atlas/helper separately from the installed app. With the new paths, check a headless MM7 control, visible launch and map rendering, audio/video, existing save load, new save, quit, relaunch and reload. Confirm the MM6 and MM8 sibling slots and private profiles are untouched.
-5. Only after those checks, switch the installed app and its saved data preference. Preserve the old app and roots until a later real play check succeeds. Roll back by restoring the old app/preference; leave all save folders intact.
+5. Only after those checks, switch the installed app and its saved data preference. Leave all save folders intact. Superseded 2026-11-22: the app replacement policy deletes the old app after a verified replacement, so the earlier rollback step that kept it no longer applies.
 
 The source path change passed Swift type checking and a cached-library arm64 `MM7` and GameTest build. Extracted MM7 game data was copied privately to the new default folder and every regular file was byte-verified against the original; the original remains intact. A headless MM7 control then passed through the new default path. The installed app, preferences and private saves were not moved, so visible launch and save/reload through a candidate app remain open.
 

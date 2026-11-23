@@ -1,6 +1,8 @@
 # MM7 full audit handoff — week of 2026-11-23
 
-This is a plan, not a claim that the full audit has begun. It covers the
+This is a plan, not a claim that the full audit has begun. The audit had not
+started on 2026-11-23, and its start date is the owner's call because the
+delivery order puts the full MM7 audit after the MM6 working gate. It covers the
 owner's private MM7 data and the Mac runtime. Use
 [the audit checklist](MM7_AUDIT_CHECKLIST.md) for the acceptance contract and
 [the 2026-11-07 A0-A2 results](MM7_AUDIT_RESULTS_2026-11-07.md) as the prior
@@ -10,7 +12,7 @@ contents, game assets, save contents or hashes into Git.
 
 ## Kickoff and evidence boundary
 
-1. Record the current `codex/mm7` commit, the fixed `ECv0.1.0` tag, installed
+1. Record the current `codex/mm7` commit, the latest MM7 release tag (`ECv0.1.1` at writing), installed
    MM7 helper and Atlas identities, source/data roots, profile/save filenames,
    and free disk space in a new ignored local report. Keep at least 10 GB free.
    Check `git status --short --branch` and `git worktree list` before edits.

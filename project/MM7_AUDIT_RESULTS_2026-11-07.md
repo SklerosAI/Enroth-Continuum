@@ -127,7 +127,7 @@ Defects, inherited unless noted:
 6. Monster spell and projectile damage use the wrong ability slot
    (`Actor.cpp:274, 354`, `a4` ignored). Rows 18, 23, 24, 35, 36, 211-213.
    Meteor Shower always centres on the party.
-   **Ability stamp fixed in the integration tree at `387b97a59`:** the selected
+   **Ability stamp fixed in the integration tree at `e2eae3edf`:** the selected
    spell slot now reaches projectile, Meteor Shower, Sparks and Sharpmetal
    sprites. Three MM7 GameTests failed before the fix and passed after it;
    three MM6 combat controls passed. Two affected trace fixtures were
@@ -177,8 +177,12 @@ Defects, inherited unless noted:
     **Further fixed on 2026-11-09:** Spirit Lash now retains mana and uses
     failure recovery when its target is out of range (`be9a160bc`), and a
     charged wand uses the novice spell-recovery row consistently
-    (`59ead390d`). Cancelled-scroll consumption and charge-spend ordering
-    remain open.
+    (`59ead390d`). Charge-spend ordering remains open.
+    **Superseded 2026-11-23:** cancelled-scroll consumption was fixed in
+    `ece2203eb` (2026-11-10) and `d7edd7c41` (2026-11-11), covered by
+    `MM7Scrolls.CancelItemTargetScroll`, `CancelActorTargetScroll`,
+    `CancelCharacterTargetScroll`, `CancelActorTargetScrollFromInventory` and
+    `IncapacitationCancelsActorTargetScroll`.
     **Further fixed on 2026-11-09:** MM7 Squire contributes +2 to every
     weapon and armor skill, and Sage contributes +6 to Item ID and Monster ID
     (`dbd5dfba5`). These title-specific bonuses leave MM6 unchanged.
@@ -194,11 +198,17 @@ Defects, inherited unless noted:
     The synthetic test failed on both `Ener` fields before repair and passed
     with Earth and MM6 parser controls afterward; the MM6 parser is separate.
 13. Items and professions: two enchantment families add no elemental damage
-    (`Item.cpp:71-130`), artifacts 530, 531 and 536 lack their described
-    effects, the Squire profession does nothing and Sage lacks its identify
-    bonus (`NPCEnums.h:73, 84`), two grandmaster teacher requirements differ
-    from their text (`NPCTopics.cpp:519-527`), Archer and Warrior Mage
-    Disarm Trap caps differ from the manual (`mm7_data.cpp:1450, 1491`).
+    (`Item.cpp:71-130`, Assassins' 5 Body and Barbarians' 6-8 Cold), artifacts
+    530, 531 and 536 lack their described effects (Cloak of the Sheep's Sleep
+    immunity, Elfbane's elf slaying, Lady's Escort's drowning protection), the
+    Squire profession does nothing and Sage lacks its identify bonus
+    (`NPCEnums.h:73, 84`), two grandmaster teacher requirements differ from
+    their text (`NPCTopics.cpp:519-527`), and the Archer and Warrior Mage
+    Disarm Trap caps are Novice where the manual implies more
+    (`mm7_data.cpp:1450, 1491`), which is unresolved against MM7.exe.
+    **Squire and Sage fixed on 2026-11-09** (`dbd5dfba5`,
+    `MM7NpcProfession.SquireAndSageApplyDocumentedSkillBonuses`). The other
+    items here were still open in source on 2026-11-23.
 14. Upstream issues confirmed still present: #2867 (zombie face persists,
     Divine Intervention is an extra path), #2502, #1463, #2770, #2763, #2786,
     #2071, #920/#2003, #1530, #682, #586, #1917, #1918, #843, #2268, #2232.
@@ -226,9 +236,13 @@ remain in the test. The Day of the Gods fix and trace update are integrated;
 no graphical or installed-app claim follows.
 
 The branch GameTests cover the first five test targets above. Remaining tests
-that would close open defects: rows 24 and 35 slot-2 spells, a level-7 chest artifact flag, the event 532
-pedestal, a cancelled scroll, Squire and Sage
-effects, the two teacher requirements, zombie clearing paths, and #2502.
+that would close open defects, as of 2026-11-23: the two teacher requirements
+and #2502. The slot-2 spells (`MM7MonsterSpell.SecondSlot*`), the level-7
+artifact flag (`Issues.Issue1988_ArtifactLimitOnLevelSeven`), the event 532
+pedestal (`MM7EventSpell.DayOfTheGodsPowerMatchesOrdinaryCast`), cancelled
+scrolls (`MM7Scrolls.*`), Squire and Sage
+(`MM7NpcProfession.SquireAndSageApplyDocumentedSkillBonuses`) and zombie
+clearing (`MM7Combat.DivineInterventionPreservesZombie`) now have tests.
 
 ## A2b campaign and events (done)
 
@@ -238,6 +252,8 @@ messenger's 112/113-day boundary. A later headless test also verified that
 Alice Hargreaves' room opens without its missing room video (`505fbaec6`).
 Only the raid case remains disabled; these tests do not establish a
 continuous campaign from a new game or visible ending playback.
+**Superseded 2026-11-23:** `MM7Campaign.HarmondaleRaid` has run enabled since
+`baa044b76` (2026-11-10), with survivor and no-survivor iterations.
 
 - All 77 scripts (76 maps plus `global.evt`) framed: 16,699 records, 47
   opcodes, 0 framing errors, 0 broken jump targets, 0 missing MoveToMap targets
@@ -267,6 +283,8 @@ Risks, all inherited:
    Harmondale doors until every group-9 raider in d29 and out02 is dead.
    The candidate test failed to set the castle completion bit after marking
    group-9 actors dead; map/group ownership needs further investigation.
+   **Superseded 2026-11-23:** raid clearing is covered by
+   `MM7Campaign.HarmondaleRaid` (`baa044b76`).
    A separate MM6 item-pickup remnant also set MM7 raid bits 184 and 185
    when picking up item IDs 506 and 455. That path is now MM6-only
    (`99757a31d`); the focused MM7 pickup regression passed.
@@ -327,6 +345,11 @@ Defects:
    its abnormal-exit warning appeared after a controlled force-quit at the
    title menu. Ordinary Exit returned the normal message. Save failure and
    corrupt-body handling remain open.
+   **Superseded 2026-11-23:** fixed by `908052d39` (atomic native saves) and
+   `b26b68ef2` (corrupt saves rejected before loading), covered by
+   `MM7SaveFailure.ManualWriteFailureKeepsSaveMenu`,
+   `MM7SaveFailure.QuickWriteFailureKeepsSlotAndReportsError` and the
+   `MM7AtomicSaveFile.*` and `MM7SaveValidation.*` unit tests.
 5. Low-medium, fork: the spellbook Grandmaster popup row lost its `\t000`
    indent reset (`UIPopup.cpp:1415-1422`). Restored in `f70627f9c`; a visual
    comparison is still open.
@@ -346,8 +369,9 @@ fullscreen uses an SDL Space on display 0, no HiDPI flag is set. Upstream
 #1201 (HiDPI) and #2171 (window size after a fullscreen toggle) still apply.
 #1920 is avoided by Atlas passing `--data-path`. #1591 (signing) still applies.
 
-Remaining tests: corrupt-save load, unwritable save, spellbook popup screenshot,
-and an explicit run with XQuartz unavailable.
+Remaining tests: spellbook popup screenshot and an explicit run with XQuartz
+unavailable. Corrupt-save load and unwritable save are covered since
+`b26b68ef2` and `908052d39`.
 
 ## Follow-up after the A2 snapshot
 

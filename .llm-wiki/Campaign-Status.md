@@ -6,15 +6,23 @@ tags: [mm6, mm7, mm8, status]
 
 # Campaign Status
 
-The campaigns have distinct readiness levels. This page is current through the 2026-11-15 MM7 gameplay-harness checkpoint; it is not a claim that every title is fully audited. The published MM7 tag and exact local installation evidence are recorded in [[Release-Milestones]].
+The campaigns have distinct readiness levels. The [current state](#current-state--2026-11-23) section is current through 2026-11-23. The dated sections after it are historical records. None of this is a claim that every title is fully audited. The published MM7 tag and exact local installation evidence are recorded in [Release-Milestones](Release-Milestones.md).
 
 The owner's [current delivery order](Current-Delivery-Order.md) puts MM7 working first, MM6 working second, and the full title audits after both working gates. The next-gate cells below describe title-local gaps, not a competing cross-title priority order.
+
+## Current state — 2026-11-23
+
+| Game | State | Next |
+| --- | --- | --- |
+| MM7 | Working gate closed 2026-11-11. Light and Dark C0-C7 chains reach both endings, all 27 promotion endpoints and all 76 maps have headless coverage, and 28 fresh-process checkpoint pairs back the saves. `ECv0.1.0` (2026-11-16) and `ECv0.1.1` (2026-11-20) are tagged. Fortune's Turn now includes chest reroll (`b35afa610`) and the default-off Dragoon class landed (`264d8d800`). The installed Atlas carries a Release MM7 helper from `014514250`. The full suite and both chains were last run before those two merges. | Playthrough verdict: [MM7 Playthrough Go/No-Go](MM7-Playthrough-Go-No-Go.md), NO-GO on verification only. The full MM7 audit has not started, and its start is the owner's call. |
+| MM6 | Owned by Claude on `claude/mm6`, whose curated `docs/` replaced the MM6 rows of this wiki on 2026-11-19. Chain C0-C9 passes headlessly to the win screen. The installed Atlas carries a Release MM6 helper from `626f5f431` for owner playtests. | End-to-end playthrough is NO-GO: reading a spellbook, scrolls, wands, enchanted weapons and a few events end the game. See `docs/mm6-playthrough-go-no-go.md` on `claude/mm6`. |
+| MM8 | Data staged for detection, runtime reserved. | Unchanged. |
 
 ## Working-gate snapshot — 2026-11-10
 
 | Game | Verified state | Next acceptance gate |
 | --- | --- | --- |
-| MM7 | The November 9 atomic-save, load-preflight and combat repairs reached integration; the later full headless suite passed 533 tests with two skipped after campaign and scroll work. The Harmondale raid case is active and all six campaign GameTests passed on integrated source. Separate input-driven Castle opening and rebuild tests cover first Butler contact, goblin kill versus survivor, castle exit and hand-in, Stone City rescue request, seven rescue interactions versus one missing, and king rebuild outcome; those two tests plus raid passed 3/3 after integration. The rebuilt-castle fresh-process Save/Load checkpoint passed on integrated source: writer and reader 1/1 each, one-missing rescue case 1/1, and prior disposable writer and reader 1/1 each; the slot digest stayed unchanged. A staged Atlas visibly completed New Game, shop purchase, spell cast, named Save/quit/fresh-process Load with item and gold intact, and Load of a copied older save in a disposable profile. The later fail-closed Atlas profile fix is integrated; the signed recording candidate was installed headlessly after owner authorization, with the prior app retained as a rollback copy. On 2026-11-10 the owner's visible session on the installed candidate passed: title music, NPC voice and combat sound heard, an NPC conversation, a fight, a new save, relaunch from The Atlas and Load, with existing saves unchanged. A separate scavenger Judge/ship test passed on integrated source (1/1) with two ship controls (2/2); it supplies delivery items as fixtures and does not cover their acquisition or a fresh-process checkpoint after departure. | The working gate closed on 2026-11-11: a continuous chain of eight chapter tests runs from New Game to the Light ending through real saves, and the full headless suite passed 540/540. The full [MM7 audit](../project/MM7_AUDIT_CHECKLIST.md) follows the MM6 working gate. Full [MM7 audit](../project/MM7_AUDIT_CHECKLIST.md) follows the MM6 working gate. |
+| MM7 | The November 9 atomic-save, load-preflight and combat repairs reached integration; the later full headless suite passed 533 tests with two skipped after campaign and scroll work. The Harmondale raid case is active and all six campaign GameTests passed on integrated source. Separate input-driven Castle opening and rebuild tests cover first Butler contact, goblin kill versus survivor, castle exit and hand-in, Stone City rescue request, seven rescue interactions versus one missing, and king rebuild outcome; those two tests plus raid passed 3/3 after integration. The rebuilt-castle fresh-process Save/Load checkpoint passed on integrated source: writer and reader 1/1 each, one-missing rescue case 1/1, and prior disposable writer and reader 1/1 each; the slot digest stayed unchanged. A staged Atlas visibly completed New Game, shop purchase, spell cast, named Save/quit/fresh-process Load with item and gold intact, and Load of a copied older save in a disposable profile. The later fail-closed Atlas profile fix is integrated; the signed recording candidate was installed headlessly after owner authorization, with the prior app retained as a rollback copy. On 2026-11-10 the owner's visible session on the installed candidate passed: title music, NPC voice and combat sound heard, an NPC conversation, a fight, a new save, relaunch from The Atlas and Load, with existing saves unchanged. A separate scavenger Judge/ship test passed on integrated source (1/1) with two ship controls (2/2); it supplies delivery items as fixtures and does not cover their acquisition or a fresh-process checkpoint after departure. | The working gate closed on 2026-11-11: a continuous chain of eight chapter tests runs from New Game to the Light ending through real saves, and the full headless suite passed 540/540. The full [MM7 audit](../project/MM7_AUDIT_CHECKLIST.md) follows the MM6 working gate. |
 | MM6 | A seeded first-map session can Save to and Load from numbered native slots; the full headless gate passed 25 children, including three MM7 controls. Character paperdoll, portrait animation and Quest book slices passed focused and hidden checks. On 2026-11-11 production New Game reached the first map, saved from the menu and reloaded in a fresh process (gate 27/27). A sweep of all 67 maps found the blockers, and fixes for the award-animation crash, the reputation variable, the generated NPC pool and the damage channels are integrated. The first campaign chain now runs C0 (New Game to `save000.ec6`) and C1 (a fresh-process Load through councils, stable pricing, chest pickup and `save001.ec6`) in a marked disposable profile; both chapter-save digests passed. MM6 bows now use the native arrow projectile and hit their target, while map visits now preserve sky/timer state across travel and saves; all three revisit checks pass. | Extend the main-quest chain from C1, then prove the visible owner route. This remains headless campaign evidence, not a completed playable-campaign claim. |
 | MM8 | Private data is staged for local detection; the runtime is reserved. | Build and verify an isolated MM8 engine, save route and graphical session before any Play action. |
 
@@ -407,8 +415,9 @@ The three advisor hand-in checks and assassination request/cube hand-in are
 also integrated. The focused combined Light run passed 7/7. These tests use
 fixture quest items and bits around input-driven dialogue and doors. Advisor
 item acquisition is now continuous for the altar pieces, Soul Jars and Pit
-cube; real Elder Vampire combat and the Light Blaster reward assertion remain
-open. Xenofex request,
+cube. Real Elder Vampire combat and the Light Blaster reward assertion were
+open at the time and are covered since the 2026-11-15 harness
+(`MM7CombatHarness.WineCellarAttackInputDamagesAndKillsTarget`, `MM7LightAssassination`). Xenofex request,
 alive/dead map-leave and hand-in are integrated, with travel and actor death
 as fixtures in those focused controls; the current C6 chain above supplies the
 authored travel, Roland/key/controls and live combat. The Overthruster tests now cover throne request, wetsuit chest
@@ -436,13 +445,14 @@ assigning those fields. A marked disposable production Save writer and
 separate normal-Load reader passed 1/1 each with unchanged slot bytes. The
 reader selected the surviving second-slot topic through the UI; the in-memory
 seam and Xenofex controls passed 3/3. Earlier quest outcomes, altar items and
-cube are fixtures, so continuous New Game-to-ending coverage remains open.
+cube are fixtures. Continuous New Game-to-ending coverage was open then and is
+supplied since by the C0-C7 chains.
 The later Overthruster checkpoint is also integrated. Production Save after
 input-driven Lincoln retrieval and Shoals exit, followed by normal Load in a
 separate fresh headless process, passed 1/1 each. The loaded state kept the
 held Overthruster, Light/retrieval bits, four equipped wetsuits and unchanged
-slot bytes. Earlier chapter prerequisites are fixtures, so this does not yet
-prove uninterrupted campaign continuity or installed-app Save/Load.
+slot bytes. Earlier chapter prerequisites are fixtures. Uninterrupted campaign
+continuity came later with the C0-C7 chains.
 
 ## Historical snapshot — 2026-11-07
 
@@ -456,7 +466,7 @@ The following table is retained as a dated record. Its claims that normal MM6 Sa
 
 The status above is an evidence summary, not a full compatibility claim. A later MM6 first-map checkpoint adds a native numbered-slot admission policy (focused units 2/2) and an Engine-owned staged graph through exact chest handoff. Its seven-child disposable replay, two full-retry fault children and MM7 control passed again. The native slot is not connected to production Save UI, and event/actor/NPC/RNG/post-world ownership still needs extraction from test hooks. For exact counts, parser observations, and known gaps, read the current [local status](../project/LOCAL_STATUS.md) and title-specific implementation documents. The Atlas should expose each Play action only after that title's runnable session and save/load checks.
 
-The [MM7 private portrait mod](MM7-Private-Portrait-Mod.md) has a source-linked mood resolver and Atlas controls. Its focused tests and hidden HUD capture pass, but the new staged bundle has not passed visible interaction or save/reload acceptance and is not installed.
+The [MM7 private portrait mod](MM7-Private-Portrait-Mod.md) has a source-linked mood resolver and Atlas controls. Its focused tests and hidden HUD capture pass, but at the time the new staged bundle had not passed visible interaction or save/reload acceptance and was not installed. Later installs carry the Atelier.
 The integration tree also has a focused [MM7 level-seven artifact fix](MM7-Level-Seven-Artifacts.md); its picker and indoor payload tests pass, while real pickup and installed-app acceptance remain open.
 
 Source: [project/LOCAL_STATUS.md](../project/LOCAL_STATUS.md), [project/MM6_F3_GATE_REVIEW.md](../project/MM6_F3_GATE_REVIEW.md), [project/MM7_AUDIT_CHECKLIST.md](../project/MM7_AUDIT_CHECKLIST.md), reviewed 2026-11-07.

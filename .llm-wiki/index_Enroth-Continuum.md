@@ -32,7 +32,8 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 
 - [MM7 Dragoon Mod](MM7-Dragoon-Mod.md) — Default-off Atlas class family, tiered skills, scoped Knight promotions and headless regression matrix
 
-- [Campaign Status](Campaign-Status.md) — Current MM6, MM7 and MM8 readiness, including the MM6 C0-C1 chain and consolidated MM7 full gate with both endings, all side-objective durability, 27-of-27 promotions and 76-of-76 map runtime coverage
+- [Campaign Status](Campaign-Status.md) — MM6, MM7 and MM8 readiness with a 2026-11-23 current-state table, the consolidated MM7 full gate with both endings, all side-objective durability, 27-of-27 promotions and 76-of-76 map runtime coverage, and dated history
+- [MM7 Playthrough Go/No-Go](MM7-Playthrough-Go-No-Go.md) — Whether MM7 is ready for an end-to-end playthrough: NO-GO on verification only, no known player-reachable crash, and what flips the verdict
 - [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
 - [MM7 All Artifacts + Storage](MM7-All-Artifacts-Storage-Mod.md) — Optional collection-based random-artifact eligibility with Castle Harmondale persistent storage
 - [MM7 Private Portrait Mod](MM7-Private-Portrait-Mod.md) — Local mood PNG layout, shared MM7 portrait resolver, Atlas controls, and verified hidden HUD capture
@@ -43,12 +44,12 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Disposable Save and Reload](MM7-Disposable-Save-Reload.md) — Isolated Save/Load evidence, 28 checkpoint pairs, a local pre-tag gate, copied owner-save primary/backup probes and installed-candidate limits
 - [MM7 Chest Reroll Mod](MM7-Chest-Reroll-Mod.md) — Fortune’s Turn chest button, independent HUD X behavior, source-marker persistence and playtest limit
 - [MM7 Fortune's Turn Mod](MM7-Monster-Loot-Reroll-Mod.md) — merged chest/reward Atlas choice, checked-X control for non-chest rewards, and isolated MM6 launcher options
-- [ECv0.1.1 Release Candidate](../project/ECV011_RELEASE_CANDIDATE.md) — proposed MM7 patch scope, MM6 playtest boundary and release gates; no tag created
+- [ECv0.1.1 Release Candidate](../project/ECV011_RELEASE_CANDIDATE.md) — pre-tag MM7 patch plan, MM6 playtest boundary and release gates, tagged `ECv0.1.1` on 2026-11-20
 - [MM7 Scroll Cancellation](MM7-Scroll-Cancel.md) — Item-, actor- and character-target scroll return on cancelled targeting, focused integrated controls and remaining exit paths
 - [MM7 Playtest Recording](MM7-Playtest-Recording.md) — Atlas rolling video now retains the newest two minutes after every exit, alongside bounded diagnostics, protected clips and the remaining macOS permission gate
 - [MM7 Quest Behavior Catalog](MM7-Quest-Behavior-Catalog.md) — Public/source-event reconciliation of every main, Light, Dark, side and promotion quest; includes both Niles chain returns, Rogue checkpoint, Walls predicate coverage, 18 durable side/objective routes and all 27 promotion endpoints
 - [MM7 Remaining Quests and Areas](../project/MM7_REMAINING_QUESTS_AND_AREAS.md) — Both Niles chain returns, measured Light/Dark approaches, Rogue durability and remaining graphical and parity work
-- [MM7 Atomic Save File](MM7-Atomic-Save-File.md) — Native-slot helper, detached preflight and integrated staged live capture; production atomic SaveLoad wiring remains open
+- [MM7 Atomic Save File](MM7-Atomic-Save-File.md) — Native-slot helper, detached preflight and staged live capture. Native SaveLoad writes through the helper and loads run structural preflight
 - [MM6 GrayFace Patch Reference](MM6-GrayFace-Patch-Reference.md) — Pinned GrayFace MM6 Patch 2.5.7, its 90 engine fixes cross-referenced against our runtime, decoded data fixes and open vanilla-bug decisions
 - [MM6 Transition and Death Candidates](MM6-Transition-And-Death-Candidates.md) — Cancel-only MM6 indoor dialog and detached death model with explicit live integration gates
 - [MM7 Level-Seven Artifacts](MM7-Level-Seven-Artifacts.md) — MM7 artifact flags, cap and indoor pickup payload fixed with focused GameTests; graphical pickup remains open

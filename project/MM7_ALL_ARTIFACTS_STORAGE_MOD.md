@@ -105,7 +105,13 @@ Run the focused engine cases with:
 ENROTH_MM7_ALL_ARTIFACTS_STORAGE=1 \
   build/test/Bin/GameTest/OpenEnroth_GameTest \
   --game mm7 --headless --data-path "$MM7_DATA_PATH" --test-path test/Data \
-  --gtest_filter='MM7PrivateMods.*:MM7AllArtifactsEngine.*:MM7HarmondaleStorage.*'
+  --gtest_filter='MM7AllArtifactsEngine.*:MM7HarmondaleStorage.*'
+```
+
+The flag-parsing checks are unit tests in the unit-test binary:
+
+```sh
+build/test/Bin/UnitTest/OpenEnroth_UnitTest --gtest_filter='MM7PrivateMods.*'
 ```
 
 Run the disabled control without the flag:

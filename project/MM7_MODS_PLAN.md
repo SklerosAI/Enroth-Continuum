@@ -99,7 +99,7 @@ Recommended defaults first.
 
 ## Future trilogy mod request
 
-- MM7 chest reroll is part of the Fortune's Turn launcher choice; see [the chest contract](MM7_CHEST_REROLL_MOD.md) and [the Fortune's Turn contract](MM7_MONSTER_LOOT_REROLL_MOD.md). Random items awarded by clicked trash heaps, decorations and faces share the popup and checkbox with bounty, ore smith and weapon enchanting. Atlas also exposes the isolated MM6 helper’s Fortune’s Turn and All Artifacts choices. MM8 remains future work in [the cross-game roadmap](ROADMAP.md#optional-mod-backlog).
+- MM7 chest reroll is part of the Fortune's Turn launcher choice; see [the chest contract](MM7_CHEST_REROLL_MOD.md) and [the Fortune's Turn contract](MM7_MONSTER_LOOT_REROLL_MOD.md). Random items awarded by clicked trash heaps, decorations and faces share the popup and checkbox with bounty, ore smith and weapon enchanting. Atlas also exposes the isolated MM6 helper’s Fortune’s Turn and All Artifacts choices (consumed by the MM6 helper built from `claude/mm6`, no engine code on this branch reads them). MM8 remains future work in [the cross-game roadmap](ROADMAP.md#optional-mod-backlog).
 
 ## Next opt-in MM7 ideas
 
@@ -115,7 +115,7 @@ current source and tests take priority over reports about the original game.
 
 | Player tactic | Current fork boundary and possible mod | Verdict |
 | --- | --- | --- |
-| Reload before opening a chest or taking random monster/click loot. [Player account](https://www.gog.com/forum/might_and_magic_series/your_tips_for_mm7_and_maybe_6_and_8_and_9/page1) | Separate chest and click-loot rerolls already cover eligible random results. Fixed items and pre-generated rewards stay on the original path. | Already covered; no duplicate mod. |
+| Reload before opening a chest or taking random monster/click loot. [Player account](https://www.gog.com/forum/might_and_magic_series/your_tips_for_mm7_and_maybe_6_and_8_and_9/page1) | Fortune's Turn (the chest button plus the HUD-X rerolls, one launcher choice since `b35afa610`) already covers eligible random results. Fixed items and pre-generated rewards stay on the original path. | Already covered; no duplicate mod. |
 | Reload before a shop or guild selects stock. [Player account](https://www.gog.com/forum/might_and_magic_series/mm7_cant_savereload_to_change_items_in_shop_on_emerald_island) | The existing [Vendor Refresh](MM7_VENDOR_REFRESH_MOD.md) mod regenerates eligible stock once on each entry at the shop's normal tier. A further in-shop button would need a purchase guard and separate design. | Existing shortcut; defer a button. |
 | Reload the first town-hall bounty of the month until it names a feasible monster. [Player reports](https://www.reddit.com/r/MightAndMagic/comments/1dfskct/mm7_where_are_bounties/) | [`GUIWindow_TownHall::bountyHuntingDialogueOptionClicked`](../src/GUI/UI/Houses/TownHall.cpp) chooses the monster when the monthly deadline expires. Fortune's Turn reuses that hall's eligible pool and preserves the deadline. | Implemented under Fortune's Turn. |
 | Reload after handing ore to a smith to seek a different item. [Player account](https://www.gog.com/forum/might_and_magic_series/mm7_cant_savereload_to_change_items_in_shop_on_emerald_island) | Original global events 501-503 each consume a held ore, then generate one reward from the ore's treasure level and the smith's item type. Fortune's Turn intercepts only those verified random rewards after consumption. | Implemented under Fortune's Turn. |

@@ -19,9 +19,10 @@ normal-Load boundary after the physical Markham Vase pickup; the hand-in and
 exact four-character rewards leave the saved slot unchanged. The combined
 gate passed 731 default MM7 headless GameTests, the unit target and
 `check_style`. Graphical Mac play and original-executable Strange Temple exit
-placement parity remain open. The fixed `ECv0.1.0` tag is the release-source
-reference for the one-branch MM7 lane; installed-app and save hashes must be
-rechecked at the actual audit start.
+placement parity remain open. The latest MM7 release tag (`ECv0.1.1` at
+`e7ed06097`, 2026-11-20, superseding `ECv0.1.0` as the reference) is the
+release-source reference for the one-branch MM7 lane; installed-app and save
+hashes must be rechecked at the actual audit start.
 
 Focused pre-audit checkpoint, 2026-11-20: the Dark Priest Sun altar and the
 physical Lich jars add two production-Save/fresh-process-normal-Load pairs,
@@ -34,7 +35,9 @@ temporary-primary/valid-backup admission in separate headless processes. The
 owner source files stayed fingerprint-identical. These probes do not establish
 all legacy-save or long-play compatibility. The full archive, map, spell, item
 and monster audit remains unstarted; its [efficient handoff](MM7_FULL_AUDIT_NEXT_WEEK_PLAN.md)
-is for the week of 2026-11-23.
+was written for the week of 2026-11-23. It had not started on 2026-11-23,
+and its start date is the owner's call because the delivery order puts the
+full MM7 audit after the MM6 working gate.
 
 Checkpoint, 2026-11-15: all 27 promotion endpoints have focused behavior
 coverage, all 76 shipped maps have runtime GameTest references, and all 17
@@ -75,7 +78,7 @@ travel prompt before any compatibility repair is justified.
 
 ## Baseline and independence
 
-- [ ] Record the fixed `ECv0.1.0` MM7 release-tag revision, staged and
+- [ ] Record the latest MM7 release-tag revision (`ECv0.1.1` at writing), staged and
   installed bundle hashes, bundle identity, launcher route, game-data root,
   profile, save files and local backup hashes. Verify live launch and reload
   immediately before audit work begins.
@@ -90,7 +93,9 @@ travel prompt before any compatibility repair is justified.
 
 - [ ] Manifest and hash each owned MM7 archive and resource family, with
   per-entry names, sizes, decompressed sizes and checksums in the ignored
-  reference set. Check duplicate names, case-insensitive lookup and
+  reference set. The 2026-11-07 A1 pass recorded this coverage (see the
+  [audit results](MM7_AUDIT_RESULTS_2026-11-07.md)). The box stays open until
+  the hashes are re-verified at audit kickoff. Check duplicate names, case-insensitive lookup and
   compression boundaries against the runtime loader.
 - [ ] Index every row and numeric ID in the shipped text and binary tables;
   classify active, reserved, duplicate and missing IDs. Link each table to its

@@ -24,15 +24,15 @@ storage. See [plan.md](plan.md) for the staged acceptance checks.
 ## Trilogy support
 
 The MM7 Mac baseline and first private mod overrides are working in this fork.
-MM6 is the active next engine goal, using the owner's local GOG data. MM7 is
-frozen as its own complete runtime while MM6 is built from a separate source
-copy. MM8 later gets an equally separate runtime. The Atlas ultimately holds
+MM6 is the active engine goal, using the owner's local GOG data. MM7 continues
+on `codex/mm7` and MM6 on `claude/mm6`, as separate engine code sections of one
+source tree. MM8 later gets an equally separate runtime. The Atlas ultimately holds
 three sibling engine apps and three independent sets of data, saves, mods and
 preferences, so all campaigns can work from one installation without switching
 builds or replacing another game. We can diverge from
 OpenEnroth's implementation and schedule while preserving its license, history
-and credit. The Atlas will offer MM6 only after an observed campaign session
-and save/load check; full MM6 support means the campaign can reach its ending.
+and credit. The Atlas offers MM6 Play as an owner playtest helper. A released MM6 action still
+waits for an observed campaign session and save/load check, and full MM6 support means the campaign can reach its ending.
 Cross-game character transfer follows working source and destination games.
 See [plan.md](plan.md), section 18.1, for gates and checks.
 
@@ -56,5 +56,5 @@ have passed play, export, import, and save/load checks.
 
 ## Optional mod backlog
 
-- **Instant loot reroll (MM6, MM7, MM8):** MM7 has a separate chest mod and Fortune's Turn for random monster, click, ore smith, bounty and weapon-enchantment results; see [chest reroll](MM7_CHEST_REROLL_MOD.md) and [Fortune's Turn](MM7_MONSTER_LOOT_REROLL_MOD.md). MM6/MM8 versions remain future work.
+- **Instant loot reroll (MM6, MM7, MM8):** MM7 and MM6 each have Fortune's Turn, one Atlas choice that covers the chest reroll button and the random monster, click, ore smith, bounty and weapon-enchantment rerolls. See [chest reroll](MM7_CHEST_REROLL_MOD.md) and [Fortune's Turn](MM7_MONSTER_LOOT_REROLL_MOD.md). The MM6 version is built from `claude/mm6`. MM8 remains future work.
 - **MM7 in-game mod panel:** Show the Atlas launch options and the live loot-reroll checkbox in a small read-only panel reached from the game menu. Keep the panel out of saves and keep Atlas as the master launch toggle. See [MM7 mod research](MM7_MODS_PLAN.md#next-opt-in-mm7-ideas).

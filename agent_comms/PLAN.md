@@ -12,6 +12,15 @@ checkout, and use the matching `codex/` or `claude/` branch prefix. The older
 references to Claude as overall lead describe the prior handoff and are
 superseded by this owner decision.
 
+Status 2026-11-23: this plan was last revised on 2026-11-12 and several of
+its open items have since landed. The Dark chain C0-C7 and its ending are
+integrated (`c5d589ae0`). The two-minute rolling playtest recorder is
+integrated (see `.llm-wiki/Campaign-Status.md`). The Wine Cellar's named
+vampire is handled in `EvtInterpreter.cpp`. The cancelled-scroll fixes listed
+below as waiting were integrated as `7b3b7b074`, `ece2203eb` and `374017cdf`.
+Codex delivered MM7 work through 2026-11-22 and is idle now. The lane board is
+`CURRENT_WORK.md`.
+
 Stages run in order: (1) MM7 working, (2) MM6 working with MM7 preserved,
 (3) full MM7 audit, (4) full MM6 audit. A working gate and an audit are
 separate. A stage advances only when every row of its gate has the stated
@@ -390,10 +399,9 @@ and redirects saves to an in-memory filesystem until the trace stops.
 
 ## Limits in force
 
-- Lanes are limited by the ten-worktree cap and disk, not by a lane count
-  (owner, 2026-11-10). Codex has been silent since 2026-11-11 03:22 UTC, so
-  Claude integrates.
-- Ten registered worktrees at most. Reuse a merged worktree before creating one.
+- Owner rule since 2026-11-20: no lane, worktree or branch count cap while a
+  round runs. Each round ends with one branch and one worktree per title.
+  Each title owner integrates its own title.
 - Keep at least 10 GB free on disk. The shared ccache is capped at 2 GB
   (lowered from 3 GB on 2026-11-11). Each new worktree build adds about 1.5-2 GB, so check
   `df -h /` before starting one. Codex freed 2.3 GiB of merged build

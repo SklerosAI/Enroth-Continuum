@@ -2,6 +2,17 @@
 
 This is a personal-machine validation note. It contains no game assets.
 
+## Current state — 2026-11-23
+
+The sections below are dated records, the newest from 2026-11-12, and describe
+the machine as it was then. Since then `ECv0.1.0` (2026-11-16) and `ECv0.1.1`
+(2026-11-20) were tagged, and on 2026-11-22 the installed Atlas was replaced by
+one carrying Release MM7 (`014514250`) and MM6 (`626f5f431`) helpers. MM7 saves
+live in `Profiles/MM7-Atlas` and MM6 saves in `Profiles/MM6-Atlas`. Superseded
+apps are deleted without a rollback copy, per `AGENTS.md`, so the rollback
+copies mentioned below no longer exist. The current install record is
+[Release Milestones](../.llm-wiki/Release-Milestones.md).
+
 ## MM6 character screen layout — 2026-11-12
 
 The MM6 character screen now uses the original executable's layout on all
@@ -108,7 +119,7 @@ The one-shot MM6-only test hook now runs after `DoPrepareWorld(true)` and before
 
 A read-only NPC resource identity probe now matches the loaded MM6 static tables and global dialogue topics in a fresh null-renderer process (1/1). The first run hit a test-thread stack edge; heap-owning the large baseline and extra snapshots resolved it, and focused NPC/raw-session tests passed 18/18. Generated NPC identity and game RNG are still outside the saved owner contract.
 
-## MM7: playable on this M2 Mac
+## MM7: playable on this M2 Mac (historical, 2026-11-05)
 
 The current integration tree also builds a title-locked `MM7.app` and stages a signed Atlas with `Contents/Helpers/MM7.app`. A wrong-title helper was rejected without changing the previous staged app, and a reuse build retained an identical MM7 helper. This is a build-tree checkpoint; the installed Atlas still has the prior generic helper until a live launch and save check accepts the new bundle. The protected `mm7-isolated-runtime` baseline and both local save profiles remain untouched.
 

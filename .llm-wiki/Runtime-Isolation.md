@@ -28,6 +28,9 @@ while the chest’s Reroll button remains available with X off. MM6 does not
 use the MM7 recording collector. Visible Atlas rendering and launch readiness
 passed; visible MM6 game interaction and normal installed-app save/reload
 remain for owner playtesting.
+On 2026-11-23 the first owner MM6 session on this build ended when a Cleric read
+a spellbook, which the MM6 helper refuses by throwing. The crash and the other
+blockers are tracked in `docs/mm6-playthrough-go-no-go.md` on `claude/mm6`.
 
 The [Atlas assembler](../launcher/assemble.py) validates bundle identity,
 arm64 code and foreign-title rejection, carries existing siblings and media

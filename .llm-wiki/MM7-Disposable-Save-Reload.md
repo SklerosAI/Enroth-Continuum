@@ -64,7 +64,7 @@ normal profile's settings file; prior bytes were unavailable, so it was
 preserved. The accidental new log was removed. This gate does not establish
 full campaign completion or installed-app cutover. The owner later authorized
 a headless Atlas reinstall. The signed candidate is installed with the old
-app retained locally, but no post-install launch or graphical Save/Load check
+app retained locally (superseded 2026-11-22: installs now delete the old app and keep no backup), but no post-install launch or graphical Save/Load check
 has run.
 
 ## Rebuilt-castle checkpoint — 2026-11-10

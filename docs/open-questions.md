@@ -44,6 +44,10 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   oute3 edge. Loading that border autosave put the party at the New Sorpigal start instead of the edge, with
   `fix_border_autosave` on and off alike. Possibly the death and respawn path. Not reproduced or checked against
   MM6.exe.
+- **Guild learn speech.** MM6.exe's shop click handler 0x4A4CA0 has a learn-skill branch (0x4A4D09, dialogue states
+  36 to 66) that plays speech 78 on success, and status 403 with sound 27 for a skill already known. The port's
+  `MM6Guild` learn plays nothing and `MM6SkillGuild` plays its house learn sound. Which guilds reach 0x4A4D09 isn't
+  traced.
 - **Any-item roll.** Chests and `GiveItem` kind 0 keep MM6.exe's off-by-one, which favours item 1, because the GrayFace
   patch leaves that roll alone. Fixing it changes chest contents on every map. Owner's call. `mm6::generateAnyItem`.
 - **MM7 monster types on MM6 paths.** `supertypeForMonsterId` makes MM6's Genies and Plate Knights undead and its

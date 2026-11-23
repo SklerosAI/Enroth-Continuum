@@ -67,9 +67,8 @@ textures per character. Conditions pick a portrait through
 
 - Identity: the `Item_MM7` byte at offset 0x1B now carries MM7 chest-reroll
   provenance for unclaimed random loot. This proposed single-item mod needs a
-  different durable identity design before implementation. The original
-  byte-tag proposal below is superseded; any replacement must survive item
-  conversion between characters, chests, maps and shops without colliding
+  different durable identity design before implementation. That design must
+  survive item conversion between characters, chests, maps and shops without colliding
   with chest-reroll provenance. Each override row must still match an item ID.
 - Persistence: `Mods/MM7/items.tsv` with tag, item ID, party slot, equipment
   slot, base AC, bonus AC and state (pending or bound). Atlas allocates tags

@@ -8,8 +8,8 @@ The opt-in `MM7DisposableSave` tests use an explicit, marked, owner-only
 system-temp profile through `NativeFileSystem`. The test runner accepts
 `--mm7-disposable-profile` only with MM7, `--headless`, an explicit licensed
 `--data-path`, `--gtest_also_run_disabled_tests` and one exact filter from the
-admitted MM7 disposable table in `GameTestMain.cpp` (originally one writer and
-one reader, since grown to every checkpoint pair). Before startup it canonicalizes the profile, checks its temp parent,
+admitted MM7 disposable table in `GameTestMain.cpp`, which lists every
+checkpoint pair. Before startup it canonicalizes the profile, checks its temp parent,
 name, permissions, marker and allowed contents, and rejects symlinks. The
 writer starts a new MM7 game, sets a known test-only Party value and calls the
 normal MM7 disk save writer. After that process exits, the reader retains only

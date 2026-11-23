@@ -32,7 +32,8 @@ git log --oneline master..upstream/master
 
 Upstream synchronization is intentionally a reviewed, optional operation. Do not
 force-push the shared branch, and do not mix synchronization commits with
-SklerosAI work. The Mac MM7 self-contained-source gate in
-[MM7_SELF_CONTAINED_SOURCE.md](MM7_SELF_CONTAINED_SOURCE.md) removes remaining
-build-time dependencies on OpenEnroth-hosted artifacts while retaining all
+SklerosAI work. The opt-in Mac MM7 local-only build is self-contained in tracked
+source, while the ordinary configure still downloads OpenEnroth-hosted
+dependency archives and the ztd.text submodule. See
+[MM7_SELF_CONTAINED_SOURCE.md](MM7_SELF_CONTAINED_SOURCE.md). Both keep all
 required attribution.

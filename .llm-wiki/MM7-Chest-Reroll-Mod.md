@@ -26,9 +26,8 @@ ends rerolls for that chest, including after save/load.
 The snapshot round trip, focused chest tests and a headless click on the inset
 button passed. The current full MM7 headless suite passed 737/737 and
 `check_style` passed. A hidden OpenGL capture established placement and
-appearance in the MM7 chest. The installed Atlas passed signature verification
-and retained the previous MM6 executable unchanged. Visible installed-app
-interaction remains to be checked in normal graphical play.
+appearance in the MM7 chest. Visible installed-app interaction is not yet checked in
+normal graphical play.
 
 An older save's already-generated chest lacks marker provenance, so this mod
 does not offer a reroll for it until that map normally respawns. Monster loot,

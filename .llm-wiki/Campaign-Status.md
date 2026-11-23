@@ -6,9 +6,9 @@ tags: [mm6, mm7, mm8, status]
 
 # Campaign Status
 
-The campaigns have distinct readiness levels. The [current state](#current-state--2026-11-23) section is current through 2026-11-23. The dated sections after it are historical records. None of this is a claim that every title is fully audited. The published MM7 tag and exact local installation evidence are recorded in [Release-Milestones](Release-Milestones.md).
-
-The owner's [current delivery order](Current-Delivery-Order.md) puts MM7 working first, MM6 working second, and the full title audits after both working gates. The next-gate cells below describe title-local gaps, not a competing cross-title priority order.
+Where each title stands today. None of this claims a title is fully audited. Tags and the installed app are in
+[Release Milestones](Release-Milestones.md). The owner's [delivery order](Current-Delivery-Order.md) puts MM7 working
+first, MM6 working second, then the full MM7 audit and the full MM6 audit.
 
 ## Current state — 2026-11-23
 
@@ -16,459 +16,64 @@ The owner's [current delivery order](Current-Delivery-Order.md) puts MM7 working
 | --- | --- | --- |
 | MM7 | Working gate closed 2026-11-11. Light and Dark C0-C7 chains reach both endings, all 27 promotion endpoints and all 76 maps have headless coverage, and 28 fresh-process checkpoint pairs back the saves. `ECv0.1.0` (2026-11-16) and `ECv0.1.1` (2026-11-20) are tagged. Fortune's Turn now includes chest reroll (`b35afa610`) and the default-off Dragoon class landed (`264d8d800`). The installed Atlas carries a Release MM7 helper from `014514250`. The full suite and both chains were last run before those two merges. | Playthrough verdict: [MM7 Playthrough Go/No-Go](MM7-Playthrough-Go-No-Go.md), NO-GO on verification only. The full MM7 audit has not started, and its start is the owner's call. |
 | MM6 | Owned by Claude on `claude/mm6`, whose curated `docs/` replaced the MM6 rows of this wiki on 2026-11-19. Chain C0-C9 passes headlessly to the win screen. The installed Atlas carries a Release MM6 helper from `626f5f431` for owner playtests. | End-to-end playthrough is NO-GO: reading a spellbook, scrolls, wands, enchanted weapons and a few events end the game. See `docs/mm6-playthrough-go-no-go.md` on `claude/mm6`. |
-| MM8 | Data staged for detection, runtime reserved. | Unchanged. |
+| MM8 | Data staged and detected by the Atlas, runtime reserved. | No MM8 helper or Play action until an isolated MM8 engine, save route and graphical session pass. |
 
-## Working-gate snapshot — 2026-11-10
+## MM7
 
-| Game | Verified state | Next acceptance gate |
-| --- | --- | --- |
-| MM7 | The November 9 atomic-save, load-preflight and combat repairs reached integration; the later full headless suite passed 533 tests with two skipped after campaign and scroll work. The Harmondale raid case is active and all six campaign GameTests passed on integrated source. Separate input-driven Castle opening and rebuild tests cover first Butler contact, goblin kill versus survivor, castle exit and hand-in, Stone City rescue request, seven rescue interactions versus one missing, and king rebuild outcome; those two tests plus raid passed 3/3 after integration. The rebuilt-castle fresh-process Save/Load checkpoint passed on integrated source: writer and reader 1/1 each, one-missing rescue case 1/1, and prior disposable writer and reader 1/1 each; the slot digest stayed unchanged. A staged Atlas visibly completed New Game, shop purchase, spell cast, named Save/quit/fresh-process Load with item and gold intact, and Load of a copied older save in a disposable profile. The later fail-closed Atlas profile fix is integrated; the signed recording candidate was installed headlessly after owner authorization, with the prior app retained as a rollback copy. On 2026-11-10 the owner's visible session on the installed candidate passed: title music, NPC voice and combat sound heard, an NPC conversation, a fight, a new save, relaunch from The Atlas and Load, with existing saves unchanged. A separate scavenger Judge/ship test passed on integrated source (1/1) with two ship controls (2/2); it supplies delivery items as fixtures and does not cover their acquisition or a fresh-process checkpoint after departure. | The working gate closed on 2026-11-11: a continuous chain of eight chapter tests runs from New Game to the Light ending through real saves, and the full headless suite passed 540/540. The full [MM7 audit](../project/MM7_AUDIT_CHECKLIST.md) follows the MM6 working gate. |
-| MM6 | A seeded first-map session can Save to and Load from numbered native slots; the full headless gate passed 25 children, including three MM7 controls. Character paperdoll, portrait animation and Quest book slices passed focused and hidden checks. On 2026-11-11 production New Game reached the first map, saved from the menu and reloaded in a fresh process (gate 27/27). A sweep of all 67 maps found the blockers, and fixes for the award-animation crash, the reputation variable, the generated NPC pool and the damage channels are integrated. The first campaign chain now runs C0 (New Game to `save000.ec6`) and C1 (a fresh-process Load through councils, stable pricing, chest pickup and `save001.ec6`) in a marked disposable profile; both chapter-save digests passed. MM6 bows now use the native arrow projectile and hit their target, while map visits now preserve sky/timer state across travel and saves; all three revisit checks pass. | Extend the main-quest chain from C1, then prove the visible owner route. This remains headless campaign evidence, not a completed playable-campaign claim. |
-| MM8 | Private data is staged for local detection; the runtime is reserved. | Build and verify an isolated MM8 engine, save route and graphical session before any Play action. |
+**Campaign.** `MM7CampaignChain` runs New Game to the Light ending as eight chapter tests in fresh processes, each
+starting from the save the previous chapter wrote. `MM7DarkCampaignChain` reuses chapters C0-C2 and adds its own C3-C7
+to the Dark ending. Both chains are `DISABLED_` by default and run on request. The Light C6 chapter follows the authored
+Mount Nighon, Thunderfist, Tunnels to Eofol, Land of the Giants and Colony Zod route. The Dark chain takes the
+messenger, Deyja and Arbiter route, retrieves the altar pieces, Soul Jars and the Pit cube, and finishes through the
+Gloaming wetsuits, Shoals and Lincoln.
 
-## MM7 audit continuation — 2026-11-15
+**Promotions.** Every first and second promotion, 27 endpoints, has a behaviour test through the real dialogue, map
+route and objective, with path, prerequisite and missing-objective refusals, qualifying and honorary rewards and
+duplicate stability. See the [MM7 Quest Behavior Catalog](MM7-Quest-Behavior-Catalog.md).
 
-### Gameplay and Barrow checkpoint — 2026-11-15
+**Maps and side quests.** All 76 shipped maps load and run in a game test. Side quests on the chains' routes and the
+regional quests in `MM7SideQuests` have behaviour tests, and the ones in `MM7SideQuestCheckpoint` also survive a
+production save and a fresh-process load with unchanged slot bytes.
 
-The [MM7 gameplay harness](MM7-Gameplay-Harness.md) now provides bounded
-press/hold/release movement, attack-input combat and fresh-process suite
-admission. A composed Wine Cellar case walks toward the authored Elder Vampire,
-releases the key, damages and kills it through attack input, and has an
-inspected hidden OpenGL proof. The narrow MM7 compatibility repair activates
-only the exact disabled quest actor while its quest is live; completion
-blockers and the other disabled group actors remain closed. Tolberti's complete
-Light Blaster reward transaction is asserted.
+**Saves.** Native saves are written atomically (`mm7::writeAtomicSaveSlot`), loads pass a preflight, and
+`MM7SaveFailure` covers the failure paths. `tools/run_mm7_pretag_checkpoints.py` runs the 28 writer and reader pairs
+as a pre-tag gate.
 
-The same checkpoint covers every Barrow Downs map through 27 authored
-transitions, plus the Zokarr meditation-pool promotion and the complete Light
-Arch Druid route through Green, Nighon Tunnels, Zokarr and Green's return. The
-unreachable Hothfarr/event-178 branch is dead original content. Ranger-to-Hunter,
-Druid-to-Great-Druid, Archer-to-Warrior-Mage, Knight-to-Cavalier and
-Paladin-to-Crusader first promotions use their real dialogue/event routes;
-Great Druid physically activates all three authored Stonehenges, while Crusader includes attack-input
-Wromthrax combat and the authored 210-second objective timer. A fresh Light C0-C7 chain passed before the owner asked
-to pause repeated known-green testing; later slices should receive focused
-checks until the next meaningful integration milestone.
+**Movement and combat.** The [MM7 gameplay harness](MM7-Gameplay-Harness.md) drives press, hold and release movement
+and attack-input combat in fresh headless processes. `MM7BarrowTraversal` covers every Barrow Downs transition.
+Combat fixes from the 2026-11-07 audit are in [MM7 Combat Audit Fixes](MM7-Combat-Audit-Fixes.md).
 
-Barrow II's Lantern event now distinguishes a successfully opened source chest
-from fresh recovery state. Map variable 2 is set only after source chest 2
-opens, survives close and save/reload, and keeps that chest authoritative even
-after the award; fresh award state still uses fallback chest 0. Trap timing,
-source identity, legacy fallback, patched-shape disengagement and the existing
-quest transaction pass alongside a rat-floor geometry check, 8/8. The rat is
-already on a valid indoor floor under OpenEnroth's exact-center spawn behavior,
-so no general radius repair was added.
+**Original-data compatibility.** MM7-only seams fix shipped script and map defects only when the exact original record
+is present, so patched or custom data stays authoritative. They cover quest chests that stranded their item after a
+close before pickup (Lantern of Light, Archmage, Lich jars, Perfect Bow, Haldar's Remains), Mount Nighon's doors and
+peasants, Celeste's Lady Carmine check, Tor's Warlock greeting, the combined Knight and Lord Arena count, the wishing
+well charge, Deyja's guards, Castle Harmondale's banners and advisers, the Haunted Mansion and Gryphonheart paintings,
+Avlee's floating rock and the Colony Zod movie. Scroll targeting returns the scroll on cancel, see
+[MM7 Scroll Cancel](MM7-Scroll-Cancel.md).
 
-Sorcerer-to-Wizard also follows the full physical golem-component route and
-both head outcomes. The focused packet exposed Castle Harmondale event 376
-enabling group 6 and dismissing the Golem NPC before Thomas's animation; an
-MM7-only guard now requires the authored animation bit. The Wizard tests plus
-the existing golem control pass 4/4 without rerunning broader suites.
+**Visible play.** The owner's session on 2026-11-10 covered title music, NPC voice, combat sound, a conversation, a
+fight, a new save and a relaunch and Load from the Atlas. The graphical audit rows (interface, media, mods, long
+sessions) are open.
 
-Cleric-to-Priest completes behavior coverage for all nine first promotions.
-The route uses Falk's real house, Tidewater's physical quest-map chest and the
-Bracada boat schedule, with exact refusal, reward, item, reputation, topic and
-duplicate assertions. The exact original event now preserves source chest 1
-through close and reload using map variable 2, while fresh recovery-bit or
-Priest-award state routes to fallback chest 0. The expanded Priest packet plus
-the adjacent Breeding control passes 8/8; broader known-green suites remain
-intentionally unrereun.
+**Mods.** Fortune's Turn with chest reroll, All Artifacts and Storage, Vendor Refresh, the private portrait mod and the
+default-off Dragoon class are integrated. The [playtest recorder](MM7-Playtest-Recording.md) keeps a two-minute
+rolling buffer and saves a clip on request.
 
-Knight-to-Champion now counts the authored combined Knight plus Lord Arena-win
-total rather than only the Knight counter. The failing behavior was reproduced
-through Leda's real dialogue for 0+5 and 4+1; the event-scoped repair, exact
-promotion transaction, refusal matrix and Arena control pass 5/5.
+**Open.** The Strange Temple exit's native placement parity, the non-blocking 2026-11-07 audit defects and the full
+audit are listed in [Open Questions](Open-Questions.md). The remaining quests and areas are on the
+[selection board](../project/MM7_REMAINING_QUESTS_AND_AREAS.md) and the [audit checklist](../project/MM7_AUDIT_CHECKLIST.md).
 
-Initiate-to-Master now uses Hume's real Light offer/return, the physical Temple
-of Baa transition, attack-input High Priest combat and viewport corpse pickup
-of the Cloak of the Sheep. Exact qualifying and honorary outcomes, refusal,
-reputation/topic cleanup and duplicate stability pass with the adjacent Zokarr
-promotion control, 4/4. The source contract confirms eligibility is inherited
-through Hume's first-promotion topic rather than rechecking an Initiate award;
-no production change was needed.
+## MM6
 
-Priest-to-Priest-of-Light and -Dark now use Rebecca's and Falk's real dialogue
-and physically click the authored Moon and Sun altar faces. The packet covers
-Light/Dark path and topic gates, missing-objective refusals, qualifying and
-honorary outcomes, +10,000 gold, cleanup and duplicate stability. Original and
-GrayFace 2.5.7 event records both apply -10 current-location reputation on both
-branches, so the apparently surprising Dark direction is preserved. Five new
-cases plus the adjacent first-Priest route pass 6/6 without a production fix.
+MM6 status lives on `claude/mm6`: `docs/mm6-campaign-status.md` for the campaign and `docs/mm6-playthrough-go-no-go.md`
+for the playthrough verdict. The MM6 pages and `project/MM6_*` packets on this branch describe the F2 to F4 work
+before 2026-11-19 and are not current.
 
-Rogue-to-Spy now follows William Lasker's real offer, physically operates the
-Watchtower 6 counterweight and returns through his Erathian Sewers dialogue.
-The exact qualifying and honorary transaction, path refusals, missing-objective
-refusal, topic cleanup and duplicate stability pass. Shipped and GrayFace
-global events 46/47 are byte-identical, but GrayFace changes greeting row 39
-from “Rogues” to “Spies”; an MM7-only exact-string normalization fixes that
-reproduced presentation defect while leaving localized or patched data
-authoritative. Four Spy cases plus the adjacent Markham-vase control pass 5/5.
+## MM8
 
-Paladin-to-Hero and -Villain now use Charles Quixote's and William Setag's real
-offers. Hero enters Setag's Tower through the authored Deyja event, kills and
-mouse-loots the tower-key carrier, opens Alice's physical door and rescues her;
-Villain physically enters Alice's Gryphonheart room and captures her. Both
-routes cover path and prerequisite refusals, missing-objective returns, exact
-class/award/XP/gold/reputation/NPC relocation, cleanup and duplicate stability.
-Six focused cases pass, and the relevant GrayFace records are byte-identical,
-so no production repair was needed.
+Private MM8 data is staged and the Atlas detects it. `launcher/assemble.py` accepts an MM8 helper only after its play
+gate, and none is built.
 
-Mount Nighon's two shipped door halves pointed at exit-first events, and the
-two group-26/27 peasants retained human faction 54, making the town's Warlocks
-attack them. Exact original map/event signatures now redirect the tavern and
-training halves to their working paired events and assign only those two groups
-to Warlock faction 74. Physical viewport picks open both houses, the two-way
-actor relations are friendly, patched/custom data remains authoritative, and
-the four Nighon cases plus the adjacent Deyja source contract pass 5/5.
+Source: current `codex/mm7` source and tests, `launcher/`, [Release Milestones](Release-Milestones.md).
 
-Wizard-to-Archmage physically retrieves the Breeding Zone Book of Divine
-Intervention and retains it through Thomas Grey's exact transaction. The route
-reproduced event 195 stranding the book after a close-before-pickup; a guarded
-map-variable compatibility seam now reopens the source chest during that map
-incarnation while preserving fresh-map duplicate prevention. Focused Archmage
-and Lantern quest-chest controls pass 6/6.
-
-Rogue-to-Assassin now follows Seknit's real Dark offer through live combat and
-corpse looting against Lady Carmine. Celeste event 378 previously passed an
-empty group check and enabled Oracle dagger recovery before the assassination;
-an exact target seam now requires actor zero's death. Exact retained-dagger
-rewards, refusal and duplicate coverage pass 5/5, with the adjacent Wine Cellar
-kill control 1/1.
-
-Great-Druid-to-Warlock now uses the real Tor dialogue, authored Land-to-Dragon-
-Caves transition and physical egg sprite. Event 103 previously assigned the
-Warlock greeting to Anthony Green rather than Tor; the instruction-scoped
-recipient correction, exact rewards, familiar hire and duplicate coverage pass
-3/3 with the Great Druid control 1/1.
-
-Wizard-to-Lich now physically opens the Walls of Mist jar chest, takes all four
-jars and proves the 3/4 refusal and exact bound-jar conversion. Event 176
-previously used unrelated award 80 to route the active quest to an empty chest
-and ignored its persistent marker; the exact compatibility seam selects the
-source for active qbit 48 or decor 23 and survives save/reload. The focused
-packet plus the existing Lich control pass 7/7.
-
-Both Warrior-Mage second promotions now use the real Titans' Stronghold Perfect
-Bow chest and return the adjusted bow through Lawrence Mark or Snick. The
-trapped source no longer sets qbit 163 before a successful open; map variable 2
-preserves same-visit/reload access and fresh retrieved maps prevent duplicates.
-The Light/Dark reward, refusal, lifecycle and duplicate packet passes 6/6.
-
-The final four promotion packets bring MM7 to 27/27 behavior-covered
-endpoints. Ranger Lord uses Lysander and the Oldest Tree around the physical
-Mercenary Guild Heart of Wood chest. Ninja carries Sand's cipher through the
-School of Sorcery and physically completes the Hidden Tomb code and
-sarcophagus. Bounty Hunter kills an authored Dragon C target through attack
-input and claims the real 10,000-gold Harmondale Town Hall bounty. Black
-Knight kills a Navan treasury guard through attack input, walks across event
-376 and physically loots chest 5. Each packet covers its path/prerequisite and
-missing-objective refusals, exact qualifying/honorary rewards and duplicate
-stability; none required a production compatibility change.
-
-Temple of the Moon and Strange Temple close the final inventory-only map rows,
-so all 76 shipped MM7 maps now have runtime GameTest coverage. The Moon route
-enters through Emerald event 101, physically takes item 636, opens door 4,
-exits through event 100 and proves no respawn on re-entry. The Strange route
-right-clicks the reusable bottle, buys an empty potion bottle through event
-454 and exits through event 501 to Harmondale. That shipped exit carries an
-out-of-bounds explicit destination, so OpenEnroth loads the correct map but
-skips placement. Static native evidence shows the original copies the full
-signed coordinate and delegates overflow handling to the first outdoor update,
-while GrayFace 2.5.7 has no override. A private trace of the settled position
-and border-dialog state remains the required parity gate before any repair.
-
-The opening contest now has physical acquisition coverage for all six items.
-The Moon tile comes from its authored world sprite; a separate Emerald packet
-creates Cure Wounds through live alchemy, buys the seashell and lute, trades the
-potion for the wealthy hat, retains it through Sal Sharktooth's refusal, then
-kills and physically corpse-loots Sal for the fixed Longbow. The five items and
-NPC state roundtrip through normal save/load before their real Judge hand-ins.
-
-The remaining war-alternative gaps are now covered without a production
-change. Both opposing-throne exposure topics execute their authored death and
-failure cleanup; a representative Stone City rebuild return places both
-ambassadors before all five trumpet handlers are exercised with exact
-per-character rewards. All 27 effective result/recipient states resolve under
-both arbiters, including exposed/expired equivalence and the shipped
-incomplete-state defaults. The existing neutral/Dark checkpoint remains the
-durable boundary rather than duplicating every campaign step.
-
-Stone City's Troglodyte route now uses Spark's real dialogue, one measured
-approach and attack-input Queen kill, a survivor refusal and the exact clear
-reward; only the repetitive remainder is fixtured. Its production-Save writer
-and fresh-process normal-Load reader pass with unchanged slot bytes. The
-inspected lower-city capture shows coherent tunnel geometry, lighting, HUD and
-minimap plus the Queen kill message; the rolling private folder remains at 100.
-
-Haldar's Remains now covers the authored trapped Maze face rather than only a
-direct backing-chest open. The close-before-pickup regression is repaired with
-a persistent source marker while legacy marker-zero routing remains intact.
-Lifecycle tests pass 4/4 and the existing Mazim refusal/reward control 1/1.
-A production-save writer and separate-process normal-Load reader additionally
-preserve the acquired Remains, active/taken bits, repaired source marker and
-source-chest delta; event 176 reopens chest 1 without respawning the item, and
-the saved slot remains byte-identical.
-
-Darron's White Cliff deck now has an independent durability boundary. The
-writer accepts the real quest, physically removes the deck world sprite and
-saves with the deck retained; a separate-process normal-menu reader preserves
-the active quest, retained item and removed source without respawn or save-byte
-change.
-
-The Dark Griffin hunt now covers its complete report matrix through Seth
-Drakkson's real topics. Neither region clear, Erathia-only clear and
-Bracada-only clear all refuse without changing gold, bank, XP, reputation or
-awards. Both regions clear grants exactly 5,000 carried gold, 10,000 XP per
-character, -10 current-location reputation and award 98 to all four, retains
-both regional bits, clears the active topic, changes the greeting and cannot be
-claimed twice. The existing predicate repair remains independently pinned; no
-new production defect was reproduced.
-
-Malwick's optional debt chain now has a continuous accepted-to-trigger proof.
-The packet takes his Wand through the real Emerald conversation, installs both
-authored Light and Dark Arbiters and verifies each transaction starts Counter5.
-A Light writer reaches 1,007 hours with no letter or downstream state and saves;
-the fresh-process normal-menu reader preserves the Wand, alignment, path and
-counter, then exact 1,008-hour Harmondale entry supplies the letter and starts
-Niles's visit without changing the slot bytes. Original and GrayFace 2.5.7
-event-37/event-50 records match, so no production change was needed.
-
-The Light and Dark endings now clear their active final-quest bits after the
-successful Overthruster hand-in, removing the completed task from the Quest
-Book. History 25/26 remains valid and unchanged, and the no-item refusal keeps
-its bit/topic. Focused ending and Light hand-in controls pass 2/2. A later full
-fresh rerun exposed stale C7 tape expectations that stopped before the intended
-final inactive sample; the one-line Light and Dark expectations now include
-that settled cleanup, and both complete fresh C0-C7 chains pass again.
-
-### Consolidated MM7 full gate — 2026-11-15
-
-The final integration sweep passed the full build, all 157 style targets,
-1,124 of 1,169 unit tests with 45 expected private-MM6-fixture skips, and 721
-of 729 default MM7 GameTests with eight expected opt-in-mod skips. The
-complementary All Artifacts/Storage and vendor packet passed eight tests with
-its disabled-mode control skipped as designed. All 23 admitted legacy
-writer/reader pairs passed in 46 processes, including the new Lantern, Davrik
-and Griffin boundaries. Both fresh eight-process Light and Dark campaign
-chains passed through C7 after the ending-tape reconciliation. Both isolated
-hidden OpenGL capture tests passed; the owner accepted the dark Barrow II frame
-as normal without Torch Light. This closes the three remaining side/objective
-durability rows, not the visible Mac playtest or the Strange Temple native
-placement question.
-
-The Land of the Giants wishing well now charges the intended 5,000 gold on
-every qualifying click before its authored random effect. The exact event seam
-preserves the 4,998/4,999 insufficient-funds branches and already-patched data;
-physical face tests plus the existing well-effect control pass 4/4.
-
-Deyja's northern group-4 guards now resolve friendly for normal neutral/Dark
-visits and after the exact 720-hour anger expiry, while Light/active anger and
-stored hostile states use their default hostile faction. The unrelated group-5
-wilderness population remains hostile. The focused faction/timer matrix passes
-4/4 without adding broad unsupported opcode-55 semantics.
-
-Castle Harmondale now renders human, neutral or elf banners for every complete
-war-result combination and leaves incomplete/contradictory states at base
-textures. Advisor flags require Light+Walls or Dark+Breeding, so mismatched
-alignment no longer displays the wrong guild. The 12-outcome/invalid/adviser
-matrix plus the retained quest-zero control pass 5/5.
-
-The MM7 compatibility seams received a cumulative fail-closed review. Exact
-Wine and Lady Carmine targets now bypass alert-filtered vacuous kill checks,
-and the Wizard early-golem guard requires the complete original event shape.
-Patched/custom-shaped data disengages, generic empty-group behavior is retained,
-and the combined Assassin/Wine/Wizard regression set passes 12/12.
-
-Haunted Mansion's Angel painting and Castle Gryphonheart's Roland and
-Archibald paintings now stay visually absent after a taken wall is revisited.
-The reload seam requires each exact original six-record pickup event, runs
-after normal authored reload triggers and leaves patched-shaped data alone.
-All three reentry cases, no-duplicate behavior and sibling isolation pass 3/3.
-
-Avlee's original `rock01` at (-15088, -4288) now sits on its verified terrain
-floor at Z 148 instead of its shipped Z 208. The map-load correction requires
-the unique complete original decoration signature and leaves patched/custom
-data authoritative. The focused geometry and disengagement controls pass 2/2.
-
-Colony Zod's Family Reunion movie now remains one-time on the exact original
-exit-event shape. The first qualifying exit sets qbit 105, plays the movie and
-adds History 24; a completed repeat jumps past both presentation steps, while
-custom-shaped data remains authoritative. Two Colony cases plus the adjacent
-Xenofex map-leave control pass 3/3.
-
-Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
-green fog matches its explicit underwater color and distances. The Breeding
-Zone black occluder was a literal-origin capture-placement defect and disappears
-at the authored floor-resolved start. Selected private images are kept in the
-ignored progress folder under a rolling 100-image cap.
-
-The Light campaign's C6 seam now follows the authored Mount Nighon,
-Thunderfist Mountain, Tunnels to Eofol, Land of the Giants and Colony Zod
-route instead of teleporting to Xenofex. It receives Archibald's Blaster,
-rescues Roland, consumes his key, activates both controls, kills Xenofex,
-leaves through the authored exit, uses the return altar, respects Lambent's
-5am throne closure and completes Resurecta's hand-in before `save006.mm7`.
-The shared transition helper now robustly handles clickable faces, pressure
-plates and decorations, including the moved Walls-of-Mist exit. A fresh Light
-C0-C7 run, five focused Xenofex/Roland/throne-hour controls and the 157-target
-style gate passed; the existing C7 ending accepted the strengthened C6 save.
-
-The separately admitted Dark campaign profile is now established through C7.
-It reuses common C0-C2, takes the authored messenger/Deyja/Arbiter route in C3,
-then carries Archibald's real assignment through the Breeding Zone proof,
-authored Pit exit, Gloaming hand-in and three enterable adviser houses before
-writing `save004.mm7`. C5 physically retrieves both temple altar pieces and
-Thunderfist's Soul Jars, activates Clanker's authored defense event, kills and
-loots Robert's live Celeste actor, and returns the cube for all-character
-novice Blaster skill and Kastore's relocation before `save005.mm7`. C6 then
-follows the authored Mount Nighon, Thunderfist Mountain and Tunnels to Eofol
-route; rescues Roland; consumes his key; activates both Colony Zod controls;
-kills Xenofex; returns through the Land of the Giants altar; and completes
-Kastore's hand-in before `save006.mm7`. C7 accepts Kastore's final task, opens
-the two authored Gloaming faces backed by wetsuit-bearing chests, equips all
-four suits through inventory input, walks across Avlee's underwater border,
-traverses Shoals and Lincoln, powers the console, physically takes the
-Overthruster, exits and completes the Dark ending before `save007.mm7`. A fresh
-eight-process C0-C7 run passed with retained predecessors unchanged. Both
-Light and Dark campaign chains are now complete headless audit anchors; their
-named fixture, ordinary movement/combat and graphical gaps remain audit work.
-
-The `codex/mm7-dark-chain` audit line is integrated on `master`. It carries
-complete headless coverage for Norbert Thrush's Parsons' Quill route: Emerald
-Island contest completion and departure, the real letter offer, a
-missing-quill refusal, the Markham Manor exchange, and the final hand-in with
-item, quest, award, reputation, gold and XP assertions. Kerrid's route is also
-complete through his real offer, the missing-pipes refusal, the Hall Under the
-Hill pressure-plate audience event, all-food consumption, letter-to-pipes
-exchange, return and rewards. The observed script grants 2,000 XP per character
-at the audience and 5,000 more at Kerrid, while writing the journal award only
-to the active character. After reconciliation with the current shared core,
-the complete MM7 headless suite passed 567 tests with two expected vendor-mod
-skips. The upstream `issue_1666` trace update paired with the earlier
-valid-indoor-spawn fix is included; the post-MM6-reconciliation regional
-side/promotion selection remains green at 10/10.
-
-The same regional gate now also carries the complete Light-path Season's Stole
-contract: Gary Zimm's real offer and missing-item refusal, Hall of the Pit chest
-acquisition, physical return, quest/item transitions, 7,500 XP per character
-and 7,500 gold. As with Kerrid, the source script writes its journal award only
-to the active character. The focused test and the 10-test regional selection
-both pass headlessly after integration.
-
-The completed Season's Stole, Kerrid, Parsons, Missing Contestants, Three
-Paintings, Three Statuettes, Arcomage Champion and Obelisk puzzle routes now also have
-independent production-Save/fresh-process-normal-Load checkpoints. Missing
-Contestants follows Markham's real offer, proves the
-no-shield refusal, clicks the physical Dragon's Lair floor item, and verifies
-the item, quest, 1,000-gold, 1,000-XP-per-character and all-character award
-contract. Arcomage Champion reaches Gina's real offer and refusal, records all
-thirteen authored tavern results through the same persistence transaction used
-by the live game, completes her hand-in and takes the Forge Gauntlets from the
-authored reward chest. `Issues.Issue388` separately covers live card play; the
-quest fixture does not claim thirteen complete matches. The Obelisk route
-executes all fourteen authored discovery bindings,
-proves the one-missing and 1 AM refusal states, then opens and empties the real
-Evenmorn chest at midnight after its scripted 100,000-gold reward. All sixteen
-exact writer/reader tests passed headlessly, with final
-quest, item, reward, award, map and route-specific food/reputation state intact
-and every slot byte-identical after its reader. Admission rejects a missing
-disposable profile and a reader profile without a save. The regional selection
-passes 14/14 and the repository style gate 157/157. These checkpoints do not
-join the eight quests into one continuous campaign.
-
-See the [November 9 progress table](Progress-2026-11-09.md) and [MM6 resume handoff](../project/MM6_RESUME_HANDOFF.md) for exact checks and next source paths. Raw captures and game data stay local.
-
-A [passive MM7 playtest recorder](MM7-Playtest-Recording.md) is integrated in the
-installed, signed Atlas after the owner authorized a headless reinstall. Its
-script, bundle and installed source hashes passed headless checks. The tracked
-revision uses a bounded two-minute rolling video buffer and an intentional
-clip hotkey; live capture, external-drive behavior and installed-app launch
-remain unverified.
-This tooling does not advance campaign
-playability by itself.
-
-The MM7 item-, actor- and character-target scroll cancellation fixes are
-integrated. They return the pending scroll on Escape and still consume it
-after a successful target pick. Focused scroll, spell and Light controls
-passed 16/16 on integration source, followed by a fresh-process disposable
-Save/Load pair 1/1 each with unchanged slot bytes. Other targeting exits
-remain in the audit queue.
-See [the scroll check](MM7-Scroll-Cancel.md).
-
-The later input-driven Light city and Walls of Mist positive quest route and
-the dawn closed-throne control are integrated. The two new tests passed 2/2;
-with the arbiter and related issue controls, the integrated focused run passed
-4/4. The route reaches the daytime throne, completes the three pedestal
-interactions, exits and hands in the quest. The group-1 kill check is a
-failure branch: a qualifying kill skips the quest-pass bit, while the no-kill
-path sets it. A fresh-entry probe and local base/delta check found no group-1
-actor, spawn point, scripted summon or remap. The negative branch is
-unreachable in the tested local data; no runtime fix is justified, and the
-successful route is unaffected. The later Light chapter checkpoint passed on
-integrated source: production Save writer and fresh-process normal Load reader
-1/1 each, persistent Light/Walls/guild bits intact and slot digest unchanged.
-The follow-up NPC seam check established that the throne hand-in clears its
-first topic before Save. NPC79–83 house and relevant topic fields persist
-through fresh-process Load and two subsequent frames. The revised Light route
-and advisor controls passed 5/5, with writer and reader 1/1 each.
-The three advisor hand-in checks and assassination request/cube hand-in are
-also integrated. The focused combined Light run passed 7/7. These tests use
-fixture quest items and bits around input-driven dialogue and doors. Advisor
-item acquisition is now continuous for the altar pieces, Soul Jars and Pit
-cube. Real Elder Vampire combat and the Light Blaster reward assertion were
-open at the time and are covered since the 2026-11-15 harness
-(`MM7CombatHarness.WineCellarAttackInputDamagesAndKillsTarget`, `MM7LightAssassination`). Xenofex request,
-alive/dead map-leave and hand-in are integrated, with travel and actor death
-as fixtures in those focused controls; the current C6 chain above supplies the
-authored travel, Roland/key/controls and live combat. The Overthruster tests now cover throne request, wetsuit chest
-collection, Avlee and Lincoln suit gates, Shoals entry, unpowered pedestal,
-console activation, item retrieval and exit. Four new cases and the two
-wetsuit/Shoals controls plus two Xenofex cases passed 8/8 together on
-integration source. The current C7 chain joins that physical retrieval to
-Resurecta's final hand-in and Light ending from the fresh C6 save.
-The subsequent integrated final-link test passed with the existing Xenofex and
-ending controls 3/3, and with the Overthruster cases 7/7. It proves the real
-Xenofex hand-in unlocks the second NPC topic for L9, the request activates
-the final task, a no-item hand-in stays in the throne room, and a held-item
-Overthruster fixture is consumed for the ending. This remains an independent
-control; C7 now provides the linked retrieval and fresh-process campaign proof.
-The later Pit cube acquisition test is integrated. It enters from the advisor
-request and Pit door, defeats the live carrier with bounded player attack
-input, picks and clicks the corpse to loot the cube, then returns for the
-advisor hand-in. The new test and existing no-cube control passed 2/2 on
-integrated source. Party combat strength and positioning are fixtures;
-natural walking through the room remains open, while C5 now supplies the
-uninterrupted campaign continuity.
-The later integrated Pit-to-Xenofex seam uses input-driven Walls, altar and
-Tolberti hand-ins to produce NPC80's throne house and Xenofex topic without
-assigning those fields. A marked disposable production Save writer and
-separate normal-Load reader passed 1/1 each with unchanged slot bytes. The
-reader selected the surviving second-slot topic through the UI; the in-memory
-seam and Xenofex controls passed 3/3. Earlier quest outcomes, altar items and
-cube are fixtures. Continuous New Game-to-ending coverage was open then and is
-supplied since by the C0-C7 chains.
-The later Overthruster checkpoint is also integrated. Production Save after
-input-driven Lincoln retrieval and Shoals exit, followed by normal Load in a
-separate fresh headless process, passed 1/1 each. The loaded state kept the
-held Overthruster, Light/retrieval bits, four equipped wetsuits and unchanged
-slot bytes. Earlier chapter prerequisites are fixtures. Uninterrupted campaign
-continuity came later with the C0-C7 chains.
-
-## Historical snapshot — 2026-11-07
-
-The following table is retained as a dated record. Its claims that normal MM6 Save/Load remained closed were superseded by the November 9 first-map integration.
-
-| Game | Observed state | Remaining evidence |
-| --- | --- | --- |
-| MM7 | Native arm64 Atlas launch, Emerald Island graphical view, save/reload, and private portrait and armor AC override checks passed. The separate MM7 baseline was also checked with an existing save. A new staged helper and Atlas built both from a clean tracked-source extraction and a fresh public SklerosAI clone under network denial, and focused headless MM7/Russian-text checks passed. A separately rebuilt hidden OpenGL GameTest rendered one first-map world/HUD frame with no visible window or focus change. A local-only headless GameTest saved to an isolated disk profile and reloaded it through the normal Load menu in a fresh process; the staged candidate has not had visible save/reload acceptance. | Full campaign, quest, map, ending, and broader mod coverage remain to be audited. |
-| MM6 | F2 coverage and the [F3 source-data gate](../project/MM6_F3_GATE_REVIEW.md) are complete. A disposable seven-process v5 first-map cycle passed headlessly after live capture extraction. All 15 outdoor source pairs decode; the second outdoor map loads and produces a separate v5 test candidate. Three distinct five-child disposable indoor v6 cycles now pass bounded real-loop turn/walk, post-input save and fresh-child replay; production gameplay admission remains closed. A detached border Party checkpoint and second-outdoor no-write candidate pass focused headless checks. A versioned outdoor v6 visited-map section passed a test-only atomic disk write and fresh-child read in a five-process disposable chain. The reader kept the visited owner detached; a source-backed copied-Party return arrival passed terrain checks, and an opt-in normal-transition probe matched one loaded target floor before aborting to Main Menu. Neither entered a playable returned map. No production checkpoint is written. The proven first-map v5 post-world owner check now runs from an MM6-only read-only engine service; its seven-child disposable replay chain still passes, while the normal save/load menu remains closed. A test-only first-map v5 atomic outcome/preflight policy now handles an unconfirmed post-rename result and rejects wrong-map or foreign-version slots without repair. The first-map v5 source-backed load preflight now lives in an MM6-only detached engine service and still passes the seven-child replay chain. A test-only post-world refusal now aborts to Main Menu before input, while pre-world global publication and rollback remain unproved. A disposable first-map writer now stages exact live owners and classifies atomic outcomes; both reader fixtures construct replay scopes before global assignment. The combined seven-child chain passes. A pure prepublication check now validates event and cursor/shop joins before global assignment; a test-only paused MM6 first-map Save-menu writer now produces a disposable v5 candidate that passes an independent fresh-child replay. Main Menu Quick Load now refuses ordinary MM6 requests even when an `.ec6` slot name exists; the test-only override and MM7 route remain intact. An armed test-only load scope now abandons partial-assignment and pre-event failures to Main Menu before input, then a second full first-map replay reaches exact post-world agreement and bounded input; it does not roll back published globals. An all-source indoor codec sweep passes; the risk-ranked case retains exact signed source bytes but clears this ineligible actor's runtime NPC marker after the original MM6 map-load rule. The earlier pre-event follower refusal is transient. Eligible StreetNPC generation and real dialogue remain open. Active skill Compare/Set and a fail-closed manual/quick-save guard are integrated. | Production MM6 SaveLoad, general indoor gameplay and later-map replay, campaign behavior, graphical F5 and Atlas Play remain open. The disposable cycles are not a playable campaign. |
-| MM8 | Private data staged and detected by Atlas. | No adapted MM8 engine or Play action yet. |
-
-The status above is an evidence summary, not a full compatibility claim. A later MM6 first-map checkpoint adds a native numbered-slot admission policy (focused units 2/2) and an Engine-owned staged graph through exact chest handoff. Its seven-child disposable replay, two full-retry fault children and MM7 control passed again. The native slot is not connected to production Save UI, and event/actor/NPC/RNG/post-world ownership still needs extraction from test hooks. For exact counts, parser observations, and known gaps, read the current [local status](../project/LOCAL_STATUS.md) and title-specific implementation documents. The Atlas should expose each Play action only after that title's runnable session and save/load checks.
-
-The [MM7 private portrait mod](MM7-Private-Portrait-Mod.md) has a source-linked mood resolver and Atlas controls. Its focused tests and hidden HUD capture pass, but at the time the new staged bundle had not passed visible interaction or save/reload acceptance and was not installed. Later installs carry the Atelier.
-The integration tree also has a focused [MM7 level-seven artifact fix](MM7-Level-Seven-Artifacts.md); its picker and indoor payload tests pass, while real pickup and installed-app acceptance remain open.
-
-Source: [project/LOCAL_STATUS.md](../project/LOCAL_STATUS.md), [project/MM6_F3_GATE_REVIEW.md](../project/MM6_F3_GATE_REVIEW.md), [project/MM7_AUDIT_CHECKLIST.md](../project/MM7_AUDIT_CHECKLIST.md), reviewed 2026-11-07.
-
-See also: [Runtime Isolation](Runtime-Isolation.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [MM7 Level-Seven Artifacts](MM7-Level-Seven-Artifacts.md), [Project Overview](Project-Overview.md), [Local Status Source](Source-Local-Status.md), [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), [MM6 F4 Native First Map Slot Policy](MM6-F4-Native-First-Map-Slot-Policy.md), [MM6 F4 EC6 V5 Sprite Runtime](MM6-F4-EC6-V5-Sprite-Runtime.md), [Agent Handoff](Agent-Handoff.md), [Open Questions](Open-Questions.md).
+See also: [Runtime Isolation](Runtime-Isolation.md), [MM7 Playthrough Go/No-Go](MM7-Playthrough-Go-No-Go.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [Project Overview](Project-Overview.md), [Agent Handoff](Agent-Handoff.md), [Open Questions](Open-Questions.md).

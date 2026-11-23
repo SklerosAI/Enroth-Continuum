@@ -7,7 +7,7 @@ tags: [mm7, combat, spells, items, audit]
 
 # MM7 Combat Audit Fixes
 
-Five ranked MM7 gameplay defects have focused headless regressions and fixes integrated on `mm6-mac-implementation` at `f77d8de31`. The monster second-spell ability, Energy parser and event Day of the Gods fixes are also integrated; the latter landed at `fe8d5d50f`. Later MM7-only repairs add death-explosion special damage (`b1760b19e`), out-of-range Spirit Lash failure handling (`be9a160bc`) and consistent novice-row wand recovery (`59ead390d`). The Fate hit modifiers (`6a9ea5261`) and the Squire and Sage skill bonuses (`dbd5dfba5`) landed separately.
+Five ranked MM7 gameplay defects have focused headless regressions and fixes integrated at `f77d8de31`. The monster second-spell ability, Energy parser and event Day of the Gods fixes are also integrated. The latter landed at `fe8d5d50f`. Later MM7-only repairs add death-explosion special damage (`b1760b19e`), out-of-range Spirit Lash failure handling (`be9a160bc`) and consistent novice-row wand recovery (`59ead390d`). The Fate hit modifiers (`6a9ea5261`) and the Squire and Sage skill bonuses (`dbd5dfba5`) landed separately.
 
 | Defect | Verified change |
 | --- | --- |

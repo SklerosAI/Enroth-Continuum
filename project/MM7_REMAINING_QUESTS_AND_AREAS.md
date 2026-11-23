@@ -46,8 +46,7 @@ progress-capture folder has a hard rolling limit of 100 images.
 ## Area-focused acceptance still open
 
 - **Tatalia and Avlee:** corrected authored-start hidden frames were visually
-  inspected. Both show coherent terrain, HUD and minimaps; the earlier invalid
-  placement evidence is superseded.
+  inspected. Both show coherent terrain, HUD and minimaps.
 - **Shoals:** the inspected frame shows coherent seabed relief fading into the
   deliberately short-range Eucalyptus-green underwater fog. Source proves the
   color and 50/2000 distances are authored; exact original-pixel parity remains

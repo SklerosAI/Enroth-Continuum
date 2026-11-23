@@ -13,8 +13,8 @@ This document records intent only; it does not claim implementation.
 ## The Atlas
 
 The launcher presents MM6, MM7 and MM8 as three campaign cards. It shows the
-real readiness of each engine and local data set; MM7 becomes the first Play
-button. Its Atelier manages private, per-game mod profiles, including party
+real readiness of each engine and local data set. MM7 has a Play button, and
+MM6 has one as an owner playtest helper. Its Atelier manages private, per-game mod profiles, including party
 portraits and armor settings as those engine overrides become functional. A
 prominent Vanilla option bypasses them. The Hall of Echoes hosts the optional
 legacy transfer preview. The Vault shows local saves and backups. The screen

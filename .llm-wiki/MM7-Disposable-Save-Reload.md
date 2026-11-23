@@ -7,33 +7,20 @@ tags: [mm7, save, mac, headless]
 
 # MM7 Disposable Save and Reload
 
-A local-only MM7 GameTest saved to an isolated temporary profile and reloaded
-the file through the normal main-menu Load path in a separate headless process
-on 2026-11-07.
+A disposable-profile MM7 GameTest saves to an isolated temporary profile and
+reloads the file through the normal main-menu Load path in a separate headless
+process. The [gate packet](../project/MM7_DISPOSABLE_SAVE_RELOAD_GATE.md)
+describes the strict profile and exact-filter checks. A wrong filter and
+unexpected profile contents are rejected before startup, and the temporary
+profiles are removed afterwards. Native saves are written atomically and pass a
+structural load preflight, see [MM7 Atomic Save File](MM7-Atomic-Save-File.md).
 
-The [gate packet](../project/MM7_DISPOSABLE_SAVE_RELOAD_GATE.md) describes the
-strict profile and exact-filter checks. The writer and reader passed 1/1 each;
-the loaded map and test-only Party value matched, and the save file was
-byte-identical after reload. A wrong filter and unexpected profile contents
-were rejected before startup. The temporary profiles were removed. Ordinary
-MM7 headless controls still passed 2/2.
-
-This is a null-renderer GameTest using locally built dependencies, not a
-visible run of the staged Atlas helper or an installed-app save check. It
-covers one first-map fixture, not an existing personal save or the campaign.
-The current integration source repeated the gate with its own source-linked
-GameTest under network denial on 2026-11-07: writer and reader passed 1/1 each,
-the disposable slot was byte-identical after reload, and focused MM7 controls
-passed 3/3. The temporary profile was removed. This newer result does not
-change the graphical or campaign limits.
+The registry holds 28 writer/reader checkpoint pairs, listed by
+`tools/run_mm7_pretag_checkpoints.py`. Each reader leaves its slot
+byte-identical. These are null-renderer GameTests, so they prove save
+durability at chapter and quest boundaries, not visible installed-app play.
 The [hidden OpenGL frame gate](MM7-Offscreen-Frame-Capture.md) separately
-proved rendering without disk save/reload. The [runtime cutover](MM7-Runtime-Path-Cutover.md)
-still requires collision-safe review and visible candidate play before any
-installed-app change. No proprietary data, saves or hashes entered Git.
-
-The previous paragraph records the 2026-11-07 state. The later native-slot
-helper and load preflight were integrated on 2026-11-09; see the
-[current campaign status](Campaign-Status.md) for the newer acceptance boundary.
+proves rendering. No proprietary data, saves or hashes enter Git.
 
 ## Atomic-backup recovery — 2026-11-11
 
@@ -44,28 +31,17 @@ party state, and leaves the corrupt primary unchanged. This proves the UI and
 loader use the same read-only recovery contract; it does not automatically
 repair or replace the owner's primary save.
 
-## Current staged-candidate gate — 2026-11-10
+## Visible Atlas save and load — 2026-11-10
 
-The integrated-source headless writer and fresh-process reader each passed
-1/1 with a disposable owner-only MM7 profile. A staged Atlas then launched
-MM7 into a marked temporary profile. In visible play, a newly named party
-saved through the menu, quit, relaunched through Atlas and loaded the named
-slot. A bought shield and the reduced gold total survived another
-fresh-process Load. A copy of an existing installed-baseline save also loaded
-in the disposable profile. Captures, save files and checksums stayed outside
-Git. The original normal-profile saves were not loaded or written.
-
-The Atlas disposable-profile code was reviewed and integrated after that
-visible run. Its final resolver refuses a set-invalid override for Play and
-save actions; the current integrated Swift resolver check and optimized Atlas
-compile passed. A rebuilt staged app still needs a visible check. One
-accidental direct launch during the earlier visible session modified the
-normal profile's settings file; prior bytes were unavailable, so it was
-preserved. The accidental new log was removed. This gate does not establish
-full campaign completion or installed-app cutover. The owner later authorized
-a headless Atlas reinstall. The signed candidate is installed with the old
-app retained locally (superseded 2026-11-22: installs now delete the old app and keep no backup), but no post-install launch or graphical Save/Load check
-has run.
+A staged Atlas launched MM7 into a marked temporary profile. In visible play, a
+newly named party saved through the menu, quit, relaunched through Atlas and
+loaded the named slot. A bought shield and the reduced gold total survived
+another fresh-process Load. A copy of an existing save also loaded in the
+disposable profile. The Atlas disposable-profile resolver refuses a set-invalid
+override for Play and save actions. The owner's visible session on the
+installed app on 2026-11-10 saved, relaunched from the Atlas and loaded, see
+[Campaign Status](Campaign-Status.md). The installed helper is now MM7
+`014514250`, see [Release Milestones](Release-Milestones.md).
 
 ## Rebuilt-castle checkpoint — 2026-11-10
 

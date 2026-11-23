@@ -15,8 +15,8 @@ identified in its provenance note.
 Network-disconnected standalone source builds/runs passed for the first sixteen
 snapshots. The latest three passed exact Git blob/mode comparison and focused
 syntax checks in an isolated worktree.
-The table below remains the historical 23-gitlink inventory; the current
-repository has **1 gitlink**. The integration Mac MM7 target built with the
+The table below is the original 23-gitlink inventory. The repository now has
+**1 gitlink**, `thirdparty/ztd_text`. The integration Mac MM7 target built with the
 first sixteen tracked source snapshots, using its existing cached prebuilt libraries;
 GoogleTest and `gtest_parallel` are optional test inputs.
 All nineteen full source snapshots and three scoped production-source copies
@@ -147,7 +147,7 @@ that override before a clean build can close the fetch.
 
 ## Migration sequence and acceptance
 
-1. **Freeze the working MM7 baseline.** Record the title-locked source commit, app binary hash, current arm64 archive hash above, toolchain/SDK, and a private backup of the current profile/save. Leave the protected MM7 worktree and installed Atlas helper alone.
+1. **Freeze the working MM7 baseline.** Record the title-locked source commit, app binary hash, current arm64 archive hash above, toolchain/SDK, and a private backup of the current profile/save. Leave the installed Atlas helper alone until a replacement passes launch and save/load checks.
 2. **Resolve provenance and license records before copying.** The upstream dependency tag now identifies revisions and a recipe starting point for all five prebuilt families; independently review source licenses/notices, FFmpeg's effective configuration and any transitive codecs. Review ztd-family license/NOTICE wording and libdwarf LGPL obligations. Decide whether to retain each source or replace its use. Record original URL, exact commit/archive digest, license and any patches for every chosen input.
 3. **Own the source inputs in this repo.** Add pinned source snapshots with licenses/notices and a machine-readable provenance manifest; include the 20 Mac app-configure submodule sources and seven nested fetches. Keep optional style/test inputs separately identified. Replace `CMakeModules/Git.cmake`'s unconditional update and all active `FetchContent` fetches with local-only paths; fail clearly on a missing input. A clean worktree with network disabled must not contact any OpenEnroth or other hosting service.
 4. **Build the five archive families locally.** Replace the release ZIP route with repo-owned, pinned source recipes for SDL3, OpenAL Soft, FFmpeg, libpng and zlib-ng. Set explicit CMake target paths/options and record the new outputs and license notices. Preserve the existing Mac linkage and decode/audio/render behavior; do not substitute a Homebrew cache or silently fall back to `/usr/X11R6` (the current Debug CMake cache's `PNG_LIBRARY_RELEASE` points there despite its Debug archive selection).

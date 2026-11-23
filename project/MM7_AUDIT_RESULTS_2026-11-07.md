@@ -143,10 +143,9 @@ Defects, inherited unless noted:
    use their parsed special-damage dice and type; MM6 retains attack-1.
    The public Magog replay was retraced for the two newly consumed RNG draws
    and was byte-stable across three runs (`c81540e7d`).
-8. Multi-target monster attacks are parsed but never applied. Ten rows.
-   **Audit claim superseded on 2026-11-09:** `Shot x2` and `Shot x3` already
-   route through `Actor::AI_RangedAttack` as the stacked and spread projectile
-   patterns respectively. No runtime repair is warranted.
+8. Not a defect. `Shot x2` and `Shot x3` route through
+   `Actor::AI_RangedAttack` as the stacked and spread projectile patterns, so
+   all ten multi-target rows are applied.
 9. Fate is broken: the character buff is never read, and on a monster it
    raises the monster's own hit chance (`CastSpellInfo.cpp:1686`,
    `Actor.cpp:3707, 3727`).
@@ -160,8 +159,8 @@ Defects, inherited unless noted:
     marks its selection and honors the configured artifact cap. An indoor
     spawned artifact retains its pickup item. Two focused MM7 GameTests passed,
     along with seven atomic-save tests and three MM7 controls (12/12 total);
-    the MM6 startup/chest guard passed 1/1. The installed app and frozen MM7
-    baseline have not been replaced, and a real chest pickup remains to inspect.
+    the MM6 startup/chest guard passed 1/1. A visible chest pickup is not yet
+    inspected.
 11. Smaller spell defects: the Day of the Gods event path is half-fixed
     (`Spells.cpp:800-815`, event 532 gives the wrong power), Spirit Lash
     drains mana out of range (`CastSpellInfo.cpp:946`), a scroll is consumed
@@ -169,7 +168,7 @@ Defects, inherited unless noted:
     before the outcome (`Character.cpp:4654`), wand recovery uses the novice
     row for the cast but the expert row for display (`Character.cpp:1849`),
     the Meteor Shower damage formula changed in `a304b867b`.
-    **Fixed in the integration tree at `fe8d5d50f`:** the MM7 event Master and
+    **Fixed at `fe8d5d50f`:** the MM7 event Master and
     Grandmaster Day of the Gods powers now match ordinary casts (`4 * level +
     10` and `5 * level + 10`); their 4-hour and 5-hour per-level durations
     remain. The level-10 test failed on both power values before repair and
@@ -177,12 +176,11 @@ Defects, inherited unless noted:
     **Further fixed on 2026-11-09:** Spirit Lash now retains mana and uses
     failure recovery when its target is out of range (`be9a160bc`), and a
     charged wand uses the novice spell-recovery row consistently
-    (`59ead390d`). Charge-spend ordering remains open.
-    **Superseded 2026-11-23:** cancelled-scroll consumption was fixed in
-    `ece2203eb` (2026-11-10) and `d7edd7c41` (2026-11-11), covered by
-    `MM7Scrolls.CancelItemTargetScroll`, `CancelActorTargetScroll`,
-    `CancelCharacterTargetScroll`, `CancelActorTargetScrollFromInventory` and
-    `IncapacitationCancelsActorTargetScroll`.
+    (`59ead390d`). Cancelled-scroll consumption is fixed in `ece2203eb` and
+    `d7edd7c41`, covered by `MM7Scrolls.CancelItemTargetScroll`,
+    `CancelActorTargetScroll`, `CancelCharacterTargetScroll`,
+    `CancelActorTargetScrollFromInventory` and
+    `IncapacitationCancelsActorTargetScroll`. Charge-spend ordering is open.
     **Further fixed on 2026-11-09:** MM7 Squire contributes +2 to every
     weapon and armor skill, and Sage contributes +6 to Item ID and Monster ID
     (`dbd5dfba5`). These title-specific bonuses leave MM6 unchanged.
@@ -246,14 +244,13 @@ clearing (`MM7Combat.DivineInterventionPreservesZombie`) now have tests.
 
 ## A2b campaign and events (done)
 
-2026-11-09 runtime checkpoint: three headless GameTests on current integrated
-source passed for both arbiter alignments, both ending handoffs and the
-messenger's 112/113-day boundary. A later headless test also verified that
-Alice Hargreaves' room opens without its missing room video (`505fbaec6`).
-Only the raid case remains disabled; these tests do not establish a
-continuous campaign from a new game or visible ending playback.
-**Superseded 2026-11-23:** `MM7Campaign.HarmondaleRaid` has run enabled since
-`baa044b76` (2026-11-10), with survivor and no-survivor iterations.
+Headless GameTests cover both arbiter alignments, both ending handoffs, the
+messenger's 112/113-day boundary, Alice Hargreaves' room without its missing
+room video (`505fbaec6`) and the Harmondale raid
+(`MM7Campaign.HarmondaleRaid`, survivor and no-survivor iterations, enabled
+since `baa044b76`). The continuous Light and Dark C0-C7 chains run from New
+Game to both endings, see
+[Campaign Status](../.llm-wiki/Campaign-Status.md).
 
 - All 77 scripts (76 maps plus `global.evt`) framed: 16,699 records, 47
   opcodes, 0 framing errors, 0 broken jump targets, 0 missing MoveToMap targets
@@ -281,10 +278,7 @@ Risks, all inherited:
    autosaves and returns to Harmondale (`Game.cpp:902-917`).
 2. Harmondale raid soft-lock risk (upstream #1665): qbit 183 locks the
    Harmondale doors until every group-9 raider in d29 and out02 is dead.
-   The candidate test failed to set the castle completion bit after marking
-   group-9 actors dead; map/group ownership needs further investigation.
-   **Superseded 2026-11-23:** raid clearing is covered by
-   `MM7Campaign.HarmondaleRaid` (`baa044b76`).
+   Fixed and covered by `MM7Campaign.HarmondaleRaid` (`baa044b76`).
    A separate MM6 item-pickup remnant also set MM7 raid bits 184 and 185
    when picking up item IDs 506 and 455. That path is now MM6-only
    (`99757a31d`); the focused MM7 pickup regression passed.
@@ -343,10 +337,9 @@ Defects:
    process, and a save with a valid header but corrupt body is listed and then
    crashes on load. Atlas crash reporting was corrected in `f70627f9c` and
    its abnormal-exit warning appeared after a controlled force-quit at the
-   title menu. Ordinary Exit returned the normal message. Save failure and
-   corrupt-body handling remain open.
-   **Superseded 2026-11-23:** fixed by `908052d39` (atomic native saves) and
-   `b26b68ef2` (corrupt saves rejected before loading), covered by
+   title menu. Save failure and corrupt-body handling are fixed in
+   `908052d39` (atomic native saves) and `b26b68ef2` (corrupt saves rejected
+   before loading), covered by
    `MM7SaveFailure.ManualWriteFailureKeepsSaveMenu`,
    `MM7SaveFailure.QuickWriteFailureKeepsSlotAndReportsError` and the
    `MM7AtomicSaveFile.*` and `MM7SaveValidation.*` unit tests.

@@ -7,21 +7,32 @@ tags: [priorities, mm7, mm6, audit, handoff]
 
 # Current Delivery Order
 
-The owner set this order on 2026-11-10 for the personal Mac project; it supersedes older MM6-first backlog ordering without discarding completed MM6 work.
+The owner's order for the project. Each stage advances only on the evidence in its row.
 
-| Order | Outcome | Evidence required before advancing |
-| --- | --- | --- |
-| 1 | **Get MM7 completely working.** | The current fork candidate, not only the protected installed baseline, launches through The Atlas on the Mac; normal input, media, Save/quit/relaunch/Load and main campaign progression through an ending work with durable local saves and no known blocking defect. Fix issues found in that path. |
-| 2 | **Get MM6 working.** | The separate MM6 runtime and profile support normal New Game or Load, visible play, travel and main campaign progression through an ending with durable local saves. Preserve the verified MM7 path. The current seeded first-map headless gate alone does not meet this outcome. |
-| 3 | **Run the full MM7 audit.** | Complete the title's [audit checklist](../project/MM7_AUDIT_CHECKLIST.md), including broader rules, maps, optional branches, mods and Mac interface checks beyond the working path; record defects and repairs with appropriate runtime evidence. |
-| 4 | **Run the full MM6 audit.** | Complete the [MM6 implementation checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md) and full campaign coverage beyond the working path, with original-behavior comparisons where needed. |
+| Order | Outcome | State | Evidence required before advancing |
+| --- | --- | --- | --- |
+| 1 | **Get MM7 completely working.** | Done 2026-11-11 | The current build launches through the Atlas on the Mac, and normal input, media, Save, quit, relaunch, Load and the main campaign through an ending work with durable local saves and no known blocking defect. |
+| 2 | **Get MM6 working.** | Active | The separate MM6 runtime and profile support New Game or Load, visible play, travel and the main campaign through an ending with durable local saves, without breaking MM7. The readiness flag is `docs/mm6-playthrough-go-no-go.md` on `claude/mm6`. |
+| 3 | **Run the full MM7 audit.** | Not started | Complete the [audit checklist](../project/MM7_AUDIT_CHECKLIST.md): rules, maps, optional branches, mods and Mac interface checks beyond the working path, with defects and repairs recorded with runtime evidence. The [delta-first plan](../project/MM7_FULL_AUDIT_NEXT_WEEK_PLAN.md) names the week of 2026-11-23, and the start is the owner's call. |
+| 4 | **Run the full MM6 audit.** | Not started | Full MM6 campaign and rules coverage beyond the working path, with original-behaviour comparisons where needed. Tracked on `claude/mm6`. |
 
-The working gates establish actual use of the current build; the later audits establish breadth. A headless suite, parser inventory or title screen does not close a working gate by itself. After the owner authorized reinstalling Atlas, the prior installed MM7 app was retained as a local rollback copy and the signed candidate installed headlessly. On 2026-11-10 the owner ran the visible session on the installed candidate: title music, NPC voice, combat sound, an NPC conversation, a fight, a new save, relaunch from The Atlas and Load all passed with existing saves unchanged. The MM7 visible and installed-app rows of the working gate are closed. On 2026-11-11 the continuous chapter chain from New Game to the Light ending passed on `master` through real saves, so **stage 1, MM7 working, is complete** and stage 2, MM6 working, is active. The [November 9 progress table](Progress-2026-11-09.md) is still useful for task facts, but its MM6-first next-step order is superseded by this page.
+A working gate means actual use of the current build, and the audits establish breadth. A headless suite, a parser
+inventory or a title screen does not close a working gate by itself.
 
 ## Coordination
 
-The owner assigned title authority on 2026-11-12: **Codex is the sole arbiter for MM7** (working gate, later audit, MM7 defects, acceptance evidence, lane assignment and integration decisions); **Claude Code owns all MM6 work** on the same terms. Neither title owner may redirect, accept, or change the other title's work without an explicit owner instruction. This replaces earlier statements that Claude leads overall coordination.
+- **Title authority.** Codex is the sole arbiter and delivery owner for MM7: the working gate, the audit, MM7 defects,
+  acceptance evidence, lanes and integration. Claude Code owns all MM6 work on the same terms, on `claude/mm6`.
+  Neither may redirect, accept or change the other title's work without an explicit owner instruction. Codex is idle
+  since 2026-11-22.
+- **Worktrees.** No worktree or branch count cap while a round is running. Keep at least 10 GB free disk, a hard
+  floor. Each round ends with one branch and one worktree per title: the main checkout on `codex/mm7` and
+  `enroth-worktrees/mm6-control-center` on `claude/mm6`. `tools/check_worktree_budget.py` still enforces an older
+  five-per-owner cap, so read its counts, not its verdict.
+- **Integration.** `master` is the neutral integration branch. A shared-core change runs the other title's controls
+  before it merges. Live notes between the agents go in the ignored `agent_comms/live/` mailbox, durable claims and
+  handoffs in [agent communications](../agent_comms/README.md), and the board is `agent_comms/CURRENT_WORK.md`.
+- **Privacy.** Private game data, saves and captures stay out of Git, see the
+  [source and privacy boundary](Source-and-Privacy-Boundary.md).
 
-Each title has an allocation of up to five linked worktrees. The `master` checkout is the neutral integration tree and counts against neither allocation; run `python3 tools/check_worktree_budget.py --agent codex` or `--agent claude` before creating a linked checkout. Use `codex/` and `claude/` branch prefixes so the capacity check assigns the checkout to the right owner. This owner allocation supersedes the older ten-total-worktree statement. Continue to keep no more than two independent code-changing lanes active at once, use [agent communications](../agent_comms/README.md) for claims and handoffs, and integrate reviewed branches into `master` one at a time. Shared-core changes require the other title's regression controls before integration. Retain protected baseline refs and keep private GOG material, saves and captures out of Git. Read-only triage may run alongside the code lanes.
-
-See also: [Agent Handoff](Agent-Handoff.md), [Campaign Status](Campaign-Status.md), [November 9 Progress](Progress-2026-11-09.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).
+See also: [Agent Handoff](Agent-Handoff.md), [Campaign Status](Campaign-Status.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

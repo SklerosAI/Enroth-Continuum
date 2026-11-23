@@ -1,8 +1,6 @@
 # MM7 Mac runtime path cutover
 
-Status: **installed Atlas uses the new data and profile paths** (cut over 2026-11-07, reinstalled 2026-11-22). Superseded installed apps are deleted under the owner's app replacement policy in `AGENTS.md`, so no old app is kept for rollback. The record below is the original 2026-11-07 staging packet.
-
-Original status (2026-11-07): **source defaults staged; private game data copied and verified; installed app and saves unchanged**. This packet covers a collision-safe move from inherited OpenEnroth local paths to Enroth Continuum's own MM7 data and profile paths. The opt-in clean tracked-source Mac build now passes; graphical play, save/reload, installed-app cutover and character transfer remain open.
+Status: **installed Atlas uses the Enroth Continuum data and profile paths** (cut over 2026-11-07, reinstalled 2026-11-22). Under the owner's app replacement policy in `AGENTS.md`, a verified replacement deletes the old app, so no old app is kept.
 
 ## Source state
 
@@ -11,18 +9,14 @@ Original status (2026-11-07): **source defaults staged; private game data copied
 - Atlas checks all eight MM7 archives required by the engine and retains the previous preference if a newly selected folder fails validation. Mac MM7 no longer copies a data folder's `saves/` into an empty user profile at startup.
 - The source bundle label is `Enroth Continuum MM7`; Atlas license metadata now says LGPL-3.0-or-later and retains OpenEnroth contributor credit. The Mac MM7 helper uses `enroth-continuum-mm7.ini`, `logs/enroth-continuum-mm7.log` and the default window title `Enroth Continuum MM7`. If an explicitly selected MM7 profile lacks the new config but has `openenroth.ini`, the helper reads that legacy file and later saves only the new name, leaving the legacy file intact. A custom window title remains intact. MM6 and non-Mac paths retain their existing names. Inherited internal symbols and some CLI/build strings remain for a later scoped audit.
 
-## Private migration gate
+## Save migration
 
-The older local MM7 save locations contain distinct saves with colliding names. Never merge them by filename, overwrite one with the other, or let a startup auto-copy choose a winner. Keep both original locations and the installed app as rollback sources.
+The older local MM7 save locations hold distinct saves with colliding names. They are never merged by filename, and no startup auto-copy picks a winner. Saves reach `Profiles/MM7-Atlas` only through an explicit per-collision choice or a separate import mechanism, and the original save folders are left intact. Game data and saves stay out of Git.
 
-1. Record private hashes and a backup of each source data/profile root separately. Verify a fresh target is empty and reject symlinks or paths outside the intended private roots.
-2. Copy extracted game data into a new staging sibling of `Game Data/MM7`, verify relative files and hashes, then atomically rename it. Keep game data and saves out of Git.
-3. Stage saves into a **fresh** `Profiles/MM7-Atlas` only after an explicit per-collision choice or a separate import mechanism. Verify the staged profile and keep both originals. Do not automatically reverse-merge on rollback.
-4. Build and stage a candidate Atlas/helper separately from the installed app. With the new paths, check a headless MM7 control, visible launch and map rendering, audio/video, existing save load, new save, quit, relaunch and reload. Confirm the MM6 and MM8 sibling slots and private profiles are untouched.
-5. Only after those checks, switch the installed app and its saved data preference. Leave all save folders intact. Superseded 2026-11-22: the app replacement policy deletes the old app after a verified replacement, so the earlier rollback step that kept it no longer applies.
+## Verification
 
-The source path change passed Swift type checking and a cached-library arm64 `MM7` and GameTest build. Extracted MM7 game data was copied privately to the new default folder and every regular file was byte-verified against the original; the original remains intact. A headless MM7 control then passed through the new default path. The installed app, preferences and private saves were not moved, so visible launch and save/reload through a candidate app remain open.
+The source path change passed Swift type checking and a cached-library arm64 `MM7` and GameTest build. Extracted MM7 game data was copied privately to the new default folder and every regular file was byte-verified against the original. The original remains intact. A headless MM7 control then passed through the new default path.
 
-The later MM7-only identity change linked `MM7` and GameTest in an isolated arm64 Release build using the repository-owned media-library prefix with downloads disabled. A headless MM7 control passed 1/1 and saved the new config name in its disposable user filesystem; an MM6 control passed 1/1 and retained `openenroth.ini`. In a separate disposable profile, the direct MM7 helper read a legacy config, created a rotating log with the new name and left the legacy file intact. A preferred environment override took precedence and failed closed when invalid; the legacy override still resolved a valid MM7 path when the new one was unset. These checks did not launch a visible game or alter the installed app and saves.
+The later MM7-only identity change linked `MM7` and GameTest in an isolated arm64 Release build using the repository-owned media-library prefix with downloads disabled. A headless MM7 control passed 1/1 and saved the new config name in its disposable user filesystem. An MM6 control passed 1/1 and retained `openenroth.ini`. In a separate disposable profile, the direct MM7 helper read a legacy config, created a rotating log with the new name and left the legacy file intact. A preferred environment override took precedence and failed closed when invalid. The legacy override still resolved a valid MM7 path when the new one was unset.
 
 See [MM7 source autonomy](MM7_SELF_CONTAINED_SOURCE.md), [runtime isolation](../.llm-wiki/Runtime-Isolation.md), [credits](../CREDITS.md) and [upstream relationship](UPSTREAM.md).

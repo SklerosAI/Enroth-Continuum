@@ -27,7 +27,7 @@ checks all nine link inputs and system-only dynamic links, and stages Atlas in
 a new output directory. A second fresh `git archive HEAD` extraction ran this
 one-command route end to end with networking denied. The arm64 helper and
 staged Atlas passed strict code-signature verification; the helper has valid
-bundle versions (`0.1.0` then, `0.1.1` since the patch release) and the archive build records an honest unknown Git
+bundle versions (now `0.1.1`) and the archive build records an honest unknown Git
 revision without a configure error. No private data or saves entered the bundle.
 
 After publication, a fresh shallow clone of SklerosAI's MM7-only preview at

@@ -44,6 +44,9 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   36 to 66) that plays speech 78 on success, and status 403 with sound 27 for a skill already known. The port's
   `MM6Guild` learn plays nothing and `MM6SkillGuild` plays its house learn sound. Which guilds reach 0x4A4D09 isn't
   traced.
+- **Stuck on the edge line.** A party that lands from a fall exactly on oute3's west edge line while holding forward
+  stays there, bobbing between z 155 and 158.75 with the airborne flag set, so the border trip is never offered. Seen
+  for 300 frames with a healthy party. Not traced or checked against MM6.exe.
 - **Any-item roll.** Chests and `GiveItem` kind 0 keep MM6.exe's off-by-one, which favours item 1, because the GrayFace
   patch leaves that roll alone. Fixing it changes chest contents on every map. Owner's call. `mm6::generateAnyItem`.
 - **MM7 monster types on MM6 paths.** `supertypeForMonsterId` makes MM6's Genies and Plate Knights undead and its

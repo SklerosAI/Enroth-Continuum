@@ -3867,3 +3867,8 @@ Chronological record of wiki activity.
 - Checked the MM7 plans, checklists and wiki pages against `codex/mm7` at `53505e6bc` and corrected what the code and history contradict: the `ECv0.1.1` tag, native atomic SaveLoad, stale open items in Campaign Status and the 2026-11-07 audit results, three wrong test names in the quest catalog, rollback-app steps, and the 2026-11-12 coordination boards.
 - Added [MM7 Playthrough Go/No-Go](MM7-Playthrough-Go-No-Go.md). No player-reachable MM7 throw or assert was found. The verdict is NO-GO on verification only, because the full suite and both chains last ran before Fortune's Turn absorbed chest reroll and the Dragoon class landed.
 - Campaign Status and Open Questions gained 2026-11-23 sections. The full-audit start is left to the owner. MM6 status lives in `docs/` on `claude/mm6`.
+
+## [2026-11-23] update | MM7 historical sections overwritten, playthrough GO
+- by: T-Burton-ND via claude-code
+- On the owner's request, the historical and superseded sections of the MM7 status pages, boards, plans and topic pages were rewritten in place to the current state. Git keeps the old text. The schema's mark-superseded rule was suspended for this pass.
+- The full MM7 headless suite and unit tests passed, and the Light and Dark C0-C7 chains passed from new temporary profiles. [MM7 Playthrough Go/No-Go](MM7-Playthrough-Go-No-Go.md) is now GO at `617b94d23`. The installed helper `014514250` has the same source.

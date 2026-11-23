@@ -75,8 +75,9 @@ ahead of the tag.
    names the tag, the full commit and the tree.
 5. **Verify.** Deep strict code-sign verification of the bundle, then a recursive comparison of the staged and the
    installed bundle. Open The Atlas visibly and check every title card shows its data and helper state.
-6. **Install.** Replace `/Applications/Enroth Continuum.app`. The superseded app goes to the macOS Trash. No rollback
-   copy of an old build is kept, Git is the record. Profiles, saves, mods and recordings are left untouched.
+6. **Install.** Replace `/Applications/Enroth Continuum.app` after verifying the replacement. Delete superseded installed
+   bundles and staged app artifacts completely. Keep no rollback app copy; Git is the source record. Profiles and
+   saves require a separately scoped repair or cleanup.
 
 For `ECv0.1.0` the install check verified Atlas rendering and exact bytes. Neither game was launched in that final
 check.

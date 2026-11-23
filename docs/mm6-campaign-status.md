@@ -1,6 +1,6 @@
 # MM6 campaign status
 
-Where Might and Magic VI stands on `claude/mm6` (2026-11-20): what a player can do, how it is verified,
+Where Might and Magic VI stands on `claude/mm6` (2026-11-22): what a player can do, how it is verified,
 the campaign chain, GrayFace fix progress and the latest lane results.
 
 ## Summary
@@ -73,7 +73,7 @@ The last map sweep on record loaded all 67 MM6 maps and ran every phase on all 2
 | M1 | Production New Game, Save, fresh-process Load | Done (first-map gate) |
 | M2 | Live travel, Save on any map, fresh-process Load restoring chests, dead monsters and doors on active and parked maps | Done headless |
 | M3 | Party death and respawn, in-game Load, autosave and quick save | Done headless |
-| M4 | Main-quest chain from New Game to the finale with fresh-process checkpoints | C0 to C8 merged, C9 passes on the real C8 save |
+| M4 | Main-quest chain from New Game to the finale with fresh-process checkpoints | Fresh C0 to C9 passed with Fortune's Turn and All Artifacts enabled (2026-11-22) |
 | M5 | Owner sessions: the first hours, travel and a dungeon, chain checkpoints and the ending | Partial, New Sorpigal playtests only |
 | M6 | The Atlas installs a sibling MM6 helper with its own profile, MM7 untouched | Helper ships in `ECv0.1.0` on `Profiles/MM6-Atlas` |
 | M7 | MM7 stays working after every shared-core merge | Continuous |
@@ -276,3 +276,26 @@ Ten lanes merged into `claude/mm6` on 2026-11-20:
   [run_mm6_combat_sweep.py](../tools/run_mm6_combat_sweep.py), [run_mm7_campaign_chain.py](../tools/run_mm7_campaign_chain.py)
 
 See also: [Open questions](open-questions.md), [MM6 GrayFace patch reference](mm6-grayface-patch-reference.md), [Testing](testing.md), [Releases](releases.md)
+
+## Owner playtest preparation — 2026-11-22
+
+The owner requested a new MM6 build assessment and the merged Fortune's Turn controls. Source `27019e9fa`
+includes chest reroll in Fortune's Turn, keeps the chest button independent of the HUD X, moves that X to the
+bottom left beside the first portrait, and retains MM6 All Artifacts as a separate launcher choice. Either old
+reroll preference migrates to the combined choice; disabling it clears both.
+
+Fresh verification against local MM6 data passed all 412 regular MM6 game tests with no skips, all 44
+fresh-process gate children including the MM7 controls, and 13 item-generator/ARTC/CHRL unit tests. The gate
+includes artifact-carrying Save/Load and collected-ledger persistence. Swift launcher contracts, Atlas page checks,
+Swift typechecking, changed C++ lint and diff whitespace checks passed. A read-only review found no actionable
+issue in the merged mod patch. After the native OpenGL relink, six focused mod checks and the hidden
+first-map capture also passed; the capture shows the X and dice in the clear margin left of the first portrait.
+
+The local arm64 MM6 helper builds and passes deep strict signing verification with Apple's native OpenGL
+framework. Its development cache originally selected XQuartz; the SDK OpenGL stub now supplies the native
+linkage, as described in [Testing](testing.md#native-macos-mm6-helper-linkage). No new Atlas was installed.
+The visible owner-session gate and the spell/item admission limits above remain open.
+
+A fresh C0 to C9 campaign chain also passed with Fortune's Turn and All Artifacts enabled throughout, keeping
+earlier checkpoint saves and pass markers intact. It still uses the documented strength, positioning and
+no-damage fixtures; the owner-session gate remains separate.

@@ -1699,7 +1699,7 @@ GAME_TEST(MM6Houses, WeaponShopIdentifyUnconscious) {
         if (conscious) {
             EXPECT_CONTAINS(statusTape, localization->str(static_cast<LstrId>(569))); // "Done!"
             EXPECT_MISSES(soundsTape.flatten(), SOUND_error);
-            EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>());
+            EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>({{"\f65523Longsword\f00000", {510, 217}, colorTable.White}})); // The identified sword under the mouse.
         } else {
             EXPECT_MISSES(statusTape, localization->str(static_cast<LstrId>(569)));
             EXPECT_CONTAINS(soundsTape.flatten(), SOUND_error);

@@ -19,6 +19,13 @@ Open MM7 and cross-title questions. MM6 open questions live in `docs/open-questi
 - **2026-11-07 audit defects still open.** Wand charge ordering, Monster Haste and Day of Protection never read, Hour of Power reading Shield's power, `_SelectTarget`, the indoor summon floor, the Assassins' and Barbarians' enchantments, artifacts 530, 531 and 536, two grandmaster teacher requirements and the Disarm Trap caps. See [MM7 Combat Audit Fixes](MM7-Combat-Audit-Fixes.md).
 - **Upstream issues without a fork fix.** #2068, #1560 and #2276, among others listed in the audit results.
 - **In-game mod panel.** A read-only panel of the Atlas launch options is on the owner's backlog.
+- **Capture tour findings.** From the 2026-11-23 hidden capture tour, none checked in visible play yet:
+  - In `mdt02.blv` the left third of the view at the first start point is solid white.
+  - The click-loot popup draws the status bar's "Game Options" text over its lower half.
+  - New Game outdoors shows snow and bare trees. Upstream's `seasons_change` option is on by default, and its own help text says the seasons were originally MM6-only.
+  - The Wine Cellar vampire's combat lines read "Super Vampire (fix)". The unique name comes from the shipped MM7 data.
+  - The portrait under the minimap is missing in `out15.odm` and `d23.blv` but shown on every other captured map. Not traced.
+- **Capture tool gaps.** `MM7OffscreenFrame.DISABLED_MapCapture` uses the map's start points, not the shipped entrances, so most indoor frames face a wall, and `d01.blv`, `mdt10.blv` and map index 71 have no usable start point. No MM7 house or shop capture exists.
 
 ## Cross-title questions
 

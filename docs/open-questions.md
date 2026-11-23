@@ -122,9 +122,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 - **Graphical Mac play.** The audit's interface, media, mods and long-session rows need visible play on the Mac. See
   [MM7 status](mm7-status.md) for the rows. The chest reroll button and the Fortune's Turn popup, checkbox, bounty, ore
   smith and enchant flows were checked headlessly and in hidden captures, not by clicking in the installed app.
-- **Playthrough verification.** The full MM7 suite and both C0-C7 chains last passed before Fortune's Turn absorbed
-  chest reroll and the Dragoon class landed. `codex/mm7` rates an MM7 playthrough NO-GO on verification only, with no
-  known player-reachable crash.
 - **Full audit.** The archive, map, spell, item and monster audit has not started. Its plan names the week of
   2026-11-23, the delivery order puts it after the MM6 working gate. Owner's call. See
   [MM7 status](mm7-status.md#full-audit-plan).

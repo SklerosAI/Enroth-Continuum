@@ -44,3 +44,4 @@ Format: `- YYYY-MM-DD: what landed.` See [SCHEMA.md](SCHEMA.md) for what earns a
   spawner, the shop screen, resident hiring, jail, Fortune's Turn and chest reroll for MM6.
 - 2026-11-23: First owner session on the installed `626f5f431` MM6 helper crashed reading a spellbook. The MM6 docs
   were checked against the code, and the [playthrough go/no-go](mm6-playthrough-go-no-go.md) page was added at NO-GO.
+- 2026-11-23: MM7's full suite and both C0-C7 chains passed again on `codex/mm7`, which rates an MM7 playthrough GO.

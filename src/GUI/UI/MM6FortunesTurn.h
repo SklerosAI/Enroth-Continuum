@@ -47,7 +47,7 @@ void claimFortuneItem(ItemId itemId);
 void takeFortuneItem(const Item &item);
 
 /**
- * Keeps the Fortune's Turn checkbox on the MM6 HUD, beside the fourth portrait's bars, while the launch flag is set,
+ * Keeps the Fortune's Turn checkbox on the MM6 HUD, beside the first portrait, while the launch flag is set,
  * and draws it and its dice on the game screen. The button comes and goes with the flag.
  */
 void updateFortunesTurnToggle();

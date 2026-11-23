@@ -75,11 +75,11 @@ enum GameBuild: String {
      * @param vendorRefresh             Whether this title's saved vendor choice asks for fresh stock on entry. MM7
      *                                  applies it only together with Private mods.
      * @param allArtifactsStorage       Whether Private mods asks for collection-based artifact eligibility and storage support.
-     * @param chestReroll               Whether Private mods allows rerolling unclaimed MM7 chest loot.
-     * @param monsterLootReroll          Whether Private mods allows MM7 monster loot previews and rerolls.
+     * @param chestReroll               Legacy MM7 chest choice, merged into Fortune's Turn.
+     * @param monsterLootReroll          MM7 Fortune's Turn choice, including chest and non-chest rerolls.
      * @param mm6AllArtifacts           Whether MM6's saved choice asks for the All Artifacts mod. Only MM6 reads it.
-     * @param mm6ChestReroll            Whether MM6's saved choice allows rerolling MM6 chest loot. Only MM6 reads it.
-     * @param mm6MonsterLootReroll      Whether MM6's saved choice asks for Fortune's Turn. Only MM6 reads it.
+     * @param mm6ChestReroll            Legacy MM6 chest choice, merged into Fortune's Turn. Only MM6 reads it.
+     * @param mm6MonsterLootReroll      MM6 Fortune's Turn choice, including chest reroll. Only MM6 reads it.
      * @return                          The environment to launch the helper with.
      */
     func environment(base: [String: String], modRoot: URL?, vendorRefresh: Bool,
@@ -101,8 +101,8 @@ enum GameBuild: String {
             environment.removeValue(forKey: "OPENENROTH_MM7_PATH")
             environment["ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY"] = vendorRefresh ? "1" : "0"
             environment["ENROTH_MM6_ALL_ARTIFACTS"] = mm6AllArtifacts ? "1" : "0"
-            environment["ENROTH_MM6_CHEST_REROLL"] = mm6ChestReroll ? "1" : "0"
-            environment["ENROTH_MM6_MONSTER_LOOT_REROLL"] = mm6MonsterLootReroll ? "1" : "0"
+            environment["ENROTH_MM6_CHEST_REROLL"] = (mm6ChestReroll || mm6MonsterLootReroll) ? "1" : "0"
+            environment["ENROTH_MM6_MONSTER_LOOT_REROLL"] = (mm6ChestReroll || mm6MonsterLootReroll) ? "1" : "0"
         case .fork:
             environment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] = "0"
             environment["ENROTH_MM7_ALL_ARTIFACTS_STORAGE"] = "0"
@@ -112,8 +112,8 @@ enum GameBuild: String {
                 environment["ENROTH_MM7_MOD_DIR"] = modRoot.path
                 if vendorRefresh { environment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] = "1" }
                 if allArtifactsStorage { environment["ENROTH_MM7_ALL_ARTIFACTS_STORAGE"] = "1" }
-                if chestReroll { environment["ENROTH_MM7_CHEST_REROLL"] = "1" }
-                if monsterLootReroll { environment["ENROTH_MM7_MONSTER_LOOT_REROLL"] = "1" }
+                if chestReroll || monsterLootReroll { environment["ENROTH_MM7_CHEST_REROLL"] = "1" }
+                if chestReroll || monsterLootReroll { environment["ENROTH_MM7_MONSTER_LOOT_REROLL"] = "1" }
             }
         case .upstream:
             environment.removeValue(forKey: "ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY")

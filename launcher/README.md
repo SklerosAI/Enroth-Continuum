@@ -60,7 +60,7 @@ data path and user path. It does not package original Might & Magic data.
 - The Atelier provides private portrait moods for four party positions,
   one MM7 armor template AC override, an optional fresh-vendor-stock-on-entry
   setting for MM6 and MM7, the MM7-only **All Artifacts + Storage** option,
-  chest reroll and Fortune's Turn rows for MM7 and for MM6, an MM6-only
+  one Fortune's Turn row including chest reroll for each of MM7 and MM6, an MM6-only
   **All Artifacts** option, and a Vanilla/Private mods switch.
   Portrait moods can replace normal, condition and reaction art in party creation
   and game play. Voices and body art remain original; death and eradication art
@@ -114,18 +114,13 @@ and Private mods are both on. Vanilla MM7, MM6 and upstream OpenEnroth receive
 no active MM7 artifact/storage flag. Play MM6 passes `ENROTH_MM6_ALL_ARTIFACTS`
 as `1` or `0` from its own toggle (`mods.mm6.allArtifacts`), with or without
 Private mods. MM7 and upstream never receive it.
-The chest reroll toggle passes `ENROTH_MM7_CHEST_REROLL=1` only to a
-Private mods MM7 launch. Its Reroll button appears on unclaimed chests whose
-random loot was generated while the toggle was active. See
-[mods and Atlas](../docs/mods-and-atlas.md) for the chest reroll contract.
-The separate click-loot toggle passes `ENROTH_MM7_MONSTER_LOOT_REROLL=1` only
-to a Private mods MM7 launch. Its in-game dice checkbox controls whether an
-eligible random-loot corpse or clicked random script item opens a paused
-Reroll/Take popup. See [mods and Atlas](../docs/mods-and-atlas.md) for the click-loot contract.
-Play MM6 passes `ENROTH_MM6_CHEST_REROLL` and `ENROTH_MM6_MONSTER_LOOT_REROLL`
-as `1` or `0` from their own MM6 toggles (`mods.mm6.chestReroll`,
-`mods.mm6.monsterLootReroll`), with or without Private mods. MM7 and upstream
-never receive them.
+Fortune's Turn includes chest reroll. Atlas passes both title-local reroll flags together:
+`ENROTH_MM7_CHEST_REROLL` and `ENROTH_MM7_MONSTER_LOOT_REROLL` for a Private mods MM7 launch;
+`ENROTH_MM6_CHEST_REROLL` and `ENROTH_MM6_MONSTER_LOOT_REROLL` for an MM6 launch.
+Each is explicitly `1` or `0`, and the other titles never receive it. Either legacy saved reroll preference
+initially enables the unified option; switching it off clears both. The small chest Reroll button stays
+independent of the bottom-left X, which controls non-chest reward previews. Old generated chests without
+reroll markers remain ineligible until map respawn. See [mods and Atlas](../docs/mods-and-atlas.md).
 
 The source defaults for a future MM7 Atlas build are
 `~/Library/Application Support/Enroth Continuum/Game Data/MM7` and the fresh

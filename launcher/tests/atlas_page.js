@@ -100,14 +100,11 @@ assert.match(document.getElementById('all-artifacts-storage-status').textContent
 document.getElementById('all-artifacts-storage-toggle').click();
 assert.strictEqual(sent.at(-1), 'all-artifacts-storage-on');
 
-window.Atlas.receive(state({modsEnabled: false, chestReroll: true}));
-assert.strictEqual(document.getElementById('chest-reroll-toggle').textContent, 'Turn off');
-assert.match(document.getElementById('chest-reroll-status').textContent, /enable Private mods/);
-document.getElementById('chest-reroll-toggle').click();
-assert.strictEqual(sent.at(-1), 'chest-reroll-off');
-window.Atlas.receive(state({modsEnabled: true, chestReroll: false}));
-document.getElementById('chest-reroll-toggle').click();
-assert.strictEqual(sent.at(-1), 'chest-reroll-on');
+// A saved chest-only preference migrates to the unified Fortune control.
+window.Atlas.receive(state({chestReroll: true}));
+assert.strictEqual(document.getElementById('monster-loot-reroll-toggle').textContent, 'Turn off');
+document.getElementById('monster-loot-reroll-toggle').click();
+assert.strictEqual(sent.at(-1), 'monster-loot-reroll-off');
 
 window.Atlas.receive(state({modsEnabled: false, monsterLootReroll: true}));
 assert.strictEqual(document.getElementById('monster-loot-reroll-toggle').textContent, 'Turn off');
@@ -135,8 +132,7 @@ assert.strictEqual(sent.at(-1), 'mm6-all-artifacts-on');
 
 // The MM6 chest reroll and Fortune's Turn toggles save MM6's own choices, apply without Private mods and leave MM7's
 // toggles alone.
-for (const [name, key, mm7Name, off] of [['mm6-chest-reroll', 'mm6ChestReroll', 'chest-reroll', 'Off · normal chest loot'],
-                                          ['mm6-monster-loot-reroll', 'mm6MonsterLootReroll', 'monster-loot-reroll',
+for (const [name, key, mm7Name, off] of [['mm6-monster-loot-reroll', 'mm6MonsterLootReroll', 'monster-loot-reroll',
                                            'Off · normal rewards']]) {
   const toggle = document.getElementById(`${name}-toggle`);
   const status = document.getElementById(`${name}-status`);
@@ -152,6 +148,13 @@ for (const [name, key, mm7Name, off] of [['mm6-chest-reroll', 'mm6ChestReroll', 
   toggle.click();
   assert.strictEqual(sent.at(-1), `${name}-on`);
 }
+
+// A chest-only MM6 preference also migrates to Fortune without enabling MM7.
+window.Atlas.receive(state({mm6ChestReroll: true}));
+assert.strictEqual(document.getElementById('mm6-monster-loot-reroll-toggle').textContent, 'Turn off');
+assert.strictEqual(document.getElementById('monster-loot-reroll-toggle').textContent, 'Turn on');
+document.getElementById('mm6-monster-loot-reroll-toggle').click();
+assert.strictEqual(sent.at(-1), 'mm6-monster-loot-reroll-off');
 
 // The vendor toggle saves a choice for each title. MM6 applies its own without Private mods, MM7 only with them.
 const vendorToggle = document.getElementById('vendor-refresh-toggle');

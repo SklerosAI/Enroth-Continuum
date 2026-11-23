@@ -113,11 +113,11 @@ precondition(GameBuild.mm6.environment(base: base, modRoot: nil, vendorRefresh: 
 precondition(GameBuild.mm6.environment(base: base, modRoot: nil, vendorRefresh: false, allArtifactsStorage: false,
                                        chestReroll: false, monsterLootReroll: false, mm6ChestReroll: true)
              == ["HOME": "/home", "ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY": "0", "ENROTH_MM6_ALL_ARTIFACTS": "0",
-                 "ENROTH_MM6_CHEST_REROLL": "1", "ENROTH_MM6_MONSTER_LOOT_REROLL": "0"])
+                 "ENROTH_MM6_CHEST_REROLL": "1", "ENROTH_MM6_MONSTER_LOOT_REROLL": "1"])
 precondition(GameBuild.mm6.environment(base: base, modRoot: nil, vendorRefresh: false, allArtifactsStorage: false,
                                        chestReroll: false, monsterLootReroll: false, mm6MonsterLootReroll: true)
              == ["HOME": "/home", "ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY": "0", "ENROTH_MM6_ALL_ARTIFACTS": "0",
-                 "ENROTH_MM6_CHEST_REROLL": "0", "ENROTH_MM6_MONSTER_LOOT_REROLL": "1"])
+                 "ENROTH_MM6_CHEST_REROLL": "1", "ENROTH_MM6_MONSTER_LOOT_REROLL": "1"])
 let mm6FlagBase = base.merging(["ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY": "1", "ENROTH_MM6_ALL_ARTIFACTS": "1",
                                  "ENROTH_MM6_CHEST_REROLL": "1", "ENROTH_MM6_MONSTER_LOOT_REROLL": "1"]) { $1 }
 let mm6FromFlagBase = GameBuild.mm6.environment(base: mm6FlagBase, modRoot: nil, vendorRefresh: false,
@@ -140,5 +140,14 @@ precondition(GameBuild.upstream.environment(base: mm6FlagBase, modRoot: mods, ve
                                             allArtifactsStorage: true, chestReroll: true, monsterLootReroll: true,
                                             mm6AllArtifacts: true, mm6ChestReroll: true, mm6MonsterLootReroll: true)
              == ["HOME": "/home"])
+
+// Either old MM7 reroll choice enables the complete mod; vanilla still suppresses both.
+for choices in [(true, false), (false, true)] {
+    let merged = GameBuild.fork.environment(base: base, modRoot: mods, vendorRefresh: false,
+                                             allArtifactsStorage: false, chestReroll: choices.0,
+                                             monsterLootReroll: choices.1)
+    precondition(merged["ENROTH_MM7_CHEST_REROLL"] == "1")
+    precondition(merged["ENROTH_MM7_MONSTER_LOOT_REROLL"] == "1")
+}
 
 print("MM7 profile path and game build checks passed")

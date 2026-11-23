@@ -49,7 +49,7 @@ Every page in `docs/` with a one-line summary, by category. Read this before sea
 - [Testing](testing.md): unit and game tests, tapes, data-path env vars, hidden captures and the gate runners.
 - [Build and dev setup on macOS](build-and-dev-setup.md): toolchain, targets, style checks, the offline MM7 build and
   local game data.
-- [Mods and the Atlas launcher](mods-and-atlas.md): the Atlas app, its title helpers and the private MM7 mods.
+- [Mods and the Atlas launcher](mods-and-atlas.md): the Atlas app, unified Fortune rerolls, MM6 All Artifacts and private MM7 mods.
 
 ## Process
 

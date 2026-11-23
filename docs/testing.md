@@ -324,3 +324,12 @@ The full option list, file layout and caps are in [tools/MM7_PLAYTEST_CAPTURE.md
 - [mm7_playtest_capture.sh](../tools/mm7_playtest_capture.sh), [MM7_PLAYTEST_CAPTURE.md](../tools/MM7_PLAYTEST_CAPTURE.md)
 
 See also: [Build and Dev Setup](build-and-dev-setup.md), [MM6 Port Architecture](mm6-port-architecture.md), [MM6 Campaign Status](mm6-campaign-status.md)
+
+## Native macOS MM6 helper linkage
+
+Before staging an owner-playtest helper, check `otool -L build/src/Bin/OpenEnroth/MM6.app/Contents/MacOS/MM6`.
+The GL dependency must be Apple's `OpenGL.framework`, as in the installed sibling helpers. A local development
+cache can instead select XQuartz. Configure `OPENGL_gl_LIBRARY` to the active macOS SDK's
+`System/Library/Frameworks/OpenGL.framework/OpenGL.tbd`, rebuild the helper, then sign and verify the staged
+bundle. Use the SDK stub, since the runtime framework binary may live only in the macOS dyld cache. A successful
+headless test does not establish this graphical linkage.

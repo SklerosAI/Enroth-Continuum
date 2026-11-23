@@ -941,13 +941,17 @@ GAME_TEST(MM6ChestHeadless, DISABLED_ChestKeepsItsSecondPageInFreshProcess) {
 
 GAME_TEST(MM6ChestReroll, RerollRollsTheRandomLootAgain) {
     // With the chest reroll mod on, a chest with random loot shows a Reroll button, and the button rolls the chest's
-    // random loot again. The fixed item, the chest's type and its flags stay. Without the mod there is no button.
+    // random loot again, including with Fortune's Turn alone and its HUD checkbox off. The fixed item, the chest's
+    // type and its flags stay. Without the mod there is no button.
     constexpr ItemId fixedItem = static_cast<ItemId>(513);
-    for (bool on : {false, true}) {
-        SCOPED_TRACE(fmt::format("on={}", on));
+    for (int mode : {0, 1, 2, 3}) {
+        const bool on = mode != 0;
+        SCOPED_TRACE(fmt::format("mode={}", mode));
         test.prepareForNextTest();
-        ScopedModFlag reroll("ENROTH_MM6_CHEST_REROLL", on);
+        ScopedModFlag reroll("ENROTH_MM6_CHEST_REROLL", mode == 1);
+        ScopedModFlag fortune("ENROTH_MM6_MONSTER_LOOT_REROLL", mode >= 2);
         startNewGameThroughInput(game);
+        engine->config->gameplay.MM6MonsterLootRerollInGame.setValue(mode != 2);
         standAtShadowGuildHideoutChest1(game);
         auto contentsTape = tapes.custom([] { return chestContents(1); });
         auto typeTape = tapes.custom([] { return vChests[1].chestTypeId; });

@@ -63,18 +63,16 @@ Each title keeps its own profile so saves and configs never mix. An MM7 Atlas pr
 - MM6 gets no recording and no Private mods switch. The child environment drops `ENROTH_MM7_MOD_DIR`,
   `ENROTH_MM7_ALL_ARTIFACTS_STORAGE`, `ENROTH_MM7_CHEST_REROLL`, `ENROTH_MM7_MONSTER_LOOT_REROLL`,
   `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY` and `OPENENROTH_MM7_PATH`.
-- MM6 honours four Atelier options of its own, set on every Play MM6 launch whatever the Private mods switch says:
+- MM6 honours three Atelier options of its own, set on every Play MM6 launch whatever the Private mods switch says:
   - Fresh vendor stock on entry. Atlas sets `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` to `1` or `0` from the preference
     `mods.mm6.vendorRefreshOnEntry`. See [Vendor refresh on entry](#vendor-refresh-on-entry).
   - All Artifacts. Atlas sets `ENROTH_MM6_ALL_ARTIFACTS` to `1` or `0` from the preference `mods.mm6.allArtifacts`.
     See [All Artifacts for MM6](#all-artifacts-for-mm6).
-  - Reroll chest loot. Atlas sets `ENROTH_MM6_CHEST_REROLL` to `1` or `0` from the preference `mods.mm6.chestReroll`.
-    See [Chest reroll](#chest-reroll).
-  - Fortune's Turn. Atlas sets `ENROTH_MM6_MONSTER_LOOT_REROLL` to `1` or `0` from the preference
-    `mods.mm6.monsterLootReroll`. See [Fortune's Turn](#fortunes-turn).
-- Vendor refresh has one "MM6 + MM7" row in the Atelier that writes both titles' preferences. All Artifacts, chest
-  reroll and Fortune's Turn each have their own "· MM6" row below the MM7 rows, and its status reads "On for next MM6
-  launch" when on.
+  - Fortune's Turn, including chest reroll. Atlas sets both `ENROTH_MM6_CHEST_REROLL` and
+    `ENROTH_MM6_MONSTER_LOOT_REROLL` to the same `1` or `0`. Either old saved reroll preference initially enables
+    the combined option; its switch then writes both keys. See [Fortune's Turn](#fortunes-turn).
+- Vendor refresh has one "MM6 + MM7" row in the Atelier that writes both titles' preferences. All Artifacts and
+  Fortune's Turn each have a "· MM6" row below the MM7 rows, with "On for next MM6 launch" when enabled.
 - Play MM6 is a playtest entry. MM8 is a data-detection card only. There is no MM8 helper.
 
 ### Upstream OpenEnroth
@@ -185,8 +183,8 @@ four MM7 boolean flags to `0`.
 | `ENROTH_MM7_MONSTER_LOOT_REROLL` | Private mods on and preference `mods.mm7.monsterLootReroll` | `mm7::mods::monsterLootRerollEnabled` |
 | `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.vendorRefreshOnEntry` | `mm6::vendorRefreshPolicy` |
 | `ENROTH_MM6_ALL_ARTIFACTS` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.allArtifacts` | `mm6::mods::allArtifactsEnabled` |
-| `ENROTH_MM6_CHEST_REROLL` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.chestReroll` | `mm6::mods::chestRerollEnabled`, see [Chest reroll](#chest-reroll) |
-| `ENROTH_MM6_MONSTER_LOOT_REROLL` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.monsterLootReroll` | `mm6::mods::monsterLootRerollEnabled`, see [Fortune's Turn](#fortunes-turn) |
+| `ENROTH_MM6_CHEST_REROLL` | Every Play MM6 launch, `1` or `0` from the unified Fortune choice | `mm6::mods::chestRerollEnabled`, see [Chest reroll](#chest-reroll) |
+| `ENROTH_MM6_MONSTER_LOOT_REROLL` | Every Play MM6 launch, `1` or `0` from the unified Fortune choice | `mm6::mods::monsterLootRerollEnabled`, see [Fortune's Turn](#fortunes-turn) |
 
 Every MM7 reader checks `GameTitle::MM7` first, so the MM7 variables do nothing in an MM6 run, and the MM6 readers
 check `GameTitle::MM6`. The boolean flags
@@ -300,7 +298,7 @@ collection ledger across a save round trip.
 
 #### MM7
 
-The Atelier's "Reroll chest loot · MM7" toggle adds a small Reroll button, in brass and dark wood, to the lower wooden
+The Atelier's "Fortune's Turn · MM7" toggle adds a small Reroll button, in brass and dark wood, to the lower wooden
 border of an MM7 chest that still holds an authored random-loot marker. The button is absent when the flag is off and
 when no marker remains.
 
@@ -320,7 +318,7 @@ when no marker remains.
 #### MM6
 
 `ENROTH_MM6_CHEST_REROLL` accepts only the exact string `1` (`mm6::mods::chestRerollEnabled` in
-`src/Engine/Mods/PrivateMods.{h,cpp}`). With it on, an MM6 chest whose random loot can still be rolled again shows a
+`src/Engine/Mods/PrivateMods.{h,cpp}`). Fortune's Turn also enables it. With either flag on, an MM6 chest whose random loot can still be rolled again shows a
 Reroll button in the same brass and dark wood, on the chest's right-hand panel above the exit button. The page button
 sits between them when the chest has more than one page.
 
@@ -394,7 +392,7 @@ buttons and its exclusions, and rolls with MM6's own rules:
 - Escape takes nothing from a corpse or a clicked source, keeps the bounty the popup showed, and takes the item a
   Circus trade showed.
 
-The checkbox sits in the marble right of the fourth portrait's bars, with a dice under it, and is saved in the engine
+The checkbox sits at the bottom left beside the first portrait, with a dice under it, and is saved in the engine
 config as `mm6_monster_loot_reroll_in_game`. Its button exists only while the launch flag is set. MM6 has no Enchant
 Item player spell (`mm6::isVerifiedPlayerSpell`), so the enchantment reroll has no MM6 counterpart, and there is no
 new-game corpse setup.
@@ -445,8 +443,8 @@ loaded from one rebuilds it from what the party carries. See [MM6 save format](m
 
 MM6 has no storage the way MM7 has Castle Harmondale. The party owns no house, the port's MM6 chests only let items be
 taken out, and every MM6 map refills, which regenerates its chests (`mapstats.txt` refill days 1 to 672, all 67 maps).
-The four backpacks are the only place to keep artifacts, and a save today refuses a party that carries one, see
-[Open questions](open-questions.md).
+The four backpacks hold the collection. Artifact-carrying parties save and reload through the production EC6
+route, covered by `MM6ItemSaveHeadless` and `MM6AllArtifactsHeadless`.
 
 The Atelier shows "All Artifacts · MM6" next to the MM7 toggle. It writes `mods.mm6.allArtifacts`, and Play MM6 passes
 it as `ENROTH_MM6_ALL_ARTIFACTS=1`, or `0` when off. The MM7 and upstream launches drop the variable.
@@ -491,3 +489,10 @@ it as `ENROTH_MM6_ALL_ARTIFACTS=1`, or `0` when off. The MM7 and upstream launch
   set their own flag. The MM6 ledger's fresh-process pair runs in `tools/run_mm6_firstmap_gate.py`.
 
 See also: [Build setup](build-and-dev-setup.md), [Testing](testing.md), [MM7 status](mm7-status.md), [Upstream](upstream.md), [Source and privacy](source-and-privacy.md)
+
+## Unified Fortune's Turn controls — 2026-11-22
+
+Fortune's Turn now includes chest reroll for MM6 and MM7. Its launch flag enables the chest's small **Reroll**
+button independently of the in-game X checkbox. Switching that X off restores normal non-chest rewards while the
+chest button remains available until a chest item is claimed. The legacy chest-only launch flags remain accepted.
+MM6 All Artifacts stays a separate option, using MM6's collected ledger and native item rules.

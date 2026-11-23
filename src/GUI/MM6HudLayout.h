@@ -98,6 +98,6 @@ inline constexpr std::array<Pointi, 4> mm6HudPortraitCenters = {{{52, 422}, {165
 inline constexpr int mm6HudPortraitRadius = 35;
 inline constexpr std::array<Recti, 4> mm6HudVitalsHoverRects = {{{90, 378, 21, 89}, {203, 378, 21, 89}, {316, 378, 21, 89}, {428, 378, 21, 89}}};
 
-inline constexpr Recti mm6HudFortunesTurnCheckboxRect = {451, 386, 12, 12}; // In the marble right of the fourth bars.
-inline constexpr Recti mm6HudFortunesTurnDiceRect = {451, 401, 12, 12};
-inline constexpr Recti mm6HudFortunesTurnButtonRect = {450, 385, 14, 29};
+inline constexpr Recti mm6HudFortunesTurnCheckboxRect = {2, 386, 12, 12}; // Left margin beside the first portrait.
+inline constexpr Recti mm6HudFortunesTurnDiceRect = {2, 401, 12, 12};
+inline constexpr Recti mm6HudFortunesTurnButtonRect = {1, 385, 14, 29};

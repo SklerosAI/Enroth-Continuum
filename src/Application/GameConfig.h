@@ -272,6 +272,10 @@ class GameConfig : public Config {
             "MM6 only. Shops refuse to buy an item with no value, a blaster, as the GrayFace patch does. "
             "In vanilla a weapon shop or the general store bought a blaster for 1 gold."};
 
+        Bool FixIncapacitatedSkillIdentify = {this, "fix_incapacitated_skill_identify", true,
+            "MM6 only. An item info box doesn't let an active character who can't act identify or repair the item with his "
+            "skills, as the GrayFace patch does. In vanilla an unconscious or dead character still did."};
+
         Bool FixDoorStateSwitch = {this, "fix_door_state_switch", true,
             "MM6 only. Event scripts can pass door action 3 to switch a door even while it's moving, as the GrayFace patch does. "
             "In vanilla action 3 did nothing. No shipped script uses it, it is there for modded scripts."};

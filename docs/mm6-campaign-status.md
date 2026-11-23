@@ -222,7 +222,7 @@ Landed:
 | C12 | `fix_spells_cost` |
 | C4 | `fix_bonus_damage_resistance` for the relics Hades, Ares and Artemis. The elemental enchantments wait for their admission. |
 | C25 | `fix_item_generation`. Shop stock and `GiveItem` kinds only, the any-item roll stays vanilla as in the patch. |
-| W28 | No flag. MM6.exe already refused paid shop services. The skill half waits for the shop item info box. |
+| W28 | `fix_incapacitated_skill_identify` for the skill half, in the item info box. The paid shop half has no flag, MM6.exe already refused it. |
 | W12 | `fix_unopened_chest_artifacts` for the respawn refund. Event opcode 69 `RefundChestArtifacts` runs without a flag, no shipped script uses it. |
 | W13 | `fix_chest_overflow`. Reorder by value and compaction, only for a chest that overflows, and what still has no room on a second page. Beyond GrayFace, whose reopen step pages replace. |
 | None | `fix_valeria_shield`. Beyond GrayFace, the patch misses it: Valeria halves arrows from the hand, where MM6.exe looked in the armor slot. |

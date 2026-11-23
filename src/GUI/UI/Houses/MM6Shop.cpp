@@ -1,15 +1,18 @@
 #include "MM6Shop.h"
 
 #include <algorithm>
+#include <cctype>
 #include <exception>
 #include <string>
 
 #include "Engine/AssetsManager.h"
+#include "Engine/Data/ItemData.h"
 #include "Engine/Engine.h"
 #include "Engine/EngineIocContainer.h"
 #include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Localization.h"
+#include "Engine/MM6/MM6BoundedItemProjection.h"
 #include "Engine/MM6/MM6ChestTitleState.h"
 #include "Engine/MM6/MM6ItemGenerator.h"
 #include "Engine/MM6/MM6ShopBoundedPurchase.h"
@@ -20,16 +23,19 @@
 #include "Engine/Random/Random.h"
 #include "Engine/Tables/HouseTable.h"
 #include "Engine/Tables/ItemTable.h"
+#include "Engine/Tables/MerchantTable.h"
 
 #include "GUI/GUIButton.h"
 #include "GUI/GUIFont.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/ItemGrid.h"
 #include "GUI/UI/MM6CharacterScreen.h"
+#include "GUI/UI/UIPopup.h"
 #include "GUI/UI/UIStatusBar.h"
 
 #include "Io/Mouse.h"
 
+#include "Library/Color/ColorTable.h"
 #include "Library/Logger/Logger.h"
 
 #include "Media/Audio/AudioPlayer.h"
@@ -97,6 +103,42 @@ static InventoryEntry clickedBackpackEntry() {
     return pParty->activeCharacter().inventory.entry(mapToInventoryGrid(pt, Pointi(14, 17)));
 }
 
+/**
+ * @param type                          Shop type. A spell guild quotes like a magic shop.
+ * @param item                          Item id.
+ * @param data                          The item's entry in the MM6 item table.
+ * @return                              Whether the shopkeeper's lines treat the item as his kind of goods. Unlike the
+ *                                      trade check, this goes by shop type and lets a magic shop quote items 436 to 445.
+ */
+static bool quotesItemKind(HouseType type, ItemId item, const ItemData &data) {
+    const int id = std::to_underlying(item);
+    const int typeCode = mm6::detail::originalItemTypeCode(data.type);
+    switch (type) {
+        case HOUSE_TYPE_WEAPON_SHOP: return typeCode >= 0 && typeCode <= 2;
+        case HOUSE_TYPE_ARMOR_SHOP: return typeCode >= 3 && typeCode <= 9;
+        case HOUSE_TYPE_GENERAL_STORE: return true;
+        default: return (id >= 436 && id <= 445) || mm6::detail::originalItemSkillCode(data.skill) == 13;
+    }
+}
+
+static const IndexedArray<std::string, MERCHANT_PHRASE_FIRST, MERCHANT_PHRASE_LAST> &merchantPhrases(mm6::HouseServiceOption screen) {
+    using enum mm6::HouseServiceOption;
+    switch (screen) {
+        case SellItems: return pMerchantsSellPhrases;
+        case IdentifyItems: return pMerchantsIdentifyPhrases;
+        case RepairItems: return pMerchantsRepairPhrases;
+        default: return pMerchantsBuyPhrases;
+    }
+}
+
+/**
+ * @param itemName                      Display name of the item.
+ * @return                              The name in MM6's pale yellow, the way the `%24` code shows it.
+ */
+static std::string coloredItemName(std::string_view itemName) {
+    return fmt::format("{::}{}\f00000", colorTable.PaleCanary.tag(), itemName);
+}
+
 GUIWindow_MM6Shop::GUIWindow_MM6Shop(HouseId houseId, const mm6::HousePresentationState &presentation)
     : GUIWindow_MM6House(houseId, presentation) {}
 
@@ -124,6 +166,11 @@ void GUIWindow_MM6Shop::Update() {
     render->DrawQuad2D(assets->getIcon("footer"), {0, 352});
     DrawText(assets->pFontLucida.get(), {assets->pFontLucida->AlignText_Center(450, footer) + 11, 355}, colorTable.White, footer, frameRect);
 
+    if (pParty->hasActiveCharacter() && pParty->activeCharacter().CanAct()) {
+        const std::string line = merchantLine();
+        if (!line.empty())
+            drawPanelText(line, (174 - panelTextHeight(line)) / 2 + 138, colorTable.White);
+    }
     if (pParty->hasActiveCharacter() && !pParty->activeCharacter().CanAct()) {
         const std::string refusal = localization->format(LSTR_S_IS_IN_NO_CONDITION_TO_S, pParty->activeCharacter().name, localization->str(LSTR_DO_ANYTHING));
         drawPanelText(refusal, (212 - panelTextHeight(refusal)) / 2 + 101, colorTable.PaleCanary);
@@ -178,6 +225,31 @@ void GUIWindow_MM6Shop::houseScreenClick() {
             return;
         default:
             return;
+    }
+}
+
+void GUIWindow_MM6Shop::showItemInfo() {
+    if (!_screen || !pParty->hasActiveCharacter())
+        return;
+    if (!isBuyScreen(_screen)) {
+        if (InventoryEntry entry = clickedBackpackEntry())
+            GameUI_DrawItemInfo(entry.get());
+        return;
+    }
+    const Pointi pt = EngineIocContainer::ResolveMouse()->position();
+    for (int slot = 0; slot < 12; ++slot) {
+        if (!stockItemRect(slot).contains(pt))
+            continue;
+        const mm6::ItemRecord28 &record = mm6::shopTitleState().stock.records[stockRecordIndex(slot)];
+        if (_screen == mm6::HouseServiceOption::BuySpells) {
+            showSpellbookInfo(static_cast<ItemId>(record.itemNumberRaw()));
+            return;
+        }
+        if (const auto projected = mm6::stageBoundedItem(record, *pItemTable, GameTitle::MM6)) {
+            Item item = mm6::boundedItem(*projected);
+            GameUI_DrawItemInfo(&item);
+        }
+        return;
     }
 }
 
@@ -290,10 +362,12 @@ void GUIWindow_MM6Shop::buy(int slot) {
     mm6::ShopTitleState &shops = mm6::shopTitleState();
     mm6::ItemRecord28 &source = shops.stock.records[stockRecordIndex(slot)];
     Character &buyer = pParty->activeCharacter();
+    const bool guild = _screen == mm6::HouseServiceOption::BuySpells;
     const int value = mm6::itemValue(source, *pItemTable);
     const int price = mm6::itemBuyPrice(value, multiplier(), mm6::merchantPercent(buyer));
     if (pParty->GetGold() < price) {
         engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD);
+        mm6PlayHouseSound(houseId(), HOUSE_SOUND_GENERAL_NOT_ENOUGH_GOLD);
         return;
     }
 
@@ -303,7 +377,10 @@ void GUIWindow_MM6Shop::buy(int slot) {
         Item item;
         item.itemId = static_cast<ItemId>(source.itemNumberRaw());
         if (!probe.tryAdd(item)) {
+            if (guild)
+                return; // A guild says nothing when the pack is full.
             engine->_statusBar->setEvent(LSTR_MM6_PACK_IS_FULL);
+            buyer.playReaction(SPEECH_NO_ROOM);
         } else {
             engine->_statusBar->setEvent("This item is not available yet.");
         }
@@ -311,14 +388,21 @@ void GUIWindow_MM6Shop::buy(int slot) {
     }
     source = staged;
     pParty->TakeGold(price);
+    if (!guild)
+        buyer.playReaction(SPEECH_ITEM_BUY);
 }
 
 void GUIWindow_MM6Shop::sell() {
     InventoryEntry entry = clickedBackpackEntry();
-    if (!entry || !mm6::shopTradesItem(std::to_underlying(houseId()), entry->itemId, pItemTable->items[entry->itemId]))
+    if (!entry)
         return;
-    if (engine->config->gameplay.FixShopsBuyingBlasters.value() && pItemTable->items[entry->itemId].baseValue == 0)
-        return; // Blasters 64 and 65 have no value in MM6 items.txt.
+    Character &seller = pParty->activeCharacter();
+    const bool blaster = engine->config->gameplay.FixShopsBuyingBlasters.value() && pItemTable->items[entry->itemId].baseValue == 0; // Blasters 64 and 65 have no value in MM6 items.txt.
+    if (blaster || !mm6::shopTradesItem(std::to_underlying(houseId()), entry->itemId, pItemTable->items[entry->itemId])) {
+        seller.playReaction(SPEECH_WRONG_SHOP);
+        pAudioPlayer->playUISound(SOUND_error);
+        return;
+    }
     int value = 0;
     try {
         value = mm6::itemValue(*entry, *pItemTable);
@@ -327,41 +411,142 @@ void GUIWindow_MM6Shop::sell() {
         engine->_statusBar->setEvent("This item can't be sold yet.");
         return;
     }
-    const int payment = mm6::itemSalePayment(value, multiplier(), mm6::merchantPercent(pParty->activeCharacter()),
+    const int payment = mm6::itemSalePayment(value, multiplier(), mm6::merchantPercent(seller),
                                              entry->IsBroken(), _house.type == HOUSE_TYPE_GENERAL_STORE);
-    pParty->activeCharacter().inventory.take(entry);
+    seller.inventory.take(entry);
     pParty->SetGold(pParty->GetGold() + payment);
+    seller.playReaction(SPEECH_ITEM_SOLD);
 }
 
 void GUIWindow_MM6Shop::identify() {
     InventoryEntry entry = clickedBackpackEntry();
-    if (!entry || entry->IsIdentified() ||
-        !mm6::shopTradesItem(std::to_underlying(houseId()), entry->itemId, pItemTable->items[entry->itemId]))
+    if (!entry)
         return;
-    const int price = mm6::itemIdentifyPrice(multiplier(), mm6::merchantPercent(pParty->activeCharacter()));
+    Character &character = pParty->activeCharacter();
+    if (entry->IsIdentified()) {
+        character.playReaction(SPEECH_ALREADY_INDENTIFIED);
+        return;
+    }
+    if (!mm6::shopTradesItem(std::to_underlying(houseId()), entry->itemId, pItemTable->items[entry->itemId])) {
+        pAudioPlayer->playUISound(SOUND_error);
+        character.playReaction(SPEECH_WRONG_SHOP);
+        return;
+    }
+    const int price = mm6::itemIdentifyPrice(multiplier(), mm6::merchantPercent(character));
     if (pParty->GetGold() < price) {
-        engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD);
+        mm6PlayHouseSound(houseId(), HOUSE_SOUND_GENERAL_NOT_ENOUGH_GOLD);
         return;
     }
     pParty->TakeGold(price);
     entry->flags |= ITEM_IDENTIFIED;
+    character.playReaction(SPEECH_SHOP_IDENTIFY);
     engine->_statusBar->setEvent(LSTR_MM6_DONE);
 }
 
 void GUIWindow_MM6Shop::repair() {
     InventoryEntry entry = clickedBackpackEntry();
-    if (!entry || !entry->IsBroken() || (!entry->mm6RawRecord && pItemTable->items[entry->itemId].type == ITEM_TYPE_POTION) ||
-        !mm6::shopTradesItem(std::to_underlying(houseId()), entry->itemId, pItemTable->items[entry->itemId]))
+    if (!entry)
         return;
+    Character &character = pParty->activeCharacter();
+    if (!entry->IsBroken()) {
+        character.playReaction(SPEECH_ALREADY_INDENTIFIED); // MM6 answers an unbroken item with the already identified line.
+        return;
+    }
+    if (!entry->mm6RawRecord && pItemTable->items[entry->itemId].type == ITEM_TYPE_POTION)
+        return;
+    if (!mm6::shopTradesItem(std::to_underlying(houseId()), entry->itemId, pItemTable->items[entry->itemId])) {
+        pAudioPlayer->playUISound(SOUND_error);
+        character.playReaction(SPEECH_WRONG_SHOP);
+        return;
+    }
     const int value = mm6::itemValue(*entry, *pItemTable);
-    const int price = mm6::itemRepairPrice(value, multiplier(), mm6::merchantPercent(pParty->activeCharacter()));
+    const int price = mm6::itemRepairPrice(value, multiplier(), mm6::merchantPercent(character));
     if (pParty->GetGold() < price) {
-        engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD);
+        mm6PlayHouseSound(houseId(), HOUSE_SOUND_GENERAL_NOT_ENOUGH_GOLD);
         return;
     }
     pParty->TakeGold(price);
     entry->flags = ITEM_IDENTIFIED; // MM6 overwrites the whole condition word.
+    character.playReaction(SPEECH_SHOP_REPAIR);
     engine->_statusBar->setEvent(LSTR_MM6_GOOD_AS_NEW);
+}
+
+std::string GUIWindow_MM6Shop::merchantLine() const {
+    if (isBuyScreen(_screen)) {
+        const Pointi pt = EngineIocContainer::ResolveMouse()->position();
+        for (int slot = 0; slot < 12; ++slot) {
+            if (!stockItemRect(slot).contains(pt))
+                continue;
+            const mm6::ItemRecord28 &record = mm6::shopTitleState().stock.records[stockRecordIndex(slot)];
+            const auto projected = mm6::stageBoundedItem(record, *pItemTable, GameTitle::MM6);
+            if (!projected)
+                return {};
+            return merchantLine(mm6::boundedItem(*projected), mm6::itemValue(record, *pItemTable));
+        }
+        return {};
+    }
+
+    const InventoryEntry entry = clickedBackpackEntry();
+    if (!entry)
+        return {};
+    if (_screen == mm6::HouseServiceOption::IdentifyItems && entry->IsIdentified())
+        return coloredItemName(entry->GetDisplayName());
+    if (_screen == mm6::HouseServiceOption::RepairItems && !entry->IsBroken())
+        return {};
+    try {
+        return merchantLine(*entry, mm6::itemValue(*entry, *pItemTable));
+    } catch (const std::exception &) {
+        return {}; // A potion without its MM6 record has no known value.
+    }
+}
+
+std::string GUIWindow_MM6Shop::merchantLine(const Item &item, int value) const {
+    using enum mm6::HouseServiceOption;
+    const Character &character = pParty->activeCharacter();
+    const ItemData &data = pItemTable->items[item.itemId];
+    const bool generalStore = _house.type == HOUSE_TYPE_GENERAL_STORE;
+    const int merchant = mm6::merchantPercent(character);
+    int price = 0;
+    switch (*_screen) {
+        case SellItems: price = mm6::itemSalePayment(value, multiplier(), merchant, item.IsBroken(), generalStore); break;
+        case IdentifyItems: price = mm6::itemIdentifyPrice(multiplier(), merchant); break;
+        case RepairItems: price = mm6::itemRepairPrice(value, multiplier(), merchant); break;
+        default: price = mm6::itemBuyPrice(value, multiplier(), merchant); break;
+    }
+
+    const int id = std::to_underlying(item.itemId);
+    MerchantPhrase phrase = MERCHANT_PHRASE_PRICE_HAGGLE;
+    if (!quotesItemKind(_house.type, item.itemId, data)) {
+        phrase = MERCHANT_PHRASE_INCOMPATIBLE_ITEM;
+    } else if (_screen == SellItems && (((id >= 430 && id < 436) || id > 445) ||
+                                        (engine->config->gameplay.FixShopsBuyingBlasters.value() && data.baseValue == 0))) {
+        phrase = MERCHANT_PHRASE_INVALID_ACTION;
+    } else if (!character.pActiveSkills[SKILL_MERCHANT]) {
+        phrase = MERCHANT_PHRASE_PRICE;
+    } else if (price == value) {
+        phrase = MERCHANT_PHRASE_PRICE_HAGGLE_TO_ACTUAL_PRICE;
+    }
+
+    const std::string_view text = merchantPhrases(*_screen)[phrase];
+    std::string result;
+    for (size_t i = 0; i < text.size(); ++i) {
+        if (text[i] != '%' || i + 2 >= text.size() || !std::isdigit(static_cast<unsigned char>(text[i + 1])) ||
+            !std::isdigit(static_cast<unsigned char>(text[i + 2]))) {
+            result += text[i];
+            continue;
+        }
+        const int code = (text[i + 1] - '0') * 10 + (text[i + 2] - '0');
+        i += 2;
+        switch (code) {
+            case 24: result += coloredItemName(item.GetDisplayName()); break;
+            case 25: result += std::to_string(mm6::itemBaseServicePrice(*_screen, value, multiplier(), generalStore)); break;
+            case 27: result += std::to_string(price); break;
+            case 28: result += houseTable[houseId()].pProprieterTitle; break;
+            case 29: result += std::to_string(mm6::itemIdentifyPrice(multiplier(), merchant)); break;
+            default: break;
+        }
+    }
+    return result;
 }
 
 GraphicsImage *GUIWindow_MM6Shop::stockIcon(int slot) const {

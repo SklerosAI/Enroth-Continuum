@@ -3,6 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <optional>
+#include <string>
 
 #include "Library/Geometry/Rect.h"
 
@@ -12,6 +13,7 @@
 
 class GraphicsImage;
 class GUIButton;
+struct Item;
 
 /**
  * MM6 weapon, armor and magic shop, general store and spell guild. Buying takes an item or a spellbook from the stock
@@ -26,6 +28,7 @@ class GUIWindow_MM6Shop : public GUIWindow_MM6House {
     virtual void selectService(int index) override;
     virtual bool goBack() override;
     virtual void houseScreenClick() override;
+    virtual void showItemInfo() override;
 
     /**
      * @return                          The shop screen the party is on, or `std::nullopt` on the proprietor's menu.
@@ -52,6 +55,19 @@ class GUIWindow_MM6Shop : public GUIWindow_MM6House {
     void sell();
     void identify();
     void repair();
+
+    /**
+     * @return                          What the shopkeeper says about the item under the mouse, or an empty string.
+     * @offset 0x485120, 0x489CF0 (MM6)
+     */
+    std::string merchantLine() const;
+
+    /**
+     * @param item                      Item to quote.
+     * @param value                     The item's MM6 value.
+     * @return                          The shopkeeper's line about the item on this screen.
+     */
+    std::string merchantLine(const Item &item, int value) const;
     GraphicsImage *stockIcon(int slot) const;
     size_t stockRecordIndex(int slot) const;
     float multiplier() const;

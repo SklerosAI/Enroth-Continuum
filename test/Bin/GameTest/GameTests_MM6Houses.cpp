@@ -184,6 +184,17 @@ static InventoryEntry knightSword() {
     return {};
 }
 
+static void clickBackpackItem(EngineController &game, int item) {
+    // Left click on the first item with this id in the backpack a shop screen shows.
+    InventoryEntry entry;
+    for (InventoryEntry candidate : pParty->pCharacters[0].inventory.entries())
+        if (candidate.zone() == INVENTORY_ZONE_GRID && candidate->itemId == static_cast<ItemId>(item) && !entry)
+            entry = candidate;
+    ASSERT_TRUE(entry) << "No item " << item << " in the backpack";
+    game.pressAndReleaseButton(BUTTON_LEFT, mapFromInventoryGrid(entry.geometry().topLeft(), Pointi(14, 17)) + Pointi(16, 16));
+    game.tick();
+}
+
 static void clickKnightSword(EngineController &game) {
     // Left click on the sword in the backpack a shop screen shows.
     ASSERT_TRUE(knightSword());
@@ -279,6 +290,8 @@ static void knockOut(Character *character) {
 
 static const Vec3f kTempleDoor(-9744, -1862, 700); // New Sorpigal Temple, facing north.
 static const Vec3f kWeaponShopDoor(-8422, -7392, 300); // Weapon shop, facing east.
+static constexpr SoundId kWeaponShopGreeting = static_cast<SoundId>(33301);
+static constexpr SoundId kWeaponShopNotEnoughGold = static_cast<SoundId>(33302);
 static const Vec3f kTownHallDoor(-11090, -6536, 300); // Town Hall, facing west.
 static const Vec3f kGeneralStoreDoor(-10333, -8532, 300); // General store, facing south.
 static const Vec3f kGuildDoor(-5384, -1276, 700); // Elemental guild.
@@ -575,6 +588,7 @@ GAME_TEST(MM6Houses, GuildBuySpellbook) {
     auto goldTape = tapes.gold();
     auto stockTape = tapes.custom([] { return guildStock(137); });
     auto backpackTape = tapes.custom([] { return backpackItems(0); });
+    auto speechTape = tapes.speeches();
     startMM6NewGame(game);
     pParty->pCharacters[0]._achievedAwardsBits.set(kElementalGuildMember);
     test.startTaping();
@@ -591,6 +605,7 @@ GAME_TEST(MM6Houses, GuildBuySpellbook) {
     EXPECT_EQ(stockTape, tape(std::vector<int>(12, 0), generated, afterSale));
     EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66, 505}, std::vector<int>{124, 1, 15, 23, 66, 505, 322}));
     EXPECT_EQ(goldTape, tape(200, 50));
+    EXPECT_MISSES(speechTape.flatten(), SPEECH_ITEM_BUY); // A guild sells without the bought line.
 }
 
 GAME_TEST(MM6Houses, WeaponShopVendorRefreshOnEntry) {
@@ -1282,6 +1297,377 @@ GAME_TEST(MM6Houses, WeaponShopRepair) {
     EXPECT_CONTAINS(statusTape, localization->str(static_cast<LstrId>(570))); // "Good as New!"
 }
 
+GAME_TEST(MM6Houses, WeaponShopBuySpeech) {
+    // The New Sorpigal weapon shop sold an item in silence and turned a short purse away without the shopkeeper's line.
+    // A purchase plays the bought line, a short purse the shopkeeper's not enough gold sound, and a full pack the no
+    // room line.
+    enum class Case { Bought, ShortPurse, FullPack };
+    for (Case buyCase : {Case::Bought, Case::ShortPurse, Case::FullPack}) {
+        SCOPED_TRACE(fmt::format("case={}", std::to_underlying(buyCase)));
+        test.prepareForNextTest();
+        auto goldTape = tapes.gold();
+        auto speechTape = tapes.speeches();
+        auto soundsTape = tapes.sounds();
+        auto statusTape = tapes.statusBar();
+        startMM6NewGame(game);
+        if (buyCase == Case::ShortPurse)
+            pParty->SetGold(0);
+        if (buyCase == Case::FullPack)
+            while (pParty->pCharacters[0].inventory.tryAdd(Item(static_cast<ItemId>(15)))) {}
+        test.startTaping();
+        enterThroughDoor(game, kWeaponShopDoor, 0);
+        clickHouseOption(game, localization->str(static_cast<LstrId>(539))); // Buy Items.
+        GUIWindow_MM6Shop *shop = dynamic_cast<GUIWindow_MM6Shop *>(window_SpeakInHouse.get());
+        ASSERT_NE(shop, nullptr);
+        game.pressAndReleaseButton(BUTTON_LEFT, shop->stockItemRect(0).center());
+        game.tick();
+
+        switch (buyCase) {
+            case Case::Bought:
+                EXPECT_EQ(goldTape, tape(200, 125));
+                EXPECT_EQ(speechTape.flatten(), tape(SPEECH_ITEM_BUY));
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, SOUND_gold01));
+                break;
+            case Case::ShortPurse:
+                EXPECT_EQ(goldTape, tape(0));
+                EXPECT_TRUE(speechTape.flatten().empty());
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, kWeaponShopNotEnoughGold));
+                EXPECT_CONTAINS(statusTape, localization->str(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD));
+                break;
+            case Case::FullPack:
+                EXPECT_EQ(goldTape, tape(200));
+                EXPECT_EQ(speechTape.flatten(), tape(SPEECH_NO_ROOM));
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, static_cast<SoundId>(5042))); // Zoltan saying the no room line.
+                EXPECT_CONTAINS(statusTape, localization->str(static_cast<LstrId>(563))); // "Pack is full!"
+                break;
+        }
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopSaleSpeech) {
+    // The New Sorpigal weapon shop bought and refused items in silence. A sale plays the sold line, and an item the shop
+    // doesn't deal in gets the wrong shop line with the error sound.
+    for (int item : {1, 66}) { // The knight's sword, then his leather armor.
+        SCOPED_TRACE(fmt::format("item={}", item));
+        test.prepareForNextTest();
+        auto goldTape = tapes.gold();
+        auto speechTape = tapes.speeches();
+        auto soundsTape = tapes.sounds();
+        startMM6NewGame(game);
+        test.startTaping();
+        enterThroughDoor(game, kWeaponShopDoor, 0);
+        clickHouseOption(game, localization->str(static_cast<LstrId>(540))); // Sell Items.
+        clickBackpackItem(game, item);
+
+        if (item == 1) {
+            EXPECT_EQ(goldTape, tape(200, 214));
+            EXPECT_EQ(speechTape.flatten(), tape(SPEECH_ITEM_SOLD));
+            EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, SOUND_gold01));
+        } else {
+            EXPECT_EQ(goldTape, tape(200));
+            EXPECT_EQ(speechTape.flatten(), tape(SPEECH_WRONG_SHOP));
+            EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, SOUND_error));
+        }
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopIdentifySpeech) {
+    // The New Sorpigal weapon shop identified in silence and ignored every click it turned down. Identifying plays the
+    // identify line, an identified item the already identified line, an item the shop doesn't deal in the wrong shop
+    // line with the error sound, and a short purse the shopkeeper's not enough gold sound.
+    enum class Case { Identified, AlreadyKnown, WrongShop, ShortPurse };
+    for (Case identifyCase : {Case::Identified, Case::AlreadyKnown, Case::WrongShop, Case::ShortPurse}) {
+        SCOPED_TRACE(fmt::format("case={}", std::to_underlying(identifyCase)));
+        test.prepareForNextTest();
+        auto goldTape = tapes.gold();
+        auto speechTape = tapes.speeches();
+        auto soundsTape = tapes.sounds();
+        auto statusTape = tapes.statusBar();
+        startMM6NewGame(game);
+        for (InventoryEntry entry : pParty->pCharacters[0].inventory.entries())
+            if (identifyCase != Case::AlreadyKnown)
+                entry->flags &= ~ITEM_IDENTIFIED;
+        if (identifyCase == Case::ShortPurse)
+            pParty->SetGold(0);
+        test.startTaping();
+        enterThroughDoor(game, kWeaponShopDoor, 0);
+        clickHouseOption(game, localization->str(static_cast<LstrId>(541))); // Identify Items.
+        clickBackpackItem(game, identifyCase == Case::WrongShop ? 66 : 1);
+
+        const std::string done = localization->str(static_cast<LstrId>(569)); // "Done!"
+        switch (identifyCase) {
+            case Case::Identified:
+                EXPECT_EQ(goldTape, tape(200, 125));
+                EXPECT_EQ(speechTape.flatten(), tape(SPEECH_SHOP_IDENTIFY));
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, SOUND_gold01));
+                EXPECT_CONTAINS(statusTape, done);
+                break;
+            case Case::AlreadyKnown:
+                EXPECT_EQ(goldTape, tape(200));
+                EXPECT_EQ(speechTape.flatten(), tape(SPEECH_ALREADY_INDENTIFIED));
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting));
+                EXPECT_MISSES(statusTape, done);
+                break;
+            case Case::WrongShop:
+                EXPECT_EQ(goldTape, tape(200));
+                EXPECT_EQ(speechTape.flatten(), tape(SPEECH_WRONG_SHOP));
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, SOUND_error));
+                EXPECT_MISSES(statusTape, done);
+                break;
+            case Case::ShortPurse:
+                EXPECT_EQ(goldTape, tape(0));
+                EXPECT_TRUE(speechTape.flatten().empty());
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, kWeaponShopNotEnoughGold));
+                EXPECT_MISSES(statusTape, done);
+                break;
+        }
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopRepairSpeech) {
+    // The New Sorpigal weapon shop repaired in silence and ignored every click it turned down. Repairing plays the
+    // repair line, an unbroken item the already identified line, an item the shop doesn't deal in the wrong shop line
+    // with the error sound, and a short purse the shopkeeper's not enough gold sound.
+    enum class Case { Repaired, NotBroken, WrongShop, ShortPurse };
+    for (Case repairCase : {Case::Repaired, Case::NotBroken, Case::WrongShop, Case::ShortPurse}) {
+        SCOPED_TRACE(fmt::format("case={}", std::to_underlying(repairCase)));
+        test.prepareForNextTest();
+        auto goldTape = tapes.gold();
+        auto speechTape = tapes.speeches();
+        auto soundsTape = tapes.sounds();
+        auto statusTape = tapes.statusBar();
+        startMM6NewGame(game);
+        for (InventoryEntry entry : pParty->pCharacters[0].inventory.entries())
+            if (repairCase != Case::NotBroken)
+                entry->flags |= ITEM_BROKEN;
+        if (repairCase == Case::ShortPurse)
+            pParty->SetGold(0);
+        test.startTaping();
+        enterThroughDoor(game, kWeaponShopDoor, 0);
+        clickHouseOption(game, localization->str(static_cast<LstrId>(542))); // Repair Items.
+        clickBackpackItem(game, repairCase == Case::WrongShop ? 66 : 1);
+
+        const std::string goodAsNew = localization->str(static_cast<LstrId>(570)); // "Good as New!"
+        switch (repairCase) {
+            case Case::Repaired:
+                EXPECT_EQ(goldTape, tape(200, 189));
+                EXPECT_EQ(speechTape.flatten(), tape(SPEECH_SHOP_REPAIR));
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, SOUND_gold01));
+                EXPECT_CONTAINS(statusTape, goodAsNew);
+                break;
+            case Case::NotBroken:
+                EXPECT_EQ(goldTape, tape(200));
+                EXPECT_EQ(speechTape.flatten(), tape(SPEECH_ALREADY_INDENTIFIED));
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting));
+                EXPECT_MISSES(statusTape, goodAsNew);
+                break;
+            case Case::WrongShop:
+                EXPECT_EQ(goldTape, tape(200));
+                EXPECT_EQ(speechTape.flatten(), tape(SPEECH_WRONG_SHOP));
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, SOUND_error));
+                EXPECT_MISSES(statusTape, goodAsNew);
+                break;
+            case Case::ShortPurse:
+                EXPECT_EQ(goldTape, tape(0));
+                EXPECT_TRUE(speechTape.flatten().empty());
+                EXPECT_EQ(soundsTape.flatten(), tape(kWeaponShopGreeting, kWeaponShopNotEnoughGold));
+                EXPECT_MISSES(statusTape, goodAsNew);
+                break;
+        }
+    }
+}
+
+static Pointi backpackItemCenter(int item) {
+    // The middle of the first item with this id in the backpack a shop screen shows.
+    for (InventoryEntry entry : pParty->pCharacters[0].inventory.entries())
+        if (entry.zone() == INVENTORY_ZONE_GRID && entry->itemId == static_cast<ItemId>(item))
+            return mapFromInventoryGrid(entry.geometry().topLeft(), Pointi(14, 17)) + Pointi(16, 16);
+    return {};
+}
+
+static std::vector<std::string> panelSentences(const TestMultiTape<DrawnLine> &tape) {
+    // What the right panel says in each frame, its lines joined by spaces, without repeating the frame before.
+    std::vector<std::string> result;
+    for (const AccessibleVector<DrawnLine> &frame : tape) {
+        std::string sentence;
+        for (const DrawnLine &line : panelLines(frame))
+            sentence += (sentence.empty() ? "" : " ") + line.text;
+        if (result.empty() || result.back() != sentence)
+            result.push_back(sentence);
+    }
+    return result;
+}
+
+static const std::string kWeaponShopMenu = "Buy Items Sell Items Identify Items Repair Items Special Items";
+
+static void openWeaponShopScreen(EngineController &game, int label) {
+    // Enters the New Sorpigal weapon shop and opens the screen behind this house option line.
+    enterThroughDoor(game, kWeaponShopDoor, 0);
+    clickHouseOption(game, localization->str(static_cast<LstrId>(label)));
+}
+
+GAME_TEST(MM6Houses, WeaponShopBuyHover) {
+    // Hovering an item on the New Sorpigal weapon shop's table said nothing. The shopkeeper quotes it in the right
+    // panel, and a character with the merchant skill hears the haggling line.
+    for (bool merchant : {false, true}) {
+        SCOPED_TRACE(fmt::format("merchant={}", merchant));
+        test.prepareForNextTest();
+        auto linesTape = tapes.titleLines();
+        startMM6NewGame(game);
+        if (merchant)
+            pParty->pCharacters[0].pActiveSkills[SKILL_MERCHANT] = CombinedSkillValue::novice();
+        test.startTaping();
+        openWeaponShopScreen(game, 539); // Buy Items.
+        GUIWindow_MM6Shop *shop = dynamic_cast<GUIWindow_MM6Shop *>(window_SpeakInHouse.get());
+        ASSERT_NE(shop, nullptr);
+        game.moveMouse(shop->stockItemRect(0).center());
+        game.tick();
+        const std::string quote = merchant ? "Ordinarily I sell things like this \f65523Mace\f00000 for 75 gold.  But you drive a hard bargain-- I'll sell it to you for 67."
+                                           : "An excellent choice!  This \f65523Mace\f00000 is of the finest quality.  I am willing to virtually give it away for 75 gold.";
+        EXPECT_EQ(panelSentences(linesTape), std::vector<std::string>({"", kWeaponShopMenu, "", quote}));
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopSellHover) {
+    // Hovering an item in the backpack on the New Sorpigal weapon shop's sell screen said nothing. The shopkeeper offers
+    // a price for a weapon and turns his nose up at armor.
+    for (int item : {1, 66}) { // The knight's sword, then his leather armor.
+        SCOPED_TRACE(fmt::format("item={}", item));
+        test.prepareForNextTest();
+        auto linesTape = tapes.titleLines();
+        startMM6NewGame(game);
+        test.startTaping();
+        openWeaponShopScreen(game, 540); // Sell Items.
+        game.moveMouse(backpackItemCenter(item));
+        game.tick();
+        const std::string quote = item == 1 ? "Hmph.  Looks like junk to me. <yawn> I suppose I could give you oh, say, 14 gold pieces for it."
+                                            : "Sorry, I am a Blacksmith.  I'm not interested in such things.";
+        EXPECT_EQ(panelSentences(linesTape), std::vector<std::string>({"", kWeaponShopMenu, "", quote}));
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopIdentifyHover) {
+    // Hovering an item on the New Sorpigal weapon shop's identify screen said nothing. The shopkeeper names his price for
+    // an unidentified weapon, and an identified one shows its name alone.
+    for (bool identified : {false, true}) {
+        SCOPED_TRACE(fmt::format("identified={}", identified));
+        test.prepareForNextTest();
+        auto linesTape = tapes.titleLines();
+        startMM6NewGame(game);
+        if (!identified)
+            knightSword()->flags &= ~ITEM_IDENTIFIED;
+        test.startTaping();
+        openWeaponShopScreen(game, 541); // Identify Items.
+        game.moveMouse(backpackItemCenter(1));
+        game.tick();
+        const std::string quote = identified ? "\f65523Longsword\f00000" : "I'll tell you what it is for 75 gold pieces.";
+        EXPECT_EQ(panelSentences(linesTape), std::vector<std::string>({"", kWeaponShopMenu, "", quote}));
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopRepairHover) {
+    // Hovering a broken weapon on the New Sorpigal weapon shop's repair screen said nothing. The shopkeeper names his
+    // price for it, and says nothing about a weapon that isn't broken.
+    for (bool broken : {false, true}) {
+        SCOPED_TRACE(fmt::format("broken={}", broken));
+        test.prepareForNextTest();
+        auto linesTape = tapes.titleLines();
+        startMM6NewGame(game);
+        if (broken)
+            knightSword()->flags |= ITEM_BROKEN;
+        test.startTaping();
+        openWeaponShopScreen(game, 542); // Repair Items.
+        game.moveMouse(backpackItemCenter(1));
+        game.tick();
+        if (broken) {
+            const std::string quote = "This \f65523Longsword\f00000 is nearly beyond repair.  It will take a superhuman effort to fix it!  I'll have to charge 11 gold.";
+            EXPECT_EQ(panelSentences(linesTape), std::vector<std::string>({"", kWeaponShopMenu, "", quote}));
+        } else {
+            EXPECT_EQ(panelSentences(linesTape), std::vector<std::string>({"", kWeaponShopMenu, ""}));
+        }
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopBlasterHover) {
+    // The New Sorpigal weapon shop offered gold for a blaster when the mouse was over it, and then refused to buy it.
+    // With fix_shops_buying_blasters the shopkeeper says the blaster is beyond him, without it he quotes 1 gold.
+    for (bool fix : {true, false}) {
+        SCOPED_TRACE(fmt::format("fix={}", fix));
+        test.prepareForNextTest();
+        auto linesTape = tapes.titleLines();
+        engine->config->gameplay.FixShopsBuyingBlasters.setValue(fix);
+        startMM6NewGame(game);
+        pParty->pCharacters[0].inventory.add(Item(static_cast<ItemId>(64)));
+        test.startTaping();
+        openWeaponShopScreen(game, 540); // Sell Items.
+        game.moveMouse(backpackItemCenter(64));
+        game.tick();
+        const std::string quote = fix ? "I'm a simple Blacksmith and that \f65523Ancient Weapon\f00000 is beyond my meager knowledge."
+                                      : "Hmph.  Looks like junk to me. <yawn> I suppose I could give you oh, say, 1 gold pieces for it.";
+        EXPECT_EQ(panelSentences(linesTape), std::vector<std::string>({"", kWeaponShopMenu, "", quote}));
+    }
+}
+
+static void rightClickAt(EngineController &game, Pointi point) {
+    // Holds the right button down for a frame, then lets it go.
+    game.pressButton(BUTTON_RIGHT, point);
+    game.tick();
+    game.releaseButton(BUTTON_RIGHT);
+    game.tick();
+}
+
+static AccessibleVector<std::string> boxTitles(const TestMultiTape<DrawnLine> &tape) {
+    // Title lines drawn left of the right panel, where an item info box goes.
+    return tape.flatten().filter([](const DrawnLine &line) { return line.position.x < 468; }).map([](const DrawnLine &line) { return line.text; });
+}
+
+GAME_TEST(MM6Houses, WeaponShopItemInfoBox) {
+    // Right-clicking an item in the New Sorpigal weapon shop showed no info box, on the table or in the backpack.
+    for (bool buy : {true, false}) {
+        SCOPED_TRACE(fmt::format("buy={}", buy));
+        test.prepareForNextTest();
+        auto linesTape = tapes.titleLines();
+        startMM6NewGame(game);
+        test.startTaping();
+        openWeaponShopScreen(game, buy ? 539 : 540); // Buy Items or Sell Items.
+        GUIWindow_MM6Shop *shop = dynamic_cast<GUIWindow_MM6Shop *>(window_SpeakInHouse.get());
+        ASSERT_NE(shop, nullptr);
+        rightClickAt(game, buy ? shop->stockItemRect(0).center() : backpackItemCenter(1));
+        EXPECT_EQ(boxTitles(linesTape).unique(), tape(std::string(buy ? "Mace" : "Longsword")));
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopItemInfoBoxUnconscious) {
+    // An unconscious character identified a weapon with his own skill by right-clicking it in the New Sorpigal weapon
+    // shop. The info box leaves the weapon unidentified for him and still lets a conscious character identify it, and
+    // without fix_incapacitated_skill_identify it lets him too.
+    struct Case { bool conscious; bool fix; };
+    for (Case c : {Case{false, true}, Case{true, true}, Case{false, false}}) {
+        SCOPED_TRACE(fmt::format("conscious={} fix={}", c.conscious, c.fix));
+        test.prepareForNextTest();
+        auto linesTape = tapes.titleLines();
+        auto identifiedTape = tapes.custom([] { return knightSword() && knightSword()->IsIdentified(); });
+        engine->config->gameplay.FixIncapacitatedSkillIdentify.setValue(c.fix);
+        startMM6NewGame(game);
+        knightSword()->flags &= ~ITEM_IDENTIFIED;
+        pParty->pCharacters[0].pActiveSkills[SKILL_ITEM_ID] = CombinedSkillValue::novice();
+        if (!c.conscious)
+            knockOut(&pParty->pCharacters[0]);
+        test.startTaping();
+        openWeaponShopScreen(game, 540); // Sell Items.
+        game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+        game.tick();
+        rightClickAt(game, backpackItemCenter(1));
+        const bool identifies = c.conscious || !c.fix;
+        EXPECT_EQ(identifiedTape, identifies ? tape(false, true) : tape(false));
+        if (identifies) {
+            EXPECT_EQ(boxTitles(linesTape).unique(), tape(std::string("Longsword")));
+        } else {
+            EXPECT_EQ(boxTitles(linesTape).unique(), tape(std::string("Longsword"), std::string("Not Identified")));
+        }
+    }
+}
+
 GAME_TEST(MM6Houses, WeaponShopIdentifyUnconscious) {
     // An unconscious character had a weapon identified at the New Sorpigal weapon shop. The shop turns him away with
     // the no condition line and the error sound, and a conscious one still pays and gets it identified.
@@ -1313,7 +1699,7 @@ GAME_TEST(MM6Houses, WeaponShopIdentifyUnconscious) {
         if (conscious) {
             EXPECT_CONTAINS(statusTape, localization->str(static_cast<LstrId>(569))); // "Done!"
             EXPECT_MISSES(soundsTape.flatten(), SOUND_error);
-            EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>());
+            EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>({{"\f65523Longsword\f00000", {510, 217}, colorTable.White}})); // The identified sword under the mouse.
         } else {
             EXPECT_MISSES(statusTape, localization->str(static_cast<LstrId>(569)));
             EXPECT_CONTAINS(soundsTape.flatten(), SOUND_error);

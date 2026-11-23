@@ -4,6 +4,8 @@
 #include "Engine/Objects/CombinedSkillValue.h"
 #include "Engine/Objects/ItemEnums.h"
 
+#include "GUI/UI/MM6HouseServiceData.h"
+
 class Character;
 struct Item;
 struct ItemData;
@@ -84,6 +86,18 @@ int itemRepairPrice(int value, float multiplier, int merchant);
  *                                      general store pays half.
  */
 int itemSalePayment(int value, float multiplier, int merchant, bool broken, bool generalStore);
+
+/**
+ * Full price of a shop service before the merchant discount, the number a merchant line quotes as its usual price.
+ *
+ * @param option                        Shop screen: a buy screen, Sell Items, Identify Items or Repair Items.
+ * @param value                         Item value.
+ * @param multiplier                    Shop's `Val` column in 2DEvents.txt.
+ * @param generalStore                  Whether the shop is a general store, which quotes half for a sale.
+ * @return                              Gold, at least 1 except for a general store's half.
+ * @offset 0x49EBD0, 0x49EBA0, 0x49EBF0, 0x49EC10 (MM6)
+ */
+int itemBaseServicePrice(HouseServiceOption option, int value, float multiplier, bool generalStore);
 
 /**
  * Whether a shop buys, identifies and repairs an item. MM6 decides this by house id, not by shop type: weapon shops

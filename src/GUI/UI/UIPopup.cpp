@@ -49,6 +49,7 @@
 #include "GUI/UI/UIGame.h"
 #include "GUI/UI/UIStatusBar.h"
 #include "GUI/UI/UIChest.h"
+#include "GUI/UI/Houses/MM6House.h"
 #include "GUI/UI/Houses/Shops.h"
 
 #include "Media/Audio/AudioPlayer.h"
@@ -361,7 +362,9 @@ void GameUI_DrawItemInfo(Item *inspect_item) {
         GoldAmount = inspect_item->goldAmount;
     }
 
-    if (pParty->hasActiveCharacter()) {
+    const bool canUseSkills = engine->gameTitle() != GameTitle::MM6 || !engine->config->gameplay.FixIncapacitatedSkillIdentify.value() ||
+                              (pParty->hasActiveCharacter() && pParty->activeCharacter().CanAct());
+    if (pParty->hasActiveCharacter() && canUseSkills) {
         SpeechId speech = SPEECH_NONE;
 
         // try to identify
@@ -1895,6 +1898,11 @@ void UI_OnMouseRightClick(Pointi mousePos) {
             break;
         }
         case SCREEN_HOUSE: {
+            if (engine->gameTitle() == GameTitle::MM6) {
+                if (GUIWindow_MM6House *house = mm6HouseWindow())
+                    house->showItemInfo();
+                break;
+            }
             if ((signed int)pY < 345 && (signed int)pX < 469)
                 ShowPopupShopItem();
             if ((signed int)pX >= 469)

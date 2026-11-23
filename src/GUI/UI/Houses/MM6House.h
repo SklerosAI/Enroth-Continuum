@@ -130,6 +130,14 @@ class GUIWindow_MM6House : public GUIWindow_House {
     virtual bool goBack();
 
     /**
+     * Shows the info box of the item under the mouse while the right button is held. The proprietor's menu and the
+     * people have none.
+     *
+     * @offset 0x495F60 (MM6)
+     */
+    virtual void showItemInfo() {}
+
+    /**
      * Takes the selected exit: autosaves, leaves the house and starts the trip to the exit's map.
      */
     void confirmExit();

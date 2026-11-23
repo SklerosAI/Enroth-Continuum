@@ -66,13 +66,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   (`proftext.txt`) before Join, and its news (`npcnews.txt`, picked by 0x43BC20 as the house lists its people) after
   Join, when its `npcdata.txt` News column is set. The port shows neither, so most residents, teachers and guild
   recruiters included, lack their first topic. `GUIWindow_MM6House::refreshTopics`.
-- **Shop sounds and hints.** The MM6 sell screen is silent. MM6.exe plays sound 479 and speech 77 on a sale and speech
-  79 with sound 27 on a refusal. There is no sell hint, so GrayFace's hint half of W26 has nothing to attach to.
-- **Shop item info box.** MM6 shops have no right-click item info box. When it is ported, GrayFace's W28 check (no
-  skill identify or repair by a member who can't act) comes with it. `src/GUI/UI/Houses/MM6Shop.cpp`.
-- **Shop footer.** The footer draws over the status bar, so "Done!" and "Good as New!" never show. Not checked against
-  MM6.exe.
-- **Shop item hover.** Hovering an item on a shop shelf shows no name in the status bar. Not checked against MM6.exe.
 - **Street NPC news carry-over.** A street NPC slot keeps its news topic across map loads within one game, as in
   vanilla. GrayFace has no fix. Owner's call whether to clear it.
 - **Potion mixing.** Item-on-item use of potions stays refused (`mm6::shouldBlockItemOnItemUse` in

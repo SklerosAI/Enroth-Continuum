@@ -99,6 +99,7 @@ Current MM6 flags, by key:
 | `fix_inactive_party_events`, `fix_door_state_switch` | [EvtInterpreter.cpp](../src/Engine/Evt/EvtInterpreter.cpp) |
 | `fix_wasted_black_potion` | [Character.cpp](../src/Engine/Objects/Character.cpp) |
 | `fix_shops_buying_blasters` | [MM6Shop.cpp](../src/GUI/UI/Houses/MM6Shop.cpp) |
+| `fix_incapacitated_skill_identify` | [UIPopup.cpp](../src/GUI/UI/UIPopup.cpp) |
 | `fix_condition_spells` | [CastSpellInfo.cpp](../src/Engine/Spells/CastSpellInfo.cpp) |
 | `fix_turn_based_turn_time` | [TurnEngine.cpp](../src/Engine/TurnEngine/TurnEngine.cpp) |
 | `fix_recovery_enchant` | [Character.cpp](../src/Engine/Objects/Character.cpp) |

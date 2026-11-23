@@ -26,6 +26,10 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   spawns indoors on a spawn point outside every sector, and has no alert-status check. The port fills slots one by one,
   drops such a spawn point as MM7 does, and keeps MM7's alert check. No shipped map was scanned for spawn points
   outside every sector. `SpawnEncounter` in `src/Engine/Objects/Actor.cpp`.
+- **Monster AI on hostile start.** MM6 monsters start with their `monsters.txt` hostility, so under the shared AI a
+  hostile one engages anywhere in detection range (10240) on map entry, where one that starts friendly turns hostile
+  only within 5120. MM6.exe's own AI hostility steps (0x401AC7, 0x402036) weren't compared with the shared AI.
+  `Actor::UpdateActorAI` in `src/Engine/Objects/Actor.cpp`.
 - **Event W2 follow-up.** With nobody active, the event run picks one member, but other active-member reads in the
   same run (a held item moved when a new one is given) still see nobody. `MM6GiveItemEvent.cpp`, `EvtInterpreter.cpp`.
 - **Map timer hour 88.** The Temple of the Sun (t4) dawn timer has an out-of-range hour byte. Its first firing now

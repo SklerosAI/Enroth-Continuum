@@ -11,7 +11,6 @@ Open MM7 and cross-title questions. MM6 open questions live in `docs/open-questi
 
 ## MM7 open questions — 2026-11-23
 
-- **Playthrough verification.** The full MM7 suite and both C0-C7 chains last passed before `b35afa610` and `264d8d800`. See [MM7 Playthrough Go/No-Go](MM7-Playthrough-Go-No-Go.md).
 - **Full audit start.** The audit plan names the week of 2026-11-23, the delivery order puts the audit after the MM6 working gate. It has not started. Owner's call.
 - **Strange Temple exit.** Event 501 carries an out-of-bounds Harmondale X, so the engine loads the map but skips the placement. A private native trace of the settled position decides between clamping, travel handling or no change. `MM7StrangeTemple` pins today's bounded landing.
 - **5:00 AM sunlight.** MM7 keeps the `UpdateSunlightVectors` minute check that MM6 fixed behind `fix_sunrise_light` on `claude/mm6`. `src/Engine/Graphics/Outdoor.cpp`.

@@ -33,7 +33,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Dragoon Mod](MM7-Dragoon-Mod.md) — Default-off Atlas class family, tiered skills, scoped Knight promotions and headless regression matrix
 
 - [Campaign Status](Campaign-Status.md) — MM6, MM7 and MM8 readiness with a 2026-11-23 current-state table, the consolidated MM7 full gate with both endings, all side-objective durability, 27-of-27 promotions and 76-of-76 map runtime coverage, and dated history
-- [MM7 Playthrough Go/No-Go](MM7-Playthrough-Go-No-Go.md) — Whether MM7 is ready for an end-to-end playthrough: NO-GO on verification only, no known player-reachable crash, and what flips the verdict
+- [MM7 Playthrough Go/No-Go](MM7-Playthrough-Go-No-Go.md) — Whether MM7 is ready for an end-to-end playthrough: GO since 2026-11-23, what it rests on and what drops it back to NO-GO
 - [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
 - [MM7 All Artifacts + Storage](MM7-All-Artifacts-Storage-Mod.md) — Optional collection-based random-artifact eligibility with Castle Harmondale persistent storage
 - [MM7 Private Portrait Mod](MM7-Private-Portrait-Mod.md) — Local mood PNG layout, shared MM7 portrait resolver, Atlas controls, and verified hidden HUD capture

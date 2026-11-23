@@ -3852,4 +3852,5 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Merged the chest and reward options into one Fortune’s Turn choice per title in Atlas. Existing chest or reward preferences migrate as their union; changing the choice writes both legacy keys. Chest Reroll remains available when the HUD X is off. Atlas also exposes the MM6 helper’s independent All Artifacts choice and preserves MM6 vendor preferences.
 - Fresh MM7 coexistence checks passed 39 cases with one expected off-only skip, with Dragoon, All Artifacts, vendor refresh and Fortune’s Turn enabled while the legacy chest flag was off. The chest test clicks Reroll with X off. Swift launch/environment contracts, Atlas page tests, full AtlasApp typecheck, changed C++ lint and diff checks passed.
+- The unrelated 749-case default MM7 sweep was intentionally stopped before completion after the focused gates passed; no new full-suite result is claimed.
 - Source and launch-contract validation only: this change does not install a new app or claim graphical MM6 acceptance. The MM6 helper is built and tested from its own continuing title branch.
